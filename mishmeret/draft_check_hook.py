@@ -16,10 +16,12 @@ import re
 import subprocess
 import sys
 
-HERE = os.path.dirname(os.path.abspath(__file__))
-CHECK = os.path.join(os.path.dirname(os.path.dirname(HERE)), "tools", "check_draft.py")
-DRAFT = re.compile(r"^draft_.*\.txt$")
-SKILL_NOTE = "A draft was written: its rules are skill operator-drafts (load it if this session has not)."
+import config  # noqa: E402  (the project's config: mishmeret/config.py)
+
+_DRAFTS = config.load()["drafts"]   # the project's: which files are drafts, its check, what a pass and a failure say
+CHECK = config.expand(_DRAFTS["check"])
+DRAFT = re.compile(_DRAFTS["pattern"])
+SKILL_NOTE = _DRAFTS["passed"]
 
 
 def run(event, check=CHECK):
@@ -31,8 +33,7 @@ def run(event, check=CHECK):
     out = subprocess.run([sys.executable, check, path], capture_output=True, text=True)
     if out.returncode == 0:
         return 0, SKILL_NOTE
-    return 2, (f"check_draft.py failed on {path} (skill operator-drafts: run it on every draft before handing it over) - "
-               f"fix the draft:\n{out.stdout}{out.stderr}")
+    return 2, _DRAFTS["failed"].format(path=path) + f"\n{out.stdout}{out.stderr}"
 
 
 def main():

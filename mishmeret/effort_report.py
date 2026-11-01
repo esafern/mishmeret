@@ -19,36 +19,34 @@ import os
 import re
 import sys
 
+import config  # noqa: E402  (the project's config: mishmeret/config.py)
+
 LEVELS = ("low", "medium", "high", "xhigh", "max")
 
-# The operator's recommendation, and why. A change here is the reviewer's to make.
-RECOMMENDED = {
-    "girsa-operator": ("high", "mostly bookkeeping - landings, gates, restarts, records"),
-    "girsa-demo-operator": ("high", "the operator's, pinned equal by a gate test - the demo's builds and the hosting"),
-    "girsa-ui-steward": ("high", "look-only changes, each checked by its own browser suite"),
-    "girsa-builder": ("high", "the heaviest user; every step is verified and double-reviewed after it"),
-    "girsa-verifier": ("xhigh", "the check on everyone else's work, and a modest user - the most value per token"),
-    "girsa-architect": ("xhigh", "few, long answers on design; a modest user"),
-    "girsa-auditor": ("high", "a one-off read-only audit"),
-}
+# The operator's recommendation, and why: the project's `effort` field. A change there is the reviewer's to make.
+RECOMMENDED = {role: tuple(row) for role, row in config.load()["effort"].items()}
 # The models' ids as user settings name them, by the agent file's short name.
 MODEL_IDS = {"opus": ("claude-opus-5-5", "claude-opus-5"), "fable": ("claude-fable-5-1",), "sonnet": ("claude-sonnet-5-5",)}
 
-HERE = os.path.dirname(os.path.abspath(__file__))
-AGENTS_DIR = os.path.join(os.path.dirname(HERE), "agents")
+AGENT_FILE = os.path.basename(config.load()["agent_files"])           # "{role}.md"
+AGENTS_DIR = os.path.dirname(config.expand(config.load()["agent_files"]))
 USER_SETTINGS = os.path.expanduser("~/.claude/settings.json")
 
 
 def agent_files(agents_dir):
-    """{role: {"model": ..., "effort": ...}} from each girsa-*.md file's front matter."""
+    """{role: {"model": ..., "effort": ...}} from the front matter of each agent file in `agents_dir` of a role the
+    config names - in its roles or in its recommendation (a role with an agent file and no corner, a one-off auditor) -
+    in name order. A file of a role named in neither is not read: the project's own gate holds its agent files to the
+    recommendation."""
     out = {}
-    for name in sorted(os.listdir(agents_dir)):
-        if not re.fullmatch(r"girsa-[a-z-]+\.md", name):
+    for role in sorted(set(RECOMMENDED) | set(config.role_names())):
+        path = os.path.join(agents_dir, AGENT_FILE.format(role=role))
+        if not os.path.isfile(path):
             continue
-        text = open(os.path.join(agents_dir, name), encoding="utf-8").read()
+        text = open(path, encoding="utf-8").read()
         m = re.match(r"---\n(.*?)\n---", text, re.S)
         fields = dict(re.findall(r"^(\w+):\s*(\S+)\s*$", m.group(1), re.M)) if m else {}
-        out[name[:-3]] = {"model": fields.get("model"), "effort": fields.get("effort")}
+        out[role] = {"model": fields.get("model"), "effort": fields.get("effort")}
     return out
 
 

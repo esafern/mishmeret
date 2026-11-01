@@ -16,37 +16,31 @@ import os
 import re
 import sys
 
-HERE = os.path.dirname(os.path.abspath(__file__))
-REPO = os.path.dirname(os.path.dirname(HERE))
-WARN = 0.80
-READ = 100_000      # about 25,000 tokens - what one Read loads
-HISTORY = "PROJECT-STATUS-HISTORY.md under a dated heading"
+import config  # noqa: E402  (the project's config: mishmeret/config.py)
+
+REPO = config.root()
+_SIZES = config.load()["sizes"]   # every limit and home is the project's (its `sizes` field)
+WARN = _SIZES["warn_percent"] / 100
 
 # path: (limit in bytes, where a whole block goes)
-FILES = {
-    "START_HERE.md": (30_000, "START_HERE-HISTORY.md (reasoning, incidents) or a role's own file (a role's procedure)"),
-    "LESSONS.md": (30_000, "START_HERE-HISTORY.md (each lesson's long form, by number)"),
-    "WRITING.md": (30_000, "START_HERE-HISTORY.md (reasoning, incidents)"),
-    "PROJECT-STATUS.md": (60_000, "tools/split_project_status.py (settled items), " + HISTORY + " (old TL;DR lines)"),
-    ".claude/agents/LANES.md": (30_000, "design-study/SESSION-ROLES-PLAN.md (the plan behind the lanes)"),
-    "design-study/OPERATOR-NOTEBOOK.md": (READ, HISTORY),
-    "design-study/VERIFIER-NOTEBOOK.md": (READ, HISTORY),
-    "design-study/ARCHITECT-NOTEBOOK.md": (READ, HISTORY),
-    "design-study/STEP5-HANDOVER.md": (READ, "the step's status item"),
-}
-ITEM_LIMIT = READ   # a role's open status item: rotate it (a new item; the old one archived by the split tool)
-# a role's current state, read at every start (Board #63 A): what is open, waiting and next - a few KB, never history
-STATE_GLOB, STATE_LIMIT = "design-study/STATE-girsa-*.md", 6_000
-STATE_HOME = "the role's log (its status item), the block's settled lines"
+FILES = {path: tuple(row) for path, row in _SIZES["files"].items()}
+ITEM_LIMIT = _SIZES["item_limit"]   # a role's open status item: rotate it (a new item; the old one archived)
+ITEM_HOME = _SIZES["item_home"]
+STATUS_FILE = _SIZES["status_file"]
+ITEM = re.compile(_SIZES["item_pattern"])
+# a role's current state, read at every start: what is open, waiting and next - a few KB, never history
+STATE_GLOB, STATE_LIMIT = _SIZES["state_files"], _SIZES["state_limit"]
+STATE_HOME = _SIZES["state_home"]
 
 
 def open_items(path):
-    """[(id, bytes)] of the items in PROJECT-STATUS-OPEN.md's first "## Open items" section."""
+    """[(id, bytes)] of the items in the open status file's first section (it opens with "## Open items"); an item
+    starts at a line ITEM matches, its id the first group."""
     text = open(path, encoding="utf-8").read()
     first = text.split("\n## ", 1)[0]      # the file opens with "## Open items"; the next "## " ends it
     out, cur, size = [], None, 0
     for line in first.split("\n"):
-        m = re.match(r"^(0[A-Z0-9]{2})\. ", line)
+        m = ITEM.match(line)
         if m:
             if cur:
                 out.append((cur, size))
@@ -65,10 +59,9 @@ def report(repo=REPO):
             if os.path.exists(os.path.join(repo, p))]
     rows += [(os.path.relpath(p, repo), os.path.getsize(p), STATE_LIMIT, STATE_HOME)
              for p in sorted(glob.glob(os.path.join(repo, STATE_GLOB)))]
-    status_open = os.path.join(repo, "PROJECT-STATUS-OPEN.md")
+    status_open = os.path.join(repo, STATUS_FILE)
     if os.path.exists(status_open):
-        rows += [(f"status item {i}", n, ITEM_LIMIT, "a new item for the role; the old one archived by the split tool")
-                 for i, n in open_items(status_open)]
+        rows += [(f"status item {i}", n, ITEM_LIMIT, ITEM_HOME) for i, n in open_items(status_open)]
     for name, size, limit, home in rows:
         share = size / limit
         if share >= WARN:

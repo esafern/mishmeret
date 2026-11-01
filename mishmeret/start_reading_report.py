@@ -6,7 +6,8 @@ step").
     venv/bin/python .claude/hooks/start_reading_report.py            one line per role
     venv/bin/python .claude/hooks/start_reading_report.py --check    exit 1 on a faulty START READS line
 
-Each role's brief (.claude/roles/girsa-<role>.md) names what it reads at every start on ONE line:
+Each role's brief (the config's `start_reads.briefs`, a glob; in Girsa .claude/roles/girsa-*.md) names what it reads
+at every start on ONE line:
 
     START READS: START_HERE.md, LESSONS.md, WRITING.md, design-study/STATE-girsa-<role>.md
 
@@ -21,10 +22,12 @@ import re
 import subprocess
 import sys
 
-HERE = os.path.dirname(os.path.abspath(__file__))
-REPO = os.path.dirname(os.path.dirname(HERE))
-TOKEN_BYTES = 3.6   # a rough rate for this repository's English; Hebrew runs higher
-LOGS = ("PROJECT-STATUS-OPEN.md", "PROJECT-STATUS-HISTORY.md")
+import config  # noqa: E402  (the project's config: mishmeret/config.py)
+
+REPO = config.root()
+TOKEN_BYTES = 3.6   # a rough rate for English prose; other alphabets run higher
+BRIEFS = config.load()["start_reads"]["briefs"]           # the project's briefs, a glob from the root
+LOGS = tuple(config.load()["start_reads"]["logs"])        # the project's logs, by file name: never on the line
 LINE = re.compile(r"^START READS:\s*(.+)$", re.M)
 
 
@@ -58,7 +61,7 @@ def report(repo=REPO, home=os.path.expanduser("~")):
     lines, faults = [], []
     auto = sum(os.path.getsize(p) for _, p in auto_loaded(repo, home) if os.path.isfile(p))
     lines += [f"(not counted - {name} not found at {p})" for name, p in auto_loaded(repo, home) if not os.path.isfile(p)]
-    for brief in sorted(glob.glob(os.path.join(repo, ".claude", "roles", "girsa-*.md"))):
+    for brief in sorted(glob.glob(os.path.join(repo, BRIEFS))):
         role = os.path.basename(brief)[:-3]
         found = LINE.findall(open(brief, encoding="utf-8").read())
         if not found:

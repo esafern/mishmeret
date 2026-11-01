@@ -41,9 +41,19 @@ FIELDS = {
     "launchd_prefix": str,      # agents-morning: the launchd jobs' label prefix
     "state_dir": str,           # agents-morning: its night-run marks, logs and launchd output, relative to the root
     "night": dict,              # agents-morning: the night run's knobs (seconds, tokens)
+    "sizes": dict,              # size_report: the start-up documents' limits and homes, the status items', the states'
+    "start_reads": dict,        # start_reading_report: the briefs that name a START READS line, the logs never on it
+    "effort": dict,             # effort_report: {role: [recommended effort, why]} - the roles whose agent files it reads
+    "drafts": dict,             # draft_check_hook: which written files are drafts, the check run on each, its two notes
 }
 NIGHT = {"check_every": int, "you_idle": int, "role_idle": int, "landed_quiet": int, "poll": int,
          "context_limit": int, "gap": int}
+# the reports' tables, each key required and no other (as NIGHT); a value is checked by its kind, and `files` (a path:
+# [limit in bytes, where a whole block goes]) and `effort` ({role: [level, why]}) row by row
+SIZES = {"warn_percent": int, "files": dict, "status_file": str, "item_pattern": str, "item_limit": int,
+         "item_home": str, "state_files": str, "state_limit": int, "state_home": str}
+START_READS = {"briefs": str, "logs": list}
+DRAFTS = {"pattern": str, "check": str, "passed": str, "failed": str}
 ROLE_KEYS = {"name": str, "short": str, "colour": str, "page_light": str, "page_dark": str, "corner": bool,
              "tmux": bool}
 
@@ -131,7 +141,21 @@ def load(p=None):
         raise ConfigError(f"{p}: page_order must name each role with a corner once, by its short name")
     if cfg["operator"] not in {r["name"] for r in cfg["roles"]}:
         raise ConfigError(f"{p}: operator {cfg['operator']!r} is not one of the roles")
+    for field, keys in (("sizes", SIZES), ("start_reads", START_READS), ("drafts", DRAFTS)):
+        _exact(cfg[field], keys, f"{p}: {field}")
+        for k, t in keys.items():
+            _typed(f"{field}.{k}", t, cfg[field][k], p)
+    _rows(cfg["sizes"]["files"], (int, str), f"{p}: sizes.files")
+    _rows(cfg["effort"], (str, str), f"{p}: effort")
     return cfg
+
+
+def _rows(table, kinds, where):
+    """Each value of `table` a list of `kinds`, in order: a file's [limit, home], a role's [effort, why]."""
+    for key, row in table.items():
+        if not (isinstance(row, list) and len(row) == len(kinds) and all(
+                isinstance(v, t) and not isinstance(v, bool) for v, t in zip(row, kinds))):
+            raise ConfigError(f"{where}: {key} must be [" + ", ".join(t.__name__ for t in kinds) + f"], not {row!r}")
 
 
 def expand(p):
