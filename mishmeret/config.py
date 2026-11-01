@@ -45,7 +45,16 @@ FIELDS = {
     "start_reads": dict,        # start_reading_report: the briefs that name a START READS line, the logs never on it
     "effort": dict,             # effort_report: {role: [recommended effort, why]} - the roles whose agent files it reads
     "drafts": dict,             # draft_check_hook: which written files are drafts, the check run on each, its two notes
+    "guard": dict,              # role_guard, time_precommit: the trees only the operator changes, the remotes never
+                                # pushed to, the checks whose status decides a commit, the pre-commit hook's own path
+    "land": dict,               # land: the role whose code landing names a plan, the verifier a round goes back to, the
+                                # lane check it runs, the live ledger, what a review server loads, the gate's lists
 }
+GUARD = {"homes": str, "fallback_roots": list, "trees": list, "retired_remotes": list, "checks": list,
+         "precommit": str}
+LAND = {"planned": str, "verifier": str, "lane_check": str, "ledger": str, "server": dict, "gate_sets": dict,
+        "gate_env": dict, "hand_run": dict}
+SERVER = {"entry": str, "folders": list, "page": str}
 NIGHT = {"check_every": int, "you_idle": int, "role_idle": int, "landed_quiet": int, "poll": int,
          "context_limit": int, "gap": int}
 # the reports' tables, each key required and no other (as NIGHT); a value is checked by its kind, and `files` (a path:
@@ -141,10 +150,19 @@ def load(p=None):
         raise ConfigError(f"{p}: page_order must name each role with a corner once, by its short name")
     if cfg["operator"] not in {r["name"] for r in cfg["roles"]}:
         raise ConfigError(f"{p}: operator {cfg['operator']!r} is not one of the roles")
-    for field, keys in (("sizes", SIZES), ("start_reads", START_READS), ("drafts", DRAFTS)):
+    for field, keys in (("sizes", SIZES), ("start_reads", START_READS), ("drafts", DRAFTS), ("guard", GUARD),
+                        ("land", LAND)):
         _exact(cfg[field], keys, f"{p}: {field}")
         for k, t in keys.items():
             _typed(f"{field}.{k}", t, cfg[field][k], p)
+    _exact(cfg["land"]["server"], SERVER, f"{p}: land.server")
+    for k, t in SERVER.items():
+        _typed(f"land.server.{k}", t, cfg["land"]["server"][k], p)
+    for k in ("planned", "verifier"):
+        if cfg["land"][k] not in {r["name"] for r in cfg["roles"]}:
+            raise ConfigError(f"{p}: land.{k} {cfg['land'][k]!r} is not one of the roles")
+    if "landing" not in cfg["land"]["gate_sets"] or not set(cfg["land"]["gate_env"]) <= set(cfg["land"]["gate_sets"]):
+        raise ConfigError(f"{p}: land.gate_sets must hold `landing`, and land.gate_env name only its sets")
     _rows(cfg["sizes"]["files"], (int, str), f"{p}: sizes.files")
     _rows(cfg["effort"], (str, str), f"{p}: effort")
     return cfg

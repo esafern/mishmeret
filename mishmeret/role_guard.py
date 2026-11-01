@@ -39,7 +39,15 @@ import re
 import subprocess
 import sys
 
-OPERATOR = "girsa-operator"
+import config
+
+# THE PROJECT'S OWN (its .claude/mishmeret.json, read by config.py): the operator, the roles' tmux session, the role
+# whose code landing names a plan, and the `guard` table - the corpus roots' list and its fallback, the other trees
+# whose main tree is the operator's, the remotes never pushed to, the checks whose status decides a commit
+_CFG = config.load()
+OPERATOR = _CFG["operator"]
+PLANNED = _CFG["land"]["planned"]
+GUARD = _CFG["guard"]
 BOUNDARY = r"(?:^|[;&|(`]|\$\()\s*"
 # what may stand before git and still run it (girsa-verifier's probe of 78b8088): assignments, and the prefixes env,
 # time, command, exec, nice, sudo and xargs with their options; and git by a path (/usr/bin/git)
@@ -85,7 +93,7 @@ SETS_AGENT = re.compile(r"(?<![\w$])CLAUDE_CODE_AGENT=")
 # both, with the lane check, the gate and the hold. A session with no role keeps its commits in a worktree (it cannot
 # name a role to land.py).
 THROUGH_LAND = {"commit": "`tools/land.py commit ROLE notes|code -F MESSAGE NAME...`",
-                "merge": "`tools/land.py land ROLE notes|code` (girsa-builder's code: `--plan PLAN`), from your worktree"}
+                "merge": f"`tools/land.py land ROLE notes|code` ({PLANNED}'s code: `--plan PLAN`), from your worktree"}
 # ...and the other git commands that make a commit on main, which CHANGES_MAIN already refuses every other role there:
 # refused to the operator too in this repository's main tree (girsa-verifier's LOW on 23be3451; the reviewer, Board #87
 # A), but each one's --abort.
@@ -161,26 +169,30 @@ def _expand(path, text):
     return os.path.expanduser(os.path.expandvars(path))
 
 
-# The trees only the operator changes through git: THIS repository's main clone - the one this hook belongs to, found
-# from the hook's own place - and each book's corpus root, read from the one list of homes, pipeline/book_homes.json
+# The trees only the operator changes through git: THIS repository's main clone - the project's root, from its config
+# (config.root()) - and each book's corpus root, read from the one list of homes (Girsa's pipeline/book_homes.json)
 # (a new book's root is one line there; the reviewer's go, 2026-10-23, on girsa-builder's REQUEST). Not a linked
 # worktree of either, and not a copy (`cp -c -R`, every rehearsal), which carries its own .git. The reviewer,
 # 2026-10-02: "guard - (a)" - girsa-verifier's finding: the first version took any tree whose git dir is its common dir
 # for the main tree, which is every repository that is not a linked worktree, so a role could not reset its own
 # rehearsal copy with git.
-HOOK_REPO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+HOOK_REPO = config.root()
 # When the list cannot be read, the root it held before it was the source - the guard never opens wider for a
 # broken file.
-FALLBACK_CORPUS_ROOTS = ("~/work/hashorashim",)
+FALLBACK_CORPUS_ROOTS = tuple(GUARD["fallback_roots"])
+# THE OTHER TREES WHOSE MAIN TREE IS THE OPERATOR'S (design-study/STEP-MISHMERET-MOVE-PLAN.md in Girsa, step 4): the
+# Mishmeret checkout - its worktrees anyone's, its pins (`<tree>/.pins/<sha>`) no one's (`pin_of`)
+TREES = tuple(GUARD["trees"])
 
 
 def corpus_roots(path=None):
-    """Every home's root in pipeline/book_homes.json (this repository's own among them, which HOOK_REPO also names).
+    """Every home's root in the project's list of homes (`guard.homes`, Girsa's pipeline/book_homes.json; this
+    repository's own among them, which HOOK_REPO also names).
     FALLBACK_CORPUS_ROOTS is added beside the well-formed roots when any home has no root, and is all there is when
     the file is missing, unreadable or not the list's shape - a broken entry never drops a good one (girsa-verifier's
     LOW on 71175b1d)."""
     try:
-        with open(path or os.path.join(HOOK_REPO, "pipeline", "book_homes.json"), encoding="utf-8") as fh:
+        with open(path or config.expand(GUARD["homes"]), encoding="utf-8") as fh:
             homes = json.load(fh)["homes"]
         roots = tuple(h["root"] for h in homes if isinstance(h, dict) and isinstance(h.get("root"), str) and h["root"])
         whole = len(roots) == len(homes)
@@ -206,9 +218,27 @@ def _git_dirs(path):
 
 
 def guarded_git_dirs():
-    """The git dirs of the trees in the comment above: this repository's, and each corpus root's that exists."""
-    found = (_git_dirs(root) for root in (HOOK_REPO,) + tuple(os.path.expanduser(r) for r in CORPUS_ROOTS))
+    """The git dirs of the trees in the comment above: this repository's, and each corpus root's and TREES' that
+    exists."""
+    found = (_git_dirs(root) for root in (HOOK_REPO,) + tuple(os.path.expanduser(r) for r in CORPUS_ROOTS + TREES))
     return {dirs[1] for dirs in found if dirs}
+
+
+def pin_of(path):
+    """The pin `path` is in - `<tree>/.pins/<sha>` of one of TREES - or None. By path alone, no git (the shim finds a
+    pin the same way): a pin is the code every hook runs, so nothing is written into one, by any role."""
+    real = os.path.realpath(os.path.expanduser(path))
+    for tree in TREES:
+        pins = os.path.join(os.path.realpath(os.path.expanduser(tree)), ".pins") + os.sep
+        if real.startswith(pins) and real[len(pins):]:
+            return pins + real[len(pins):].split(os.sep)[0]
+    return None
+
+
+def pin_refusal(pin):
+    return (f"refused by the role guard: {pin} is a pinned Mishmeret tree - every hook runs its code, so no role, the "
+            "operator too, changes it: a change is a new Mishmeret commit, its own pin made from it, and the "
+            "project's `mishmeret_commit` set to that sha")
 
 
 def is_main_tree(path, guarded=None):
@@ -271,10 +301,15 @@ def refusal(role, command, cwd, main_tree=is_main_tree, read=_read, depth=0, pro
                       depth, project_tree)
         if why:
             return why
-    no_role = (" (this session was started without a role: for the main clone start it as girsa-operator; a one-off "
+    no_role = (f" (this session was started without a role: for the main clone start it as {OPERATOR}; a one-off "
                "session works in a worktree, where nothing is refused)") if role == NO_ROLE else ""
     for m in GIT.finditer(masked):
         verb, rest = m.group(2), m.group(3).split()
+        if verb in CHANGES_MAIN and not ((verb == "stash" and rest[:1] and rest[0] in LEAVES_IT["stash"])
+                                         or (verb == "apply" and any(w in rest for w in LEAVES_IT["apply"]))):
+            pin = pin_of(_git_where(command, masked, m, cwd))       # a pin: refused to every role, merge --ff-only too
+            if pin:
+                return pin_refusal(pin)
         if verb in THROUGH_LAND and "--abort" not in rest:
             where = _git_where(command, masked, m, cwd)
             in_main = main_tree(where)
@@ -289,12 +324,14 @@ def refusal(role, command, cwd, main_tree=is_main_tree, read=_read, depth=0, pro
                         "`tools/land.py commit` (Board #87 A)")
         if verb == "push":
             if role != OPERATOR:
-                return ("refused by the role guard: pushing is the operator's (girsa-operator), on the reviewer's "
+                return (f"refused by the role guard: pushing is the operator's ({OPERATOR}), on the reviewer's "
                         "word - send it a LANDED or a REQUEST instead" + no_role)
-            bad = [w for w in rest if w in ("--all", "--mirror", "-f", "old-origin") or w.startswith("--force")]
+            retired = GUARD["retired_remotes"]
+            bad = [w for w in rest if w in ("--all", "--mirror", "-f", *retired) or w.startswith("--force")]
             if bad:
-                return ("refused by the role guard: the operator never pushes --all, --mirror or --force, nor to "
-                        f"old-origin (found {' '.join(bad)}) - push the branch to origin by name")
+                return ("refused by the role guard: the operator never pushes --all, --mirror or --force"
+                        + (f", nor to {' or '.join(retired)}" if retired else "")
+                        + f" (found {' '.join(bad)}) - push the branch to origin by name")
         elif (verb == "stash" and not (rest[:1] and rest[0] in LEAVES_IT["stash"])
               and project_tree(_git_where(command, masked, m, cwd))):
             return ("refused by the role guard: `git stash` in this repository - its stash list is shared by the main "
@@ -335,6 +372,11 @@ NO_ROLE = "a session with no role"
 CP = re.compile(BOUNDARY + PREFIX + r"(?:\S*/)?cp(?=\s)([^;&|\n]*)", re.M)
 
 
+def _home_as_tilde(path):
+    home = os.path.expanduser("~")
+    return "~" + path[len(home):] if path == home or path.startswith(home + os.sep) else path
+
+
 def copy_refusal(command, cwd, is_worktree=lambda p: os.path.isfile(os.path.join(p, ".git"))):
     """None, or the reason to refuse a recursive copy of a linked worktree."""
     masked = mask(command)
@@ -350,7 +392,7 @@ def copy_refusal(command, cwd, is_worktree=lambda p: os.path.isfile(os.path.join
             if is_worktree(path.rstrip("/") or "/"):
                 return (f"refused by the role guard: `cp` of {src}, a linked worktree - its .git is a file pointing "
                         "into the main repository, so git in the copy changes that worktree (LANES.md, 2026-10-02); "
-                        "a rehearsal copies the main clone: `cp -c -R ~/work/sefer-digitization-pipeline <copy>`")
+                        f"a rehearsal copies the main clone: `cp -c -R {_home_as_tilde(HOOK_REPO)} <copy>`")
     return None
 
 # THE LIVE TMUX SERVER IS NO ROLE'S TO STOP (the reviewer, 2026-10-11, the Board #14: "A - Add the guard"). Every role
@@ -383,7 +425,7 @@ def _kill_verb(word):
     hits = [v for v in KILL_VERBS if v.startswith(word)] if word.startswith("kill-") and len(word) > 5 else []
     return hits[0] if len(hits) == 1 else ("kill-server" if hits else None)
 TMUX_SCRIPT = re.compile(BOUNDARY + "(" + TMUX_PREFIX + r")(?:(?:bash|sh|zsh)((?:\s+-\w+)*)\s+)?(\S+\.sh)(?![\w.])", re.M)
-ROLES_SESSION = "girsa"
+ROLES_SESSION = _CFG["tmux_session"]
 
 
 def _own_tmux_env(prefix, before):
@@ -398,22 +440,18 @@ def _own_tmux_env(prefix, before):
 
 
 SHELL_SHIM = re.compile(r'mishmeret_shim\.py"\s+--sh\s+([\w.-]+\.sh)\b')
+HERE = os.path.dirname(os.path.abspath(__file__))
 
 
 def _moved(body, read):
-    """A SCRIPT MOVED TO MISHMERET IS READ WHERE IT RUNS (design-study/STEP-MISHMERET-MOVE-PLAN.md, step 2): a shell
-    shim here (`.claude/mishmeret_shim.py --sh NAME`) runs Mishmeret's NAME from the pinned tree, so the guard reads that
-    - read as the shim, `agents.sh --restart`'s kill-session would be hidden. A pin that cannot be found leaves the shim
-    itself, which then runs nothing."""
+    """A SCRIPT MOVED TO MISHMERET IS READ WHERE IT RUNS (design-study/STEP-MISHMERET-MOVE-PLAN.md in Girsa, step 2): a
+    project's shell shim (`.claude/mishmeret_shim.py --sh NAME`) runs Mishmeret's NAME from the pinned tree - the tree
+    this guard runs from - so the guard reads that; read as the shim, `agents.sh --restart`'s kill-session would be
+    hidden. A script not found here leaves the shim itself."""
     m = SHELL_SHIM.search(body or "")
     if not m:
         return body
-    try:
-        sys.path.insert(0, os.path.join(HOOK_REPO, ".claude"))
-        import mishmeret_shim
-        return read(os.path.join(mishmeret_shim.tree("reports"), "mishmeret", m.group(1))) or body
-    except Exception:
-        return body
+    return read(os.path.join(HERE, m.group(1))) or body
 
 
 def tmux_refusal(command, cwd, read=_read, own_env=False, depth=0):
@@ -438,7 +476,7 @@ def tmux_refusal(command, cwd, read=_read, own_env=False, depth=0):
         return (f"refused by the role guard: `tmux {verb}` here would reach the LIVE tmux server - the one every "
                 f"role's session runs in (2026-10-11 17:51: a test's kill-server stopped all five roles, none landed). "
                 "A test server is reached only as `env -u TMUX TMUX_TMPDIR=<its own folder> tmux ...` or `tmux -S "
-                "<its own socket> ...`; the live server and the girsa session are the reviewer's to stop")
+                f"<its own socket> ...`; the live server and the {ROLES_SESSION} session are the reviewer's to stop")
     for m in PKILL.finditer(masked):
         if re.search(r"(?<![\w-])tmux(?![\w-])", command[m.start(1):m.end(1)]):
             return ("refused by the role guard: pkill / killall of tmux would stop the LIVE tmux server with every "
@@ -480,7 +518,7 @@ FILE_TOOLS = {"Edit": "file_path", "Write": "file_path", "NotebookEdit": "notebo
 # before it, `check && echo ...;` (a failure in an && list does not stop even under set -e), or `check || true`. Read in
 # the command and one level into a script it runs. Its status counts when the command uses it: `if ! check; then`,
 # `check || { ...; exit 1; }`, `check && git commit`, or `set -e` before a check alone on its line.
-CHECKS = ("check_lane.py", "pytest", "check_word_ids.py", "check_draft.py")
+CHECKS = tuple(GUARD["checks"])
 GATED_STEPS = {"commit", "merge", "push", "tag", "update-ref", "cherry-pick", "am"}
 STEP_SPLIT = re.compile(r"(\|\||&&|\|&?|;|(?<![<>&])&(?![>&])|\n)")
 LEAD_WORDS = {"if", "!", "then", "else", "elif", "do", "while", "until", "{", "(", "time", "command", "exec"}
@@ -794,7 +832,7 @@ def edit_refusal(role, path, main_tree=is_main_tree):
         no_role = (" (this session was started without a role: a one-off session works in a worktree)"
                    if role == NO_ROLE else "")
         return ("refused by the role guard: this file is in the main tree or a book's corpus root, which only the "
-                "operator (girsa-operator) changes - edit your worktree's copy and land with `git merge --ff-only`, or "
+                f"operator ({OPERATOR}) changes - edit your worktree's copy and land with `git merge --ff-only`, or "
                 "send the operator a HANDOFF" + no_role)
     return None
 
@@ -819,7 +857,7 @@ def main(argv):
         return check(event, argv)
     except Exception as e:
         print(f"refused by the role guard: the guard itself failed ({type(e).__name__}: {e}) - nothing was checked, so "
-              f"nothing runs; tell girsa-operator, which owns the hooks", file=sys.stderr)
+              f"nothing runs; tell {OPERATOR}, which owns the hooks", file=sys.stderr)
         return 2
 
 
@@ -830,7 +868,9 @@ def check(event, argv):
         print(why, file=sys.stderr)
         return 2
     if tool in FILE_TOOLS:
-        why = edit_refusal(role_of(event, argv), (event.get("tool_input") or {}).get(FILE_TOOLS[tool]) or "")
+        path = (event.get("tool_input") or {}).get(FILE_TOOLS[tool]) or ""
+        pin = pin_of(path) if path else None
+        why = pin_refusal(pin) if pin else edit_refusal(role_of(event, argv), path)
         if why:
             print(why, file=sys.stderr)
             return 2

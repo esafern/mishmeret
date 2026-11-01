@@ -35,7 +35,12 @@ def sample():
                   "state_files": "STATE-*.md", "state_limit": 600, "state_home": "the log"},
         "start_reads": {"briefs": "roles/ex-*.md", "logs": ["STATUS.md"]},
         "effort": {"ex-operator": ["high", "bookkeeping"]},
-        "drafts": {"pattern": r"^draft_.*\.txt$", "check": "tools/check.py", "passed": "passed", "failed": "{path}"}}
+        "drafts": {"pattern": r"^draft_.*\.txt$", "check": "tools/check.py", "passed": "passed", "failed": "{path}"},
+        "guard": {"homes": "homes.json", "fallback_roots": ["~/book"], "trees": ["~/checkout"], "retired_remotes": [],
+                  "checks": ["pytest"], "precommit": ".claude/hooks/time_check.py"},
+        "land": {"planned": "ex-builder", "verifier": "ex-operator", "lane_check": "tools/lanes.py",
+                 "ledger": "rulings.jsonl", "server": {"entry": "app/server.py", "folders": ["app"], "page": "page/"},
+                 "gate_sets": {"landing": ["tests/test_a.py"]}, "gate_env": {}, "hand_run": {}}}
 
 
 @pytest.fixture
@@ -82,6 +87,12 @@ def test_the_sample_loads_and_its_root_is_the_config_files_project(write, tmp_pa
     (lambda c: c["sizes"]["files"].update({"A.md": [100]}), "sizes.files: A.md must be [int, str]"),
     (lambda c: c["sizes"]["files"].update({"A.md": ["100", "home"]}), "sizes.files: A.md must be [int, str]"),
     (lambda c: c["effort"].update({"ex-builder": "high"}), "effort: ex-builder must be [str, str]"),
+    (lambda c: c["guard"].pop("trees"), "guard: missing trees"),
+    (lambda c: c["guard"].update(checks="pytest"), "guard.checks must be list"),
+    (lambda c: c["land"]["server"].pop("page"), "land.server: missing page"),
+    (lambda c: c["land"].update(planned="nobody"), "land.planned 'nobody' is not one of the roles"),
+    (lambda c: c["land"].update(gate_sets={"quick": []}), "land.gate_sets must hold `landing`"),
+    (lambda c: c["land"].update(gate_env={"other": {}}), "land.gate_env name only its sets"),
 ])
 def test_a_field_missing_unknown_or_of_the_wrong_kind_is_refused_by_name(write, change, said):
     cfg = sample()

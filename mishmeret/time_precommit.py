@@ -12,16 +12,19 @@ only a time still ahead of the clock when the commit runs.
     python3 .claude/hooks/time_precommit.py --install  # writes the repository's pre-commit hook (once per clone;
                                                        # the worktrees share it)
 Exit 1 refuses the commit and says why. Needs only Python's standard library."""
-import importlib.util
 import os
 import subprocess
 import sys
 
-HERE = os.path.dirname(os.path.abspath(__file__))
-HOOK = """#!/bin/sh
-# Girsa's time check (.claude/hooks/time_precommit.py; Board #33). A tree whose branch predates it has no script: let
+import config
+
+# git's hook runs the PROJECT's path to this check (`guard.precommit`, its shim), so a tree whose branch predates the
+# check has nothing to run; the text is the one `--install` wrote before the move, byte for byte, for Girsa's config
+_CFG = config.load()
+HOOK = f"""#!/bin/sh
+# {_CFG["project"]}'s time check ({_CFG["guard"]["precommit"]}; Board #33). A tree whose branch predates it has no script: let
 # the commit run.
-s="$(git rev-parse --show-toplevel)/.claude/hooks/time_precommit.py"
+s="$(git rev-parse --show-toplevel)/{_CFG["guard"]["precommit"]}"
 [ -f "$s" ] || exit 0
 exec python3 "$s"
 """
@@ -41,9 +44,7 @@ def added_lines(cwd=None):
 
 
 def refusal(lines, now=None):
-    spec = importlib.util.spec_from_file_location("role_guard", os.path.join(HERE, "role_guard.py"))
-    rg = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(rg)
+    import role_guard as rg                     # this package's own: the guard beside it, never a project's shim
     for path, line in lines:
         why = rg.future_time_refusal(line, now)
         if why:

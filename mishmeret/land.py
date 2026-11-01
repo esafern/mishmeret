@@ -29,7 +29,6 @@ must not depend on the code it lands. Exit 0 done, 1 a red gate, 2 refused.
 import argparse
 import ast
 import hashlib
-import importlib.util
 import json
 import os
 import shlex
@@ -38,33 +37,29 @@ import subprocess
 import sys
 import tempfile
 
-TOOLS = os.path.dirname(os.path.abspath(__file__))
-OPERATOR = "girsa-operator"
-BUILDER = "girsa-builder"
-LEDGER = "review_decisions.jsonl"
-# the folders whose modules a running review server may import (`server_loads`); pipeline/ first
-SERVER_CODE_FOLDERS = ("pipeline", "citations", "tools")
+import config
 
-# THE GATE'S LISTS, their one home (START_HERE, LANES.md, two scripts and a test header each wrote the five out; no test
-# pinned them). `rebuild`: the three rebuild_yad.sh's last stage runs - the data's invariants and the logic after a
-# chain (485bc074 added test_ruling_model.py there; the lane and style tests check no data). `after-apply`: the book's
-# own checks after an Apply (ebf0b64d, the reviewer's "Book checks only").
-GATE_SETS = {
-    "landing": ["tests/test_corpus_invariants.py", "tests/test_pipeline_logic.py", "tests/test_check_lane.py",
-                "tests/test_ruling_model.py", "tests/test_page_style.py"],
-    "rebuild": ["tests/test_corpus_invariants.py", "tests/test_pipeline_logic.py", "tests/test_ruling_model.py"],
-    "after-apply": ["tests/test_corpus_invariants.py"],
-}
-GATE_ENV = {"after-apply": {"GIRSA_AFTER_APPLY": "1"}}
-# the test files no gate runs, each with why (START_HERE: run by hand); a new test file is in a set or here, or a test
-# fails
-HAND_RUN = {
-    "tests/test_review_server.py": "the browser suite - girsa-ui-steward's to run",
-    "tests/test_fixture_corpus.py": "run by hand (START_HERE)",
-    "tests/test_inventory.py": "run by hand (START_HERE)",
-    "tests/test_engine_soak.py": "the Apply engine's soak, by hand before a release (START_HERE)",
-    "tests/test_verifier_*.py": "girsa-verifier's own probes, in its lane",
-}
+HERE = os.path.dirname(os.path.abspath(__file__))
+# THE PROJECT'S OWN (its .claude/mishmeret.json, `land`): the operator, the role whose code landing names its plan, the
+# verifier a code round goes back to, the lane check run at each commit and landing (the project's path to it), the
+# live rulings file copied into the frozen gate, and what a running review server loads (`server_loads`: its entry,
+# the folders whose modules it may import - the first first - and the page's folder)
+_CFG = config.load()
+_LAND = _CFG["land"]
+OPERATOR = _CFG["operator"]
+BUILDER = _LAND["planned"]
+VERIFIER = _LAND["verifier"]
+LANE_CHECK = _LAND["lane_check"]
+LEDGER = _LAND["ledger"]
+SERVER = _LAND["server"]
+SERVER_CODE_FOLDERS = tuple(SERVER["folders"])
+
+# THE GATE'S LISTS, their one home (in Girsa: START_HERE, LANES.md, two scripts and a test header each wrote the five
+# out; no test pinned them) - the project's `land.gate_sets`, each set's environment (`gate_env`), and the test files no
+# gate runs, each with why (`hand_run`; a new test file is in a set or there, or the project's test fails)
+GATE_SETS = _LAND["gate_sets"]
+GATE_ENV = _LAND["gate_env"]
+HAND_RUN = _LAND["hand_run"]
 
 
 class Refused(Exception):
@@ -90,7 +85,7 @@ def said(cwd, *args):
 # THE TOOLS IT CALLS, one function each - the tests replace these, so what the script does with their answers is what
 # they test
 def lane_check(repo, role, doc_only=False, rng=None, because=None, plan=None):
-    cmd = [sys.executable, os.path.join(repo, "tools", "check_lane.py"), role]
+    cmd = [sys.executable, os.path.join(repo, LANE_CHECK), role]
     cmd += ["--doc-only"] * doc_only + (["--range", rng] if rng else []) + (["--because", because] if because else [])
     cmd += ["--plan", plan] if plan else []
     run = subprocess.run(cmd, cwd=repo, capture_output=True, text=True)
@@ -113,7 +108,7 @@ def unworded(top, role, rng, because):
 
 
 def board(repo, *args):
-    run = subprocess.run([sys.executable, os.path.join(repo, ".claude", "board", "board.py"), *args], cwd=repo,
+    run = subprocess.run([sys.executable, os.path.join(HERE, "board.py"), *args], cwd=repo,      # this package's Board
                          capture_output=True, text=True)
     return run.returncode, (run.stdout + run.stderr).strip()
 
@@ -136,14 +131,12 @@ def run_gate(tree, name):
     return run.returncode
 
 
-def time_refusal(main_tree, text, now=None):
+def time_refusal(text, now=None):
     """The role guard's own check of a written time (`future_time_refusal`), on a message the guard never sees - a
-    file the script commits (girsa-architect's Q7). `now` is the clock's, or a test's fixed one."""
-    path = os.path.join(main_tree, ".claude", "hooks", "role_guard.py")
-    spec = importlib.util.spec_from_file_location("girsa_role_guard", path)
-    guard = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(guard)
-    return guard.future_time_refusal(text, now)
+    file the script commits (girsa-architect's Q7). `now` is the clock's, or a test's fixed one. The guard is this
+    package's own (until the move, the main tree's copy, loaded by path)."""
+    import role_guard
+    return role_guard.future_time_refusal(text, now)
 
 
 class Where:
@@ -191,7 +184,7 @@ def commit(role, kind, message, names, tests=None, because=None, cwd="."):
         text = fh.read().strip()
     if because:
         text = f"{text}\n\nThe reviewer's words: {because}"
-    refusal = time_refusal(where.main_tree, text)
+    refusal = time_refusal(text)
     if refusal:
         raise Refused(refusal)
     added = git(where.top, "add", "--", *names)
@@ -261,7 +254,7 @@ def named_plan(where, cwd, plan):
     """PLAN as a path in the worktree, committed at HEAD - refused when there is none."""
     if not plan:
         raise Refused(f"a code landing of {BUILDER} names its plan: --plan PLAN, the plan whose `## The case` this "
-                      "work serves (Board Q&A #62, gate 1; #99 B); a round on girsa-verifier's findings names its "
+                      f"work serves (Board Q&A #62, gate 1; #99 B); a round on {VERIFIER}'s findings names its "
                       "piece's plan")
     rel = os.path.relpath(os.path.realpath(os.path.join(cwd, plan)), where.top)
     if git(where.top, "cat-file", "-e", f"HEAD:{rel}").returncode != 0:      # outside the tree too
@@ -318,7 +311,7 @@ def _landing(role, kind, where, branch, accept=(), plan=None, because=None):
                       "(`land.py check-conflict " + " ".join(shlex.quote(f) for f in conflicted) + "`; LANES.md: a "
                       "conflict resolved by keeping both sides is checked function by function), `git add` them, "
                       "`git rebase --continue`, and land again - the landing checks every replayed commit itself. A "
-                      "code round goes back to girsa-verifier.")
+                      f"code round goes back to {VERIFIER}.")
     if said(where.top, "merge-base", "HEAD", where.main_branch) != tip:
         raise Refused(f"the branch is not on {where.main_branch}'s tip after the rebase")
     # finished here, it stopped nowhere, and an earlier stop's replays were checked above: the stamp goes now, so a
@@ -348,7 +341,7 @@ def _landing(role, kind, where, branch, accept=(), plan=None, because=None):
     print("".join(f"    {line}\n" for line in said(where.top, "log", "--oneline", f"{tip}..{head}").split("\n")), end="")
     changed = set(filter(None, said(where.top, "diff", "--name-only", tip, head).split("\n")))
     loads = server_loads(where.top)
-    restart = sorted(p for p in changed if p in loads or p.startswith("review_frontend/"))
+    restart = sorted(p for p in changed if p in loads or p.startswith(SERVER["page"]))
     print(f"  the servers load: {'restart - ' + ', '.join(restart) if restart else 'none of it changed'}")
     if kind == "code":
         _frozen_gate(where)
@@ -465,7 +458,7 @@ def _frozen_gate(where):
     """The gate in main after a code landing, on a frozen copy of the main clone with the live rulings file
     (girsa-architect's Q4; girsa-verifier's landing_rerun.sh's learnt rules 8 and 12): nothing written into the main
     tree, no Save raced. Red: the merge stands, and the fix is the lander's."""
-    copy = tempfile.mkdtemp(prefix="girsa-land-")
+    copy = tempfile.mkdtemp(prefix=f"{_CFG['project'].lower()}-land-")
     tree = os.path.join(copy, "main")
     try:
         if sys.platform == "darwin":
@@ -583,7 +576,7 @@ def server_loads(repo):
     AN IMPORT IS LOOKED FOR IN EVERY CODE FOLDER, not pipeline/ alone: the server and the exporter put citations/ on
     sys.path for the notes' references, and its module went unseen until 959e1e23's landing said "none of it changed"
     (2026-10-27). A name in two folders counts both - a restart too many costs less than one missed."""
-    if not os.path.isfile(os.path.join(repo, "pipeline", "review_server.py")):
+    if not os.path.isfile(os.path.join(repo, SERVER["entry"])):
         return set()                                    # a repository with no review server
     local = {}
     for folder in SERVER_CODE_FOLDERS:
@@ -591,7 +584,7 @@ def server_loads(repo):
             for f in sorted(os.listdir(os.path.join(repo, folder))):
                 if f.endswith(".py"):
                     local.setdefault(f[:-3], []).append(f"{folder}/{f}")
-    loads, frontier = {"pipeline/review_server.py"}, ["pipeline/review_server.py"]
+    loads, frontier = {SERVER["entry"]}, [SERVER["entry"]]
     while frontier:
         path = frontier.pop()
         with open(os.path.join(repo, path), encoding="utf-8") as fh:
@@ -629,7 +622,7 @@ def main(argv=None):
     lnd = sub.add_parser("land")
     lnd.add_argument("role")
     lnd.add_argument("kind", choices=("notes", "code"))
-    lnd.add_argument("--plan", help="the plan this landing serves, committed - girsa-builder's code needs one "
+    lnd.add_argument("--plan", help=f"the plan this landing serves, committed - {BUILDER}'s code needs one "
                                     "(Board Q&A #62, #99 B)")
     lnd.add_argument("--accept", action="append", default=[], metavar="FILE::NAME",
                      help="a replayed statement compared by hand (a file that is not Python: FILE)")
