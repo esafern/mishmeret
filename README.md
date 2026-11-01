@@ -2,11 +2,13 @@
 
 משמרת - a watch, a shift of duty. The process that runs a team of Claude Code sessions, each in a standing role, on
 one project: the Board where the roles put their questions to a person and the person answers, the roles' tmux
-session, the night run that lands and clears them, the session hooks and the status line. Extracted from Girsa, a
-digitization project, where it was built; it names no project of its own.
+session, the night run that lands and clears them, the session hooks and the status line, and the reports a role or
+the project's gate runs - the start-up documents' sizes, what each role reads at start, each role's effort, and the
+check of a draft the moment a session writes it. Extracted from Girsa, a digitization project, where it was built; it
+names no project of its own.
 
 Standard library only. The sessions (`agents.sh`, `agents-morning.sh`) are macOS-only: tmux, launchd, osascript and
-iTerm2. The Board, the hooks and the status line are portable.
+iTerm2. The Board, the hooks, the status line and the reports are portable.
 
 ## How a project uses it
 
@@ -27,9 +29,12 @@ edited: a change is a new commit and a new pin. The shim's helper is the project
 with the module that reads each: the project's name, its roles (name, short name, tmux colour, the Board page's two
 colours, whether it has a corner and a tmux pane), the page's order, the operator, the Board's folder and port, the
 tmux session and settings file, Claude Code's transcripts folder, the agent files, the project's Python, the launchd
-prefix, the state folder and the night run's knobs. `MISHMERET_<FIELD>` overrides a field, `MISHMERET_NIGHT_<KEY>` one
-of the night run's; `MISHMERET_TRANSCRIPTS` names the transcripts folder itself, and `MISHMERET_NIGHT_DRY_RUN=1` makes
-the night run say what it would type. A command (never a hook) may run another tree with `MISHMERET_TREE`.
+prefix, the state folder and the night run's knobs; and the reports' tables - the start-up documents' limits and where
+a whole block of each goes (`sizes`), the briefs and the logs never named at start (`start_reads`), the recommended
+effort per role (`effort`), and which files are drafts, their check and its two sentences (`drafts`).
+`MISHMERET_<FIELD>` overrides a field, `MISHMERET_NIGHT_<KEY>` one of the night run's; `MISHMERET_TRANSCRIPTS` names
+the transcripts folder itself, and `MISHMERET_NIGHT_DRY_RUN=1` makes the night run say what it would type. A command
+(never a hook) may run another tree with `MISHMERET_TREE`.
 
 ## What the project's sessions must say
 

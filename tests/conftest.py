@@ -29,9 +29,24 @@ def project_config(root, **over):
            "claude_projects": os.path.join(str(root), "projects"), "agent_files": ".claude/agents/{role}.md",
            "python": sys.executable, "launchd_prefix": "org.example", "state_dir": "scratch/state",
            "night": {"check_every": 1800, "you_idle": 900, "role_idle": 900, "landed_quiet": 120, "poll": 60,
-                     "context_limit": 200000, "gap": 5}}
+                     "context_limit": 200000, "gap": 5},
+           "sizes": {"warn_percent": 80, "files": {"RULES.md": [1000, "RULES-HISTORY.md"],
+                                                   "docs/LANES.md": [2000, "docs/LANES-PLAN.md"]},
+                     "status_file": "STATUS.md", "item_pattern": r"^(X[0-9]{2})\. ", "item_limit": 3000,
+                     "item_home": "a new item", "state_files": "docs/STATE-ex-*.md", "state_limit": 600,
+                     "state_home": "the role's log"},
+           "start_reads": {"briefs": ".claude/roles/ex-*.md", "logs": ["STATUS.md", "STATUS-HISTORY.md"]},
+           "effort": {"ex-operator": ["high", "bookkeeping"], "ex-builder": ["high", "the heaviest user"],
+                      "ex-auditor": ["xhigh", "a one-off audit"]},
+           "drafts": {"pattern": r"^draft_.*\.txt$", "check": "tools/check.py", "passed": "A draft: its rules are ex's.",
+                      "failed": "the check failed on {path} - fix the draft:"}}
     cfg.update(over)
     return cfg
+
+
+# the placeholder project's draft check (its `drafts.check`): a draft holding "BAD" fails, with a line naming it
+DRAFT_CHECK = 'import sys\ntext = open(sys.argv[1], encoding="utf-8").read()\nif "BAD" in text:\n' \
+              '    print("BAD found in the draft")\n    sys.exit(1)\n'
 
 
 def write_project(root, **over):
@@ -45,6 +60,9 @@ def write_project(root, **over):
 
 REPO = tempfile.mkdtemp(prefix="mishmeret-project-")
 os.environ["MISHMERET_CONFIG"] = write_project(REPO)
+os.makedirs(os.path.join(REPO, "tools"))
+with open(os.path.join(REPO, "tools", "check.py"), "w", encoding="utf-8") as fh:
+    fh.write(DRAFT_CHECK)
 for k in [k for k in os.environ if k.startswith("MISHMERET_") and k != "MISHMERET_CONFIG"]:
     del os.environ[k]
 

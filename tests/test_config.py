@@ -29,7 +29,13 @@ def sample():
         "board_port": 9450, "tmux_session": "ex", "tmux_conf": "~/.tmux-ex.conf", "claude_projects": "~/.claude/projects",
         "agent_files": ".claude/agents/{role}.md", "python": "venv/bin/python", "launchd_prefix": "org.example", "state_dir": "scratch/state",
         "night": {"check_every": 1, "you_idle": 2, "role_idle": 3, "landed_quiet": 4, "poll": 5, "context_limit": 6,
-                  "gap": 7}}
+                  "gap": 7},
+        "sizes": {"warn_percent": 80, "files": {"RULES.md": [1000, "RULES-HISTORY.md"]}, "status_file": "STATUS.md",
+                  "item_pattern": r"^(X[0-9]{2})\. ", "item_limit": 3000, "item_home": "a new item",
+                  "state_files": "STATE-*.md", "state_limit": 600, "state_home": "the log"},
+        "start_reads": {"briefs": "roles/ex-*.md", "logs": ["STATUS.md"]},
+        "effort": {"ex-operator": ["high", "bookkeeping"]},
+        "drafts": {"pattern": r"^draft_.*\.txt$", "check": "tools/check.py", "passed": "passed", "failed": "{path}"}}
 
 
 @pytest.fixture
@@ -70,6 +76,12 @@ def test_the_sample_loads_and_its_root_is_the_config_files_project(write, tmp_pa
     (lambda c: c.update(page_order=["builder"]), "page_order must name each role with a corner once"),
     (lambda c: c["roles"][2].update(colour="#777777"), 'roles[2].colour must be "" (the role is not drawn)'),
     (lambda c: c["roles"][0].update(page_dark=""), "roles[0].page_dark must be a colour"),
+    (lambda c: c["sizes"].pop("item_limit"), "sizes: missing item_limit"),
+    (lambda c: c["drafts"].update(extra="x"), "drafts: unknown extra"),
+    (lambda c: c["start_reads"].update(logs="STATUS.md"), "start_reads.logs must be list"),
+    (lambda c: c["sizes"]["files"].update({"A.md": [100]}), "sizes.files: A.md must be [int, str]"),
+    (lambda c: c["sizes"]["files"].update({"A.md": ["100", "home"]}), "sizes.files: A.md must be [int, str]"),
+    (lambda c: c["effort"].update({"ex-builder": "high"}), "effort: ex-builder must be [str, str]"),
 ])
 def test_a_field_missing_unknown_or_of_the_wrong_kind_is_refused_by_name(write, change, said):
     cfg = sample()
