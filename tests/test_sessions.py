@@ -1,0 +1,215 @@
+"""The sessions: the night and morning runs, agents.sh, the resume finder, moved from Girsa's tests/test_pipeline_logic.py at 2aba11b0 (its history there). A placeholder project
+(tests/conftest.py): its roles are Girsa's shapes under the prefix "ex-"."""
+import json
+import os
+import re
+import subprocess
+import sys
+
+import pytest
+
+from conftest import PKG, REPO  # noqa: F401  (REPO: the placeholder project's root, written by the fixture)
+
+
+def test_role_sessions_finds_each_roles_latest_session_for_agents_sh_resume(tmp_path, capsys):
+    """The reviewer, 2026-10-11: "build the agents.sh resume option". tools/role_sessions.py names each role's LATEST
+    transcript (by its agent-setting record): resumable, "live" when that session is running - never an older one of
+    a running role - or "none". Placeholder roles and ids."""
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("role_sessions", os.path.join(PKG, "role_sessions.py"))
+    rs = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(rs)
+
+    def transcript(sid, role, mtime):
+        recs = [{"type": "custom-title", "customTitle": role or "x", "sessionId": sid}]
+        if role:
+            recs.append({"type": "agent-setting", "agentSetting": role, "sessionId": sid})
+        recs.append({"type": "user", "message": {"role": "user", "content": "placeholder"}, "sessionId": sid})
+        path = tmp_path / f"{sid}.jsonl"
+        path.write_text("".join(json.dumps(r) + "\n" for r in recs), encoding="utf-8")
+        os.utime(path, (mtime, mtime))
+
+    transcript("aaaa-old", "role-a", 1000)
+    transcript("aaaa-new", "role-a", 3000)          # role-a's latest: resumed
+    transcript("bbbb-old", "role-b", 1000)
+    transcript("bbbb-run", "role-b", 2000)          # role-b's latest is running: never fall back to bbbb-old
+    transcript("cccc-none", None, 4000)             # a session with no role is no role's
+    live = tmp_path / "live.json"
+    live.write_text(json.dumps([{"sessionId": "bbbb-run"}]), encoding="utf-8")
+    assert rs.main(["--projects", str(tmp_path), "--live-from", str(live), "role-a", "role-b", "role-c"]) == 0
+    rows = [line.split("\t") for line in capsys.readouterr().out.splitlines()]
+    assert rows[0][:2] == ["role-a", "aaaa-new"]
+    assert rows[1] == ["role-b", "live", "bbbb-run"]
+    assert rows[2] == ["role-c", "none"]
+    # the running sessions unreadable: none counts as running, and it says so
+    assert rs.main(["--projects", str(tmp_path), "--live-from", str(tmp_path / "missing"), "role-b"]) == 0
+    out = capsys.readouterr()
+    assert out.out.split("\t")[:2] == ["role-b", "bbbb-run"] and "could not read" in out.err
+    # the transcripts' folder Claude Code keeps for a clone: every character but a letter or digit made "-"
+    assert rs.projects_dir("/Users/x/work/a-b.c").endswith(os.path.join("projects", "-Users-x-work-a-b-c"))
+
+
+def test_the_night_run_does_not_land_a_role_waiting_for_another_roles_work(tmp_path, monkeypatch, capsys):
+    """The reviewer, 2026-10-11: "night run should not have told the ver to land when it had work to do. it should not
+    have been idle." The verifier's corner said it waited for the builder's build; the night run sent it /land anyway,
+    and the builder's HANDOFF came 37 s later. board.py's `waiting_on` (and `waiting-for ROLE`) reads a corner's wait;
+    agents-morning.sh asks it before /land and leaves a role waiting for a role still running. Placeholder board."""
+    import importlib.util
+    monkeypatch.setenv("MISHMERET_BOARD_DIR", str(tmp_path / "board"))
+    spec = importlib.util.spec_from_file_location("board", os.path.join(PKG, "board.py"))
+    bd = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(bd)
+    assert bd.waiting_on("ex-verifier") is None                          # no corner yet
+    bd.set_status("ex-verifier", "waiting-agent", "ex-builder", "Waiting for a placeholder build")
+    assert bd.waiting_on("ex-verifier") == "ex-builder"
+    assert bd.main(["waiting-for", "ex-verifier"]) == 0 and capsys.readouterr().out.strip() == "ex-builder"
+    bd.set_status("ex-verifier", now="still waiting, the words changed only")     # a text-only update keeps the wait
+    assert bd.waiting_on("ex-verifier") == "ex-builder"
+    bd.set_status("ex-verifier", "idle")
+    assert bd.waiting_on("ex-verifier") is None
+    assert bd.main(["waiting-for", "ex-verifier"]) == 0 and capsys.readouterr().out == ""
+    # the night run asks it before /land, and lets a kept, left or closed role's wait go
+    script = open(os.path.join(PKG, "agents-morning.sh"), encoding="utf-8").read()
+    ask, land = script.index('board.py" waiting-for "$r"'), script.index('type_in "$pane" "/land"')
+    assert ask < land
+    check = script[ask:land]
+    for marker in ('"$NIGHT/$w.kept"', '"$NIGHT/$w.left"', '"$NIGHT/$w.closed"', "still running - not idle"):
+        assert marker in check, marker
+
+
+def test_the_night_run_lands_a_role_under_the_limit_and_keeps_it_uncleared():
+    """The reviewer, the Board #31, 2026-10-13: "c lower the limit to 200k so most times roles will be closed. if less
+    than that - just land but not clear" (at 500,000 the operator was kept at 486,593 tokens, unlanded). Read from
+    agents-morning.sh: the limit; a role under it is sent /land and marked land-only; each place that clears on "ready to
+    clear" keeps a land-only role instead; a role so kept is not cleared on a later pass, and is looked at afresh once
+    someone works with it again."""
+    script = open(os.path.join(PKG, "agents-morning.sh"), encoding="utf-8").read()
+    assert "CONTEXT_LIMIT=$MM_NIGHT_CONTEXT_LIMIT" in script
+    under = script[script.index('if [ "${ctx:-0}" -lt "$CONTEXT_LIMIT" ]'):]
+    under = under[:under.index("\n      fi\n")]
+    assert 'type_in "$pane" "/land"' in under and '"$NIGHT/$r.land-only"' in under and "/clear" not in under
+    clears = [i for i in range(len(script)) if script.startswith('type_in "$pane" "/clear"', i)]
+    assert len(clears) == 2, "a new place that clears must keep a land-only role too"
+    for at in clears:                                                       # the check stands just before each
+        assert 'if [ -e "$NIGHT/$r.land-only" ]; then keep_landed "$r"; continue; fi' in script[at - 300:at]
+    assert '[ ! -e "$NIGHT/$r.landed-kept" ]' in script                    # kept after landing: not cleared next pass
+    assert 'rm -f "$NIGHT/$r.kept" "$NIGHT/$r.landed-kept"' in script       # worked with again: looked at afresh
+
+
+def test_the_night_run_can_be_skipped_without_turning_it_off(tmp_path):
+    """The reviewer, 2026-10-21: "give me a clean way to tell it not to run w/o turning it off". --skip-tonight holds
+    today's run, --skip every run, --resume removes both; a held run ends before it looks at anything (a dry run in a
+    placeholder folder: no dry-run folder made)."""
+    import datetime
+    import subprocess
+    from conftest import write_project
+    night = tmp_path / "scratch" / "state" / "night"
+    cfg = write_project(tmp_path)
+    def run(*args, dry=False):
+        env = dict(os.environ, MISHMERET_CONFIG=cfg, **({"MISHMERET_NIGHT_DRY_RUN": "1"} if dry else {}))
+        return subprocess.run(["bash", os.path.join(PKG, "agents-morning.sh"), *args], env=env, capture_output=True,
+                              text=True, encoding="utf-8", timeout=30)
+    for hold, file in (("--skip-tonight", f"skip-{datetime.date.today().isoformat()}"), ("--skip", "skip")):
+        assert run(hold).returncode == 0 and (night / file).exists(), hold
+        held = run("--night", dry=True)
+        assert held.returncode == 0 and f"skipped: {night / file}" in held.stdout, held.stdout + held.stderr
+        assert not list(night.glob("dry-*")), "a held run looked at the roles"
+        assert run("--resume").returncode == 0 and not (night / file).exists(), hold
+    # A RUN ALREADY GOING stops at its next look (ex-verifier's LOW on 7ba22ad8): the loop's first line reads the files
+    script = open(os.path.join(PKG, "agents-morning.sh"), encoding="utf-8").read()
+    loop = script.index("  while :; do\n", script.index('if [ "${1:-}" = "--night" ]'))
+    first = [l.strip() for l in script[loop:].split("\n")[1:4] if not l.strip().startswith("#")][0]
+    assert first.startswith('if f=$(skip_file "$RUN_DATE"); then') and first.endswith("break; fi"), first   # the end runs
+    # TYPED AFTER MIDNIGHT: a run going since the evening before is held by its own date's file too
+    (night / "2026-01-01" / ".running").mkdir(parents=True)
+    assert "going since 2026-01-01 18:00 stops" in run("--skip-tonight").stdout and (night / "skip-2026-01-01").exists()
+    assert run("--resume").returncode == 0 and not list(night.glob("skip-*")), "--resume removes every dated hold"
+
+
+def test_the_agents_scripts_share_one_clone_one_role_list_and_one_pane_lookup():
+    """The duplication audit's E26 (the reviewer, Board #82 A, 2026-10-26: the scripts in the operator's lane): agents.sh
+    and agents-morning.sh each kept the role list, the clone, the session-to-pane lookup and the transcript lookup, and
+    with the clone set the night run read one clone while its Go started the roles, through agents.sh, in another. Both
+    source agents-lib.sh; it alone holds them, reads the project's config and exports MISHMERET_CONFIG, and the Go's new
+    window is given it."""
+    read = lambda name: open(os.path.join(PKG, name), encoding="utf-8").read()
+    lib, start, night = read("agents-lib.sh"), read("agents.sh"), read("agents-morning.sh")
+    source = '. "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/agents-lib.sh"'
+    assert source in start and source in night
+    assert 'MM_CFG=$(python3 "$HERE/config.py" --shell)' in lib and 'DIR="$MM_ROOT"' in lib
+    assert 'export MISHMERET_CONFIG="${MISHMERET_CONFIG:-$DIR/.claude/mishmeret.json}"' in lib
+    for copy in ("ROLES=", "\nDIR=\"", "claude agents --json", '.jsonl 2>/dev/null', 'list-panes -s -t "$SESSION" -F \'#{pane_pid} #{pane_id}\'',
+                 "PROJECTS=", "config.py --shell"):
+        assert copy in lib, copy
+        assert copy not in start and copy not in night, f"a second copy of {copy!r}"
+    assert "write text \\\"MISHMERET_CONFIG='$MISHMERET_CONFIG' bash '$DIR/agents.sh'\\\"" in night, \
+        "the Go starts the roles in the same clone"
+
+
+def test_the_morning_run_counts_a_role_idle_once_its_turn_has_ended(tmp_path):
+    """0NA, 2026-10-26: agents-morning.sh's morning wait counted a role busy while `claude agents` called it busy only
+    for a background task of its own (the operator's keep-alive loop, a `board.py wait`), though its turn had ended - so
+    the wait could not end. The Board (1e318c4a) and keepalive_due.py read role_usage.turn_ended; agents-lib.sh's
+    role_state does the same, and the morning's states() reads it. A stub `claude` and placeholder transcripts."""
+    import subprocess
+    bin_dir, tx = tmp_path / "bin", tmp_path / "tx"
+    bin_dir.mkdir()
+    tx.mkdir()
+    rows = [{"name": "ex-builder", "status": "busy", "sessionId": "ended", "pid": 1},
+            {"name": "ex-verifier", "status": "busy", "sessionId": "open", "pid": 2},
+            {"name": "ex-architect", "status": "busy", "sessionId": "none", "pid": 3},
+            {"name": "ex-ui-steward", "status": "idle", "sessionId": "idle", "pid": 4}]
+    stub = bin_dir / "claude"
+    stub.write_text("#!/bin/sh\ncat <<'EOF'\n" + json.dumps(rows) + "\nEOF\n", encoding="utf-8")
+    stub.chmod(0o755)
+    closing = {"type": "system", "subtype": "turn_duration"}
+    for sid, recs in (("ended", ({"type": "user"}, {"type": "assistant"}, closing)), ("open", (closing, {"type": "user"}))):
+        (tx / f"{sid}.jsonl").write_text("".join(json.dumps(r) + "\n" for r in recs), encoding="utf-8")
+    env = dict(os.environ, MISHMERET_TRANSCRIPTS=str(tx), PATH=f"{bin_dir}{os.pathsep}{os.environ['PATH']}")
+    lib = os.path.join(PKG, "agents-lib.sh")
+    out = subprocess.run(["bash", "-c", f'. "{lib}"; for r in $ROLES; do echo "$r $(role_state "$r")"; done'], env=env,
+                         capture_output=True, text=True, encoding="utf-8", timeout=60)
+    assert out.returncode == 0, out.stderr
+    assert sorted(out.stdout.split("\n")[:5]) == ["ex-architect busy",    # busy, no transcript: unknown is not ended
+                                                   "ex-builder idle",       # busy, its turn ended: idle
+                                                   "ex-operator absent",
+                                                   "ex-ui-steward idle",
+                                                   "ex-verifier busy"], out.stdout   # busy, a prompt after the close
+    morning = open(os.path.join(PKG, "agents-morning.sh"), encoding="utf-8").read()
+    assert 'echo "$r $(role_state "$r")"' in morning, "the morning's states() reads role_state"
+
+
+def test_the_morning_run_starts_the_roles_when_none_is_running(tmp_path):
+    """The reviewer, 2026-10-27: "agents_morning should just call agents when appr. [appropriate] rather than tell me to
+    do it" - after a restart of the Mac, with none of the five running, it said "Start them with: bash agents.sh" and
+    stopped. It now runs plain agents.sh itself (never --restart) - at step 1 only: gone during step 2's landing, the
+    roles stopped without landing, and the run stops naming --resume rather than start fresh sessions over them
+    (ex-verifier's LOW on c524fb2e). A stub `claude` (five idle until its `update`, then none), stub tmux and sleep,
+    and a placeholder agents.sh in a temporary clone."""
+    import subprocess
+    from conftest import write_project
+    (tmp_path / "bin").mkdir()
+    cfg = write_project(tmp_path)
+    stub = tmp_path / "bin" / "claude"
+    stub.write_text("#!/bin/sh\necho '[]'\n", encoding="utf-8")
+    stub.chmod(0o755)
+    (tmp_path / "agents.sh").write_text('echo "placeholder agents.sh ran with: [$*]"\n', encoding="utf-8")
+    env = {k: v for k, v in os.environ.items() if k != "TMUX"}           # not inside the roles' own tmux session
+    env.update(MISHMERET_CONFIG=cfg, PATH=f"{tmp_path / 'bin'}{os.pathsep}{os.environ['PATH']}")
+    out = subprocess.run(["bash", os.path.join(PKG, "agents-morning.sh")], env=env, stdin=subprocess.DEVNULL,
+                         capture_output=True, text=True, encoding="utf-8", timeout=60)
+    assert out.returncode == 0, out.stdout + out.stderr
+    assert "starting them: bash agents.sh" in out.stdout and "placeholder agents.sh ran with: []" in out.stdout, out.stdout
+    # ALL FIVE IDLE AT STEP 1, NONE AFTER STEP 2'S `claude update`: a stop that names --resume, agents.sh not run
+    rows = json.dumps([{"name": r, "status": "idle", "sessionId": "-", "pid": 1} for r in
+                       ("ex-operator", "ex-builder", "ex-verifier", "ex-ui-steward", "ex-architect")])
+    stub.write_text(f"#!/bin/sh\nif [ \"$1\" = update ]; then touch '{tmp_path / 'updated'}'; exit 0; fi\n"
+                    f"if [ -e '{tmp_path / 'updated'}' ]; then echo '[]'; else echo '{rows}'; fi\n", encoding="utf-8")
+    for name in ("tmux", "sleep"):
+        (tmp_path / "bin" / name).write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
+        (tmp_path / "bin" / name).chmod(0o755)
+    out = subprocess.run(["bash", os.path.join(PKG, "agents-morning.sh")], env=env, input="yes\n",
+                         capture_output=True, text=True, encoding="utf-8", timeout=60)
+    assert out.returncode == 1, out.stdout + out.stderr
+    assert "they stopped during the landing" in out.stdout and "bash agents.sh --resume" in out.stdout, out.stdout
+    assert "starting them" not in out.stdout and "placeholder agents.sh ran" not in out.stdout, out.stdout

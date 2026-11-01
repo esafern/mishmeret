@@ -92,15 +92,16 @@ _LOADED = {}
 
 
 def load(p=None):
-    """The config, every field checked, the MISHMERET_<FIELD> overrides applied. Read once per process and path."""
+    """The config, every field checked, the MISHMERET_<FIELD> overrides applied as the environment stands NOW - the
+    file is read once per process and path, the overrides on every call (a process that sets one later sees it)."""
     p = p or path()
-    if p in _LOADED:
-        return _LOADED[p]
-    try:
-        with open(p, encoding="utf-8") as fh:
-            raw = json.load(fh)
-    except (OSError, ValueError) as e:
-        raise ConfigError(f"{p}: {e}") from None
+    if p not in _LOADED:
+        try:
+            with open(p, encoding="utf-8") as fh:
+                _LOADED[p] = json.load(fh)
+        except (OSError, ValueError) as e:
+            raise ConfigError(f"{p}: {e}") from None
+    raw = _LOADED[p]
     if not isinstance(raw, dict):
         raise ConfigError(f"{p}: not a table of fields")
     _exact(raw, FIELDS, p)
@@ -130,7 +131,6 @@ def load(p=None):
         raise ConfigError(f"{p}: page_order must name each role with a corner once, by its short name")
     if cfg["operator"] not in {r["name"] for r in cfg["roles"]}:
         raise ConfigError(f"{p}: operator {cfg['operator']!r} is not one of the roles")
-    _LOADED[p] = cfg
     return cfg
 
 

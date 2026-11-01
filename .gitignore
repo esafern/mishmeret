@@ -1,0 +1,3 @@
+__pycache__/
+# the pinned commits every project hook runs (a worktree each; never edited, a change is a new pin)
+.pins/
