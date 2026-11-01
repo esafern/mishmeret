@@ -619,3 +619,164 @@ def test_the_board_flags_a_stalled_role_and_counts_errors_and_a_week(tmp_path, m
     assert got["errors"] == {"api": 1, "hook": 1, "refused": 1, "tool": 1}
     week = ru.role_week("2030-01-03", n=2)
     assert [d for d, _ in week] == ["2030-01-02", "2030-01-03"] and week[0][1] == {"ex-builder": 10} and week[1][1] == {}
+
+
+def test_the_reviewer_defers_a_question_and_its_role_is_told_once(tmp_path, monkeypatch, capsys):
+    """The reviewer, 2026-10-13: "i need a way to defer questions on the board". Later (the page's /api/defer) moves an
+    open question to Deferred: the role's corner no longer waits on the reviewer for it, a wait running when it is
+    deferred says so once and returns 3 (the role goes on with other work), a wait started on it afterwards waits for the
+    answer, it can still be answered, and Bring back returns it. An answered or withdrawn item is not deferred.
+    Placeholder questions in a temporary board, through the page's own route."""
+    import importlib.util
+    import threading
+    import urllib.request
+    import urllib.error
+    monkeypatch.setenv("MISHMERET_BOARD_DIR", str(tmp_path / "board"))
+    monkeypatch.syspath_prepend(PKG)
+    spec = importlib.util.spec_from_file_location("board_server", os.path.join(PKG, "board_server.py"))
+    bs = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(bs)
+    bd = bs.board
+    monkeypatch.setattr(bs.LIVE, "get", lambda: {"ex-builder": {"status": "idle", "last_prompt": None}})
+    one = bd.ask("ex-builder", "Placeholder question")
+    assert bs.board_view()["roles"]["ex-builder"]["shown"] == "waiting-reviewer"    # the check below can fail
+    two = bd.ask("ex-verifier", "Placeholder decision", "", "decision", ["a=Do Y"], "a")
+    srv = bs.ThreadingHTTPServer(("127.0.0.1", 0), bs.Handler)
+    threading.Thread(target=srv.serve_forever, daemon=True).start()
+    port = srv.server_address[1]
+
+    def post(route, body):
+        req = urllib.request.Request(f"http://127.0.0.1:{port}{route}", data=json.dumps(body).encode(),
+                                     headers={"Content-Type": "application/json", "Origin": f"http://127.0.0.1:{port}"})
+        try:
+            return urllib.request.urlopen(req, timeout=5).status
+        except urllib.error.HTTPError as e:
+            return e.code
+    try:
+        # a wait already running when the reviewer presses Later: told once, exit 3
+        monkeypatch.setattr(bd.time, "sleep", lambda s: post("/api/defer", {"id": one["id"], "defer": True}))
+        assert bd.main(["wait", str(one["id"])]) == 3
+        assert "deferred by the reviewer - go on with other work" in capsys.readouterr().out
+        assert bd.items()[one["id"]]["deferred"] and not bd.is_waiting(bd.items()[one["id"]])
+        assert "[deferred]" in bd.describe(bd.items()[one["id"]])
+        assert bs.board_view()["roles"]["ex-builder"]["shown"] == "idle", "a deferred question still held its corner"
+        # a wait started on a deferred item waits for its answer, which the page still takes
+        monkeypatch.setattr(bd.time, "sleep", lambda s: post("/api/answer", {"id": one["id"], "answer": "placeholder"}))
+        assert bd.main(["wait", str(one["id"])]) == 0
+        assert "answered: placeholder" in capsys.readouterr().out
+        assert post("/api/defer", {"id": one["id"], "defer": True}) == 409, "an answered item is not deferred"
+        # Bring back
+        assert post("/api/defer", {"id": two["id"], "defer": True}) == 200 and bd.items()[two["id"]]["deferred"]
+        assert post("/api/defer", {"id": two["id"], "defer": False}) == 200 and bd.is_waiting(bd.items()[two["id"]])
+        bd.withdraw(two["id"], "no longer needed")
+        assert post("/api/defer", {"id": two["id"], "defer": True}) == 409, "a withdrawn item is not deferred"
+        assert post("/api/defer", {"id": 99, "defer": True}) == 409
+    finally:
+        srv.shutdown()
+    page = open(os.path.join(PKG, "board_server.py"), encoding="utf-8").read()
+    assert "data-defer=" in page and "data-undefer=" in page and "Deferred (${deferred.length})" in page
+
+
+def test_the_plans_budget_is_recorded_shown_and_told_once_at_80_percent(tmp_path, monkeypatch):
+    """Q&A #56 A (the reviewer, 2026-10-25: "a and c - good. go"): every session's status line records the plan's usage
+    windows for the Board's meter; at BUDGET_WARN percent a hook tells each session once per window and reset to land.
+    Placeholder readings in a temporary board."""
+    import importlib.util
+    import subprocess
+    import time as _time
+    monkeypatch.setenv("MISHMERET_BOARD_DIR", str(tmp_path / "board"))
+    monkeypatch.syspath_prepend(PKG)
+    spec = importlib.util.spec_from_file_location("board_server", os.path.join(PKG, "board_server.py"))
+    bs = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(bs)
+    bd = bs.board
+    soon, gone = int(_time.time()) + 3600, int(_time.time()) - 60
+    assert bd.record_usage(None) is None and bd.usage() is None
+    bd.record_usage({"five_hour": {"used_percentage": 42, "resets_at": soon}, "seven_day": {"used_percentage": 50, "resets_at": gone}})
+    assert set(bd.usage()) == {"five_hour", "seen_at", "session"}, "a window whose reset has passed is left out"
+    assert bd.budget_notice("s1") is None, "under the line, nothing is said"
+    assert bs.board_view()["usage"]["five_hour"]["used_percentage"] == 42
+    bd.record_usage({"five_hour": {"used_percentage": 80, "resets_at": soon}})
+    said = bd.budget_notice("s1")
+    assert said and "5-hour window is at 80%" in said and "land" in said
+    assert bd.budget_notice("s1") is None, "told once per session, window and reset"
+    assert bd.budget_notice("s2"), "each session is told"
+    bd.record_usage({"five_hour": {"used_percentage": 85, "resets_at": soon + 18000}})
+    assert bd.budget_notice("s1"), "a new window is told again"
+    hook = PKG
+    env = dict(os.environ, MISHMERET_BOARD_DIR=str(tmp_path / "board"))
+    out = subprocess.run([sys.executable, os.path.join(hook, "statusline.py")], env=env, capture_output=True, text=True,
+                         input=json.dumps({"session_name": "ex-builder", "context_window": {"current_usage": {
+                             "input_tokens": 5, "cache_read_input_tokens": 120000}},
+                             "rate_limits": {"five_hour": {"used_percentage": 90, "resets_at": soon}}})).stdout
+    assert out.startswith("context 120k · plan: 5-HOUR 90% (RESETS ") and out.rstrip().endswith(" - LAND"), out
+    assert bd.usage()["five_hour"]["used_percentage"] == 90 and bd.usage()["session"] == "ex-builder"
+    def run_hook(**data):
+        return subprocess.run([sys.executable, os.path.join(hook, "board_hook.py")], env=env, capture_output=True,
+                              text=True, input=json.dumps(data)).stdout
+    got = run_hook(session_id="s3", hook_event_name="UserPromptSubmit")
+    assert json.loads(got)["hookSpecificOutput"]["hookEventName"] == "UserPromptSubmit"
+    assert bd.session_record("ex-builder") == {}, "the status line keys its record by session id, not name"
+    # the project's settings.json runs statusline.py and board_hook.py on its three events: Girsa's configuration test
+    page = open(os.path.join(PKG, "board_server.py"), encoding="utf-8").read()
+    assert 'id="usage"' in page and "drawUsage()" in page
+
+
+def test_tokens_per_role_per_day_from_the_transcripts(tmp_path, monkeypatch):
+    """Q&A #56 ideas 3 and 4: a transcript's role is its agent-name record; a call counts once by message id on its local
+    date; a compaction is a compact_boundary record; subagents are kept by model; weighted = input 1, cache write 2,
+    cache read 0.1, output 5. Placeholder transcripts."""
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("role_usage", os.path.join(PKG, "role_usage.py"))
+    ru = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(ru)
+    monkeypatch.setenv("MISHMERET_TRANSCRIPTS", str(tmp_path))
+    from datetime import datetime as _dt
+    ts = _dt(2030, 1, 2, 12, 0).astimezone().isoformat()
+    other = _dt(2030, 1, 3, 12, 0).astimezone().isoformat()
+    call = lambda mid, t, model="claude-opus-5-5": {"type": "assistant", "timestamp": t, "message": {
+        "id": mid, "model": model, "usage": {"input_tokens": 10, "cache_creation_input_tokens": 100,
+                                             "cache_read_input_tokens": 1000, "output_tokens": 20}}}
+    rows = [{"type": "agent-name", "agentName": "ex-builder"}, call("m1", ts), call("m1", ts), call("m2", other),
+            {"type": "system", "subtype": "compact_boundary", "timestamp": ts}]
+    (tmp_path / "s1.jsonl").write_text("\n".join(json.dumps(r) for r in rows) + "\n", encoding="utf-8")
+    (tmp_path / "s1" / "subagents").mkdir(parents=True)
+    (tmp_path / "s1" / "subagents" / "a.jsonl").write_text(json.dumps(call("h1", ts, "claude-haiku-5-5")) + "\n", encoding="utf-8")
+    later = _dt(2030, 1, 4).timestamp()    # a file last written before the day holds none of it, and is skipped
+    for f in (tmp_path / "s1.jsonl", tmp_path / "s1" / "subagents" / "a.jsonl"):
+        os.utime(f, (later, later))
+    assert ru.role_usage("2030-01-05") == {}
+    got = ru.role_usage("2030-01-02")["ex-builder"]
+    assert got["main"] == {"calls": 1, "inp": 10, "cw": 100, "cr": 1000, "out": 20, "weighted": 410}
+    assert got["compactions"] == 1 and got["sessions"] == 1
+    assert got["sub"] == {"claude-haiku-5-5": {"calls": 1, "inp": 10, "cw": 100, "cr": 1000, "out": 20, "weighted": 410}}
+    assert ru.role_usage("2030-01-03")["ex-builder"]["main"]["calls"] == 1
+
+
+def test_a_sessions_number_that_day_counts_its_own_roles_sessions_of_its_own_day(tmp_path, monkeypatch):
+    """session_facts' two filters (ex-verifier, 2026-10-26, LOW 6: mutating either passed the whole file): which of
+    its role's sessions begun that day a session was counts only that role's, only that local day's. Placeholder
+    transcripts: builders at 08:00, 13:00 and 23:30 (written past midnight) one day and 00:10 the next, an architect at 09:00; and a role named
+    after line 400 (a session resumed into it, LOW 5) is still that role."""
+    import importlib.util
+    from datetime import datetime as _dt
+    spec = importlib.util.spec_from_file_location("role_usage", os.path.join(PKG, "role_usage.py"))
+    ru = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(ru)
+    monkeypatch.setenv("MISHMERET_TRANSCRIPTS", str(tmp_path))
+    def session(sid, role, when, late=False, ran=600):
+        start = _dt(*when).astimezone()
+        head = [json.dumps({"type": "user", "timestamp": start.isoformat()})]
+        name = [json.dumps({"type": "agent-name", "agentName": role})]
+        filler = [json.dumps({"type": "progress"})] * (450 if late else 0)
+        (tmp_path / f"{sid}.jsonl").write_text("\n".join(head + filler + name if late else name + head) + "\n",
+                                               encoding="utf-8")
+        os.utime(tmp_path / f"{sid}.jsonl", (start.timestamp() + ran, start.timestamp() + ran))
+    session("b1", "ex-builder", (2030, 1, 2, 8, 0))
+    session("b2", "ex-builder", (2030, 1, 2, 13, 0), late=True)
+    session("b3", "ex-builder", (2030, 1, 2, 23, 30), ran=90 * 60)       # still written after midnight
+    session("b4", "ex-builder", (2030, 1, 3, 0, 10))
+    session("a1", "ex-architect", (2030, 1, 2, 9, 0))
+    got = {sid: ru.session_facts(sid)["nth_today"] for sid in ("b1", "b2", "b3", "b4", "a1")}
+    assert got == {"b1": 1, "b2": 2, "b3": 3, "b4": 1, "a1": 1}
+    assert ru.session_facts("nobody") == {}
