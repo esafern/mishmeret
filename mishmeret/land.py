@@ -294,6 +294,12 @@ def _landing(role, kind, where, branch, accept=(), plan=None, because=None):
     # git merged it from (`replay_faults`), before a further rebase. A rebase that finishes in this call stopped nowhere,
     # so nothing in it was resolved by hand (its check after it was inert: a mutation removing it stayed green).
     stamp = _stamp(where)
+    if stamp is not None and stamp.get("clean"):
+        # A CLEAN STAMP (the last call's rebase finished, nothing resolved by hand) is dropped while the branch still
+        # sits on what it was rebased onto - an amend since is no replay - and checked from there when a rebase run by
+        # hand has moved it since (girsa-verifier's LOW 2 on step 3: a dropped stamp left such a rebase unchecked)
+        onto = said(where.top, "merge-base", "HEAD", where.main_branch)
+        stamp = None if onto == stamp["onto"] else dict(stamp, onto=onto)
     for file, names in _accepted(accept).items():
         if stamp is not None:
             stamp["accept"].setdefault(file, []).extend(names)
@@ -314,10 +320,11 @@ def _landing(role, kind, where, branch, accept=(), plan=None, because=None):
                       f"code round goes back to {VERIFIER}.")
     if said(where.top, "merge-base", "HEAD", where.main_branch) != tip:
         raise Refused(f"the branch is not on {where.main_branch}'s tip after the rebase")
-    # finished here, it stopped nowhere, and an earlier stop's replays were checked above: the stamp goes now, so a
-    # commit amended after a later refusal (the words, the lane, the gate) is not taken for one reworded at a stop
-    # (the Mishmeret move's step 3: an unworded commit amended with the words was refused so)
-    os.unlink(os.path.join(where.git_dir, STAMP))
+    # finished here, it stopped nowhere, and an earlier stop's replays were checked above: the stamp is marked clean
+    # now, so a commit amended after a later refusal (the words, the lane, the gate) is not taken for one reworded at a
+    # stop (the Mishmeret move's step 3: an unworded commit amended with the words was refused so), while a rebase run
+    # by hand before the next call is still checked (above)
+    _write_stamp(where, {"before": said(where.top, "rev-parse", "HEAD"), "onto": tip, "accept": {}, "clean": True})
     if because:
         bare = unworded(where.top, role, f"{tip}..HEAD", because)
         if bare:
@@ -337,6 +344,7 @@ def _landing(role, kind, where, branch, accept=(), plan=None, because=None):
     if merged.returncode != 0 or git(where.main_tree, "merge-base", "--is-ancestor", head,
                                      where.main_branch).returncode != 0:
         raise Refused(f"git merge --ff-only refused: {(merged.stderr or merged.stdout).strip()}")
+    os.unlink(os.path.join(where.git_dir, STAMP))       # landed: nothing of this branch's rebases is left to check
     print(f"  LANDED {tip[:8]}..{head[:8]} on {where.main_branch}:")
     print("".join(f"    {line}\n" for line in said(where.top, "log", "--oneline", f"{tip}..{head}").split("\n")), end="")
     changed = set(filter(None, said(where.top, "diff", "--name-only", tip, head).split("\n")))

@@ -42,9 +42,9 @@ def project_config(root, **over):
                       "failed": "the check failed on {path} - fix the draft:"},
            "guard": {"homes": "homes.json", "fallback_roots": [os.path.join(str(root), "fallback-book")],
                      "trees": [os.path.join(str(root), "checkout")], "retired_remotes": ["retired"],
-                     "checks": ["check_lane.py", "pytest", "check_words.py"], "precommit": ".claude/hooks/time_check.py"},
+                     "checks": ["check_lane.py", "pytest", "check_words.py", "check_draft.py"], "precommit": ".claude/hooks/time_check.py"},
            "land": {"planned": "ex-builder", "verifier": "ex-verifier", "lane_check": "tools/lanes.py",
-                    "ledger": "rulings.jsonl", "server": {"entry": "app/server.py", "folders": ["app", "lib"],
+                    "ledger": "rulings.jsonl", "server": {"entry": "app/server.py", "folders": ["app", "lib", "tools"],
                                                           "page": "page/"},
                     "gate_sets": {"landing": ["tests/test_a.py", "tests/test_b.py"], "quick": ["tests/test_a.py"]},
                     "gate_env": {"quick": {"EX_QUICK": "1"}}, "hand_run": {"tests/test_slow.py": "by hand"}}}

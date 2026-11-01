@@ -335,8 +335,8 @@ def refusal(role, command, cwd, main_tree=is_main_tree, read=_read, depth=0, pro
         elif (verb == "stash" and not (rest[:1] and rest[0] in LEAVES_IT["stash"])
               and project_tree(_git_where(command, masked, m, cwd))):
             return ("refused by the role guard: `git stash` in this repository - its stash list is shared by the main "
-                    "clone and every worktree, so a pop can take another role's work (LANES.md; 2026-10-20: the demo "
-                    "operator popped the builder's) - set the work aside as a patch: `git diff > <file>.patch`" + no_role)
+                    "clone and every worktree, so a pop can take another role's work (LANES.md; 2026-10-20: one role "
+                    "popped another's) - set the work aside as a patch: `git diff > <file>.patch`" + no_role)
         elif verb in CHANGES_MAIN and role != OPERATOR:
             leaves = LEAVES_IT.get(verb, ())
             if (rest[:1] and rest[0] in leaves) if verb == "stash" else any(w in rest for w in leaves):
@@ -439,7 +439,8 @@ def _own_tmux_env(prefix, before):
     return bool(cleared and tmpdir)
 
 
-SHELL_SHIM = re.compile(r'mishmeret_shim\.py"\s+--sh\s+([\w.-]+\.sh)\b')
+# the project's shell shim, by its form (`HELPER.py --sh NAME`), not by the helper's name - a project's own file
+SHELL_SHIM = re.compile(r'\.py"?\s+--sh\s+([\w.-]+\.sh)\b')
 HERE = os.path.dirname(os.path.abspath(__file__))
 
 
@@ -474,7 +475,7 @@ def tmux_refusal(command, cwd, read=_read, own_env=False, depth=0):
             if re.fullmatch(r"[A-Za-z][\w.-]*", session) and session != ROLES_SESSION:
                 continue                    # another session on the live server, named outright: not the roles'
         return (f"refused by the role guard: `tmux {verb}` here would reach the LIVE tmux server - the one every "
-                f"role's session runs in (2026-10-11 17:51: a test's kill-server stopped all five roles, none landed). "
+                f"role's session runs in (2026-10-11 17:51: a test's kill-server stopped every role, none landed). "
                 "A test server is reached only as `env -u TMUX TMUX_TMPDIR=<its own folder> tmux ...` or `tmux -S "
                 f"<its own socket> ...`; the live server and the {ROLES_SESSION} session are the reviewer's to stop")
     for m in PKILL.finditer(masked):

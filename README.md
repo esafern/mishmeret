@@ -31,7 +31,13 @@ colours, whether it has a corner and a tmux pane), the page's order, the operato
 tmux session and settings file, Claude Code's transcripts folder, the agent files, the project's Python, the launchd
 prefix, the state folder and the night run's knobs; and the reports' tables - the start-up documents' limits and where
 a whole block of each goes (`sizes`), the briefs and the logs never named at start (`start_reads`), the recommended
-effort per role (`effort`), and which files are drafts, their check and its two sentences (`drafts`).
+effort per role (`effort`), and which files are drafts, their check and its two sentences (`drafts`); and the guard's
+and the landing's - the list of the project's homes (its corpus roots) with a fallback, the other trees whose main
+tree is the operator's (the Mishmeret checkout: nothing is written into its `.pins/`, by any role), the remotes never
+pushed to, the checks whose own status must decide a commit, the pre-commit hook's path (`guard`); the role whose code
+landing names its plan, the verifier a round goes back to, the project's lane check (a script run with ROLE,
+`--doc-only`, `--range`, `--because`, `--plan`, read by its exit status), the live rulings file, what a review server
+loads, and the gate's lists (`land`).
 `MISHMERET_<FIELD>` overrides a field, `MISHMERET_NIGHT_<KEY>` one of the night run's; `MISHMERET_TRANSCRIPTS` names
 the transcripts folder itself, and `MISHMERET_NIGHT_DRY_RUN=1` makes the night run say what it would type. A command
 (never a hook) may run another tree with `MISHMERET_TREE`.
