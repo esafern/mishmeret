@@ -4,42 +4,42 @@
 The reviewer, 2026-10-09: "we need a special screen where each agent can supply answers to my questions and present
 decisions to me. it does not work to have them flow past in each window, and for me to confirm my decision to each
 agent." A role ASKS here (a question, or a decision with its options, a recommendation and links); the reviewer answers
-on the Board's page (board_server.py, http://127.0.0.1:8450); the role WAITS on its item and is handed the answer.
+on the Board's page (board_server.py, http://127.0.0.1:<board_port>); the role WAITS on its item and is handed the answer.
 
-The record is append-only (board.jsonl in GIRSA_BOARD_DIR, default ~/work/girsa-board - outside every repository, so it
+The record is append-only (board.jsonl in the config's board_dir, MISHMERET_BOARD_DIR over it - outside every repository, so it
 stays private and no role's tree carries it): an item, its answer, a withdrawal, each a line. Nothing is rewritten.
 
-    python3 .claude/board/board.py ask --role girsa-builder --title "..." [--body "..." | --body-file F]
+    python3 board.py ask --role ROLE --title "..." [--body "..." | --body-file F]
             [--kind question|decision] [--option KEY="label | what it means"]... [--recommend KEY] [--link URL]...
             [--image KEY=PATH]...      # a mock-up of option KEY (or a bare PATH); the mock-up window shows A left, B right
                                        # a decision about the page: one mock-up per option, labelled A, B ... on the
                                        # image, at the browser tests' two window sizes (WRITING.md, the steward's brief)
-    python3 .claude/board/board.py status --role girsa-builder [--now "..."] [--done "..."] [--next "..."]
-            [--state working|idle|waiting-agent|waiting-reviewer] [--waiting-for girsa-verifier]
+    python3 board.py status --role ROLE [--now "..."] [--done "..."] [--next "..."]
+            [--state working|idle|waiting-agent|waiting-reviewer] [--waiting-for ROLE]
                                        # the role's corner: what it works on, what just finished, what is next
-    python3 .claude/board/board.py status --role girsa-builder --still    # the same corner, reported again now: the
+    python3 board.py status --role ROLE --still    # the same corner, reported again now: the
                                        # answer to a KEEPALIVE, so the corner's time says the role is still there
-    python3 .claude/board/board.py plan --role girsa-builder --effort "Step 5 - ..." [--note "..."]
+    python3 board.py plan --role ROLE --effort "Step 5 - ..." [--note "..."]
             --step "done=..." --step "now=..." --step "next=..." [--step "next:1=..." (a sub-step)]...
                                        # a multi-day effort's steps, shown while no question waits - the whole list
-    python3 .claude/board/board.py hold --role girsa-builder --why "landing P3"   # main held until released
-    python3 .claude/board/board.py release --role girsa-builder                   # main free again
-    python3 .claude/board/board.py wait ID [--timeout SECONDS]   # blocks until answered; prints the answer - or, after
+    python3 board.py hold --role ROLE --why "landing P3"   # main held until released
+    python3 board.py release --role ROLE                   # main free again
+    python3 board.py wait ID [--timeout SECONDS]   # blocks until answered; prints the answer - or, after
                                        # 55 min by default (0: never), exits 1 "still open": wait again
-    python3 .claude/board/board.py quiet [--port 8450] [--timeout SECONDS]   # blocks until the Board says nothing is
+    python3 board.py quiet [--port PORT] [--timeout SECONDS]   # blocks until the Board says nothing is
                                        # moving; prints each role's Next and any role waiting on one not working
-                                       # (girsa-operator, in the background whenever it goes idle) - or, after 55 min
+                                       # (the operator, in the background whenever it goes idle) - or, after 55 min
                                        # by default, exits 1 "NO QUIET": read the corners, run it again
-    python3 .claude/board/board.py list [--role ROLE] [--open]
-    python3 .claude/board/board.py withdraw ID --why "..."        # an item no longer needed
-    python3 .claude/board/board.py defer ID [--undo]              # put off for later, or brought back (the page's)
-    python3 .claude/board/board.py answer ID --answer "..."       # the page's own route, for a relay or a test
-    python3 .claude/board/board.py landed --role girsa-builder (--summary "..." | --summary-file F) [--session ID]
+    python3 board.py list [--role ROLE] [--open]
+    python3 board.py withdraw ID --why "..."        # an item no longer needed
+    python3 board.py defer ID [--undo]              # put off for later, or brought back (the page's)
+    python3 board.py answer ID --answer "..."       # the page's own route, for a relay or a test
+    python3 board.py landed --role ROLE (--summary "..." | --summary-file F) [--session ID]
                                        # a session's landing: bullet points of what it accomplished - its corner says
                                        # Landed until the role's next session; the page's Landings keep every one
-    python3 .claude/board/board.py qa --role girsa-builder --question "..." (--answer "..." | --answer-file F) [--link URL]...
+    python3 board.py qa --role ROLE --question "..." (--answer "..." | --answer-file F) [--link URL]...
                                        # a question the reviewer asked in a role's pane, and the role's answer, kept
-    python3 .claude/board/board.py qa-more N --role girsa-builder [--question "..."] (--answer "..." | --answer-file F)
+    python3 board.py qa-more N --role ROLE [--question "..."] (--answer "..." | --answer-file F)
                                        # a follow-up to Q&A #N: the reviewer's next question on it, or more answer
 Needs only Python's standard library."""
 import argparse
@@ -50,15 +50,22 @@ import sys
 import time
 from datetime import datetime, timezone
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import config  # noqa: E402  (the project's config: mishmeret/config.py)
+
 # every role LANES.md names, so each holds main under its own name (girsa-demo-operator, 2026-10-18: holding as
 # girsa-operator, one operator's release freed the other's hold). The page draws a corner for the five it lists;
 # the demo operator reports in its own pane (LANES.md)
-ROLES = ("girsa-operator", "girsa-builder", "girsa-verifier", "girsa-ui-steward", "girsa-architect",
-         "girsa-demo-operator")
+ROLES = tuple(config.role_names())   # the config's roles, in its order (mishmeret/config.py)
+
+
+def _url():
+    """The Board's page, as every line that points a role to it prints it."""
+    return f"http://127.0.0.1:{config.load()['board_port']}/"
 
 
 def board_dir():
-    return os.path.expanduser(os.environ.get("GIRSA_BOARD_DIR", "~/work/girsa-board"))
+    return os.path.expanduser(config.load()["board_dir"])
 
 
 def _path():
@@ -646,7 +653,7 @@ def main(argv=None):
     # role warm; 0, never
     w.add_argument("--timeout", type=float, default=WATCH_TIMEOUT)
     qu = sub.add_parser("quiet")
-    qu.add_argument("--port", type=int, default=8450)
+    qu.add_argument("--port", type=int, default=config.load()["board_port"])
     qu.add_argument("--timeout", type=float, default=WATCH_TIMEOUT)
     ls = sub.add_parser("list")
     ls.add_argument("--role")
@@ -706,8 +713,8 @@ def main(argv=None):
         if args.cmd == "ask":
             body = open(args.body_file, encoding="utf-8").read() if args.body_file else args.body
             it = ask(args.role, args.title, body, args.kind, args.option, args.recommend, args.link, args.image)
-            print(f'#{it["id"]} on the Board (http://127.0.0.1:8450/#item-{it["id"]}) - wait for it: '
-                  f'python3 .claude/board/board.py wait {it["id"]}')
+            print(f'#{it["id"]} on the Board ({_url()}#item-{it["id"]}) - wait for it: '
+                  f'python3 {os.environ.get("MISHMERET_AS", "board.py")} wait {it["id"]}')
         elif args.cmd == "wait":
             start = time.time()
             first = items().get(args.id)
@@ -764,21 +771,21 @@ def main(argv=None):
                 raise ValueError("give the summary as --summary or --summary-file")
             text = args.summary or open(args.summary_file, encoding="utf-8").read()
             landed(args.role, text, args.session or session_of_role(args.role), args.at)
-            print(f"{args.role}'s landing is on the Board (http://127.0.0.1:8450/): its corner says Landed until its "
+            print(f"{args.role}'s landing is on the Board ({_url()}): its corner says Landed until its "
                   f"next session starts; the page's Landings keep it")
         elif args.cmd == "status":
             if args.still:
                 still(args.role)
             else:
                 set_status(args.role, args.state, args.waiting_for, args.now, args.done, args.next)
-            print(f"{args.role}'s corner updated (http://127.0.0.1:8450/)")
+            print(f"{args.role}'s corner updated ({_url()})")
         elif args.cmd == "plan":
             if args.end:
                 end_plan(args.role, args.effort)
                 print(f"{args.effort!r} taken off the Board")
             else:
                 p = set_plan(args.role, args.effort, args.step, args.note)
-                print(f"{args.effort!r}: {len(p['steps'])} steps on the Board (http://127.0.0.1:8450/)")
+                print(f"{args.effort!r}: {len(p['steps'])} steps on the Board ({_url()})")
         elif args.cmd == "hold":
             hold(args.role, args.why)
             print(f"main held by {args.role} - release it after the landing: board.py release --role {args.role}")
@@ -806,7 +813,7 @@ def main(argv=None):
                 n = qa(args.role, args.question, text, args.link)["qa"]
             else:
                 n = qa_more(args.number, args.role, text, args.question, args.link)["qa"]
-            print(f"Q&A #{n} on the Board: http://127.0.0.1:8450/#qa-{n} - give the reviewer this link and a short summary")
+            print(f"Q&A #{n} on the Board: {_url()}#qa-{n} - give the reviewer this link and a short summary")
     except ValueError as e:
         print(f"board: {e}", file=sys.stderr)
         return 2

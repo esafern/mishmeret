@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """Tokens per role per day, and each role's compactions (Q&A #56 ideas 3 and 4; the reviewer, 2026-10-25: "1. 2. 3. 4.
-5. go"). Read from the project's session transcripts (~/.claude/projects/<the main clone's path>/*.jsonl): a transcript's
+5. go"). Read from the project's session transcripts (<claude_projects>/<the project tree's path>/*.jsonl): a transcript's
 role is its `agent-name` record, its subagents' transcripts sit in <session>/subagents/, an API call counts once (by
 message id) on the local date of its timestamp, and a compaction is a `compact_boundary` record. `weighted` puts the
 token kinds on one scale at their relative list prices on one model - input 1, cache write 2 (one-hour cache), cache read
 0.1, output 5 - so roles compare; subagents are kept by model, since a Haiku or Sonnet token costs less (C).
 
-    python3 .claude/board/role_usage.py [YYYY-MM-DD]      # the table, for that day (default today)
+    python3 role_usage.py [YYYY-MM-DD]      # the table, for that day (default today)
 
 Each transcript is parsed again only when its size or mtime changed. Needs only Python's standard library."""
 import glob
@@ -16,14 +16,18 @@ import re
 import sys
 from datetime import datetime
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import config  # noqa: E402
+
 WEIGHTS = {"inp": 1, "cw": 2, "cr": 0.1, "out": 5}
 _CACHE = {}   # path: ((size, mtime), parsed)
 
 
 def project_dir():
-    repo = os.environ.get("GIRSA_REPO") or os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    return os.environ.get("GIRSA_TRANSCRIPTS") or os.path.join(
-        os.path.expanduser("~/.claude/projects"), re.sub(r"[^A-Za-z0-9]", "-", repo))
+    """Claude Code's transcripts folder for the project's tree (the config's root, so each worktree its own), under the
+    config's claude_projects; MISHMERET_TRANSCRIPTS names the folder itself (a test's)."""
+    return os.environ.get("MISHMERET_TRANSCRIPTS") or os.path.join(
+        config.expand(config.load()["claude_projects"]), re.sub(r"[^A-Za-z0-9]", "-", config.root()))
 
 
 def transcript(session_id):

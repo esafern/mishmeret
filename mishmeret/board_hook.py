@@ -14,7 +14,7 @@ import os
 import sys
 import time
 
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "board"))
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))   # board.py is beside it
 import board  # noqa: E402
 
 FOR_THE_REVIEWER = ("permission_prompt", "elicitation_dialog")

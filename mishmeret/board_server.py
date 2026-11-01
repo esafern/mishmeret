@@ -6,7 +6,7 @@ The reviewer, 2026-10-09: "we need a special screen where each agent can supply 
 decisions to me" (board.py says how the roles post and wait). Served on 127.0.0.1 only; it takes an answer only as JSON
 from its own page (Origin and Host checked), as the review server takes rulings. Started by the operator, detached:
 
-    python3 .claude/board/board_server.py --detach [--port 8450] [--log ~/work/girsa-board/server.log]
+    python3 board_server.py --detach [--port PORT] [--log <board_dir>/server.log]
 Needs only Python's standard library."""
 import argparse
 import json
@@ -18,6 +18,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import board  # noqa: E402
+import config  # noqa: E402
 import role_usage  # noqa: E402
 
 PAGE = r"""<!doctype html>
@@ -456,6 +457,46 @@ load();
 </script></body></html>"""
 
 
+def _rendered(cfg):
+    """THE PAGES WITH THE PROJECT'S NAMES (mishmeret/config.py): its name, its roles' prefix, page colours and order -
+    each put where the template names the project it was written for, every spot counted, so a template edit that
+    moves one fails here at start rather than drawing a page half one project's. The corners are laid out two to a
+    row in `page_order`, a last odd one across the row."""
+    corners = [r for r in cfg["roles"] if r["corner"]]
+    prefixes = {r["name"][:-len(r["short"])] for r in cfg["roles"] if r["name"].endswith(r["short"])}
+    if len(prefixes) != 1 or any(not r["name"].endswith(r["short"]) for r in cfg["roles"]):
+        raise config.ConfigError("every role's name must be one prefix and its short name, for the page")
+    prefix, order = prefixes.pop(), cfg["page_order"]
+    rows = [order[i:i + 2] if i + 1 < len(order) else [order[i]] * 2 for i in range(0, len(order), 2)]
+    wide = order[-1] if len(order) % 2 else ""
+    page, mock = PAGE, MOCKUPS
+    for old, new, n, which in (
+            ("Girsa Board", cfg["project"] + " Board", 3, "page"), ("Girsa Board", cfg["project"] + " Board", 2, "mock"),
+            ("--operator:#9a7f2e;--builder:#3d8590;--verifier:#4f8048;--ui-steward:#a75a80;--architect:#4a6fa0;",
+             "".join(f"--{r['short']}:{r['page_light']};" for r in corners), 1, "page"),
+            ("--operator:#bfa66e;--builder:#73aab2;--verifier:#8fb487;--ui-steward:#c793ab;--architect:#86a2c9;",
+             "".join(f"--{r['short']}:{r['page_dark']};" for r in corners), 1, "page"),
+            ('grid-template-areas:"ui-steward architect" "operator verifier" "builder builder"',
+             "grid-template-areas:" + " ".join('"' + " ".join(r) + '"' for r in rows), 1, "page"),
+            ('const ROLES = ["ui-steward", "architect", "operator", "verifier", "builder"];',
+             "const ROLES = [" + ", ".join(json.dumps(s) for s in order) + "];", 1, "page"),
+            ('short === "builder"', f'short === "{wide}"', 1, "page"),
+            ("/^girsa-/", "/^" + prefix + "/", 4, "page"), ('"girsa-" + short', f'"{prefix}" + short', 1, "page"),
+            ("girsa-${short}", prefix + "${short}", 1, "page"), ('"girsa-mockups"', f'"{prefix}mockups"', 1, "page"),
+            ("http://127.0.0.1:8450/#qa-N", f"http://127.0.0.1:{cfg['board_port']}/#qa-N", 1, "page")):
+        text = page if which == "page" else mock
+        if text.count(old) != n:
+            raise RuntimeError(f"the Board's {which} template has {text.count(old)} of {old!r}, not {n}")
+        if which == "page":
+            page = page.replace(old, new)
+        else:
+            mock = mock.replace(old, new)
+    return page, mock
+
+
+PAGE, MOCKUPS = _rendered(config.load())
+
+
 class Live:
     """Each role's running state, from `claude agents --json`, and the time of the last prompt put to it (from the tail of
     its transcript) - read at most every few seconds, whatever the number of pages open."""
@@ -727,7 +768,7 @@ class Handler(BaseHTTPRequestHandler):
 
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
-    ap.add_argument("--port", type=int, default=8450)
+    ap.add_argument("--port", type=int, default=config.load()["board_port"])
     ap.add_argument("--detach", action="store_true", help="run in its own session, output to --log, and return")
     ap.add_argument("--log", default=os.path.join(board.board_dir(), "server.log"))
     args = ap.parse_args(argv)

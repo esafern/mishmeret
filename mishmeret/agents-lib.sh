@@ -1,13 +1,24 @@
 # agents-lib.sh - what agents.sh and agents-morning.sh share (the duplication audit's E26; the reviewer, Board #82 A,
 # 2026-10-26): the clone they work in, the roles they start, where a session's transcript is, and which tmux pane a
-# role's session runs in. Each script kept its own copy; with GIRSA_DIR set, the night run read one clone and its Go
+# role's session runs in. Each script kept its own copy; with the clone set, the night run read one clone and its Go
 # started the roles, through agents.sh, in another. Sourced by both, never run alone.
+#
+# All of it is the project's, from its config (mishmeret/config.py --shell): the clone is the config's root, so a
+# script one of them starts (agents.sh, from the night run's Go) works in the same clone through MISHMERET_CONFIG.
 
-DIR="${GIRSA_DIR:-$HOME/work/sefer-digitization-pipeline}"
-export GIRSA_DIR="$DIR"      # a script one of them starts (agents.sh, from the night run's Go) works in the same clone
-PY="$DIR/venv/bin/python"
-ROLES="girsa-operator girsa-builder girsa-verifier girsa-ui-steward girsa-architect"
-PROJECTS="${GIRSA_CLAUDE_PROJECTS:-$HOME/.claude/projects}"
+HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+MM_CFG=$(python3 "$HERE/config.py" --shell) || { echo "$(basename "$0"): the project's Mishmeret config cannot be read" >&2; exit 1; }
+eval "$MM_CFG"
+DIR="$MM_ROOT"
+export MISHMERET_CONFIG="${MISHMERET_CONFIG:-$DIR/.claude/mishmeret.json}"
+PY="$MM_PYTHON"
+ROLES="$MM_ROLES"
+PROJECTS="$MM_PROJECTS"
+SESSION="$MM_SESSION"
+
+colour_of() {   # role -> its colour (MM_COLOURS, "name=colour" words)
+  local w; for w in $MM_COLOURS; do [ "${w%%=*}" = "$1" ] && { echo "${w#*=}"; return; }; done
+}
 
 transcript_of() {   # sessionId -> its transcript's path, or nothing
   ls "$PROJECTS"/*/"$1".jsonl 2>/dev/null | head -1
@@ -30,14 +41,14 @@ role_state() {   # role -> its status from `claude agents` (idle, busy, ..., or 
   local info st sid
   info=$(role_info "$1"); st=${info%% *}; sid=$(echo "$info" | cut -d' ' -f2)
   if [ "$st" = "busy" ] && "$PY" -c 'import sys; sys.path.insert(0, sys.argv[1]); import role_usage
-sys.exit(0 if role_usage.turn_ended(sys.argv[2]) else 1)' "$DIR/.claude/board" "$sid" 2>/dev/null; then st=idle; fi
+sys.exit(0 if role_usage.turn_ended(sys.argv[2]) else 1)' "$HERE" "$sid" 2>/dev/null; then st=idle; fi
   echo "$st"
 }
 
-pane_of_pid() {   # a role's claude pid -> its tmux pane in the "girsa" session (the process is a child of the pane's shell)
+pane_of_pid() {   # a role's claude pid -> its tmux pane in the roles' session (the process is a child of the pane's shell)
   local ppid; ppid=$(ps -o ppid= -p "$1" 2>/dev/null | tr -d ' ')
   [ -n "$ppid" ] || return 0
-  tmux list-panes -s -t girsa -F '#{pane_pid} #{pane_id}' 2>/dev/null | awk -v p="$ppid" '$1 == p {print $2}'
+  tmux list-panes -s -t "$SESSION" -F '#{pane_pid} #{pane_id}' 2>/dev/null | awk -v p="$ppid" '$1 == p {print $2}'
 }
 
 pane_of() {   # role -> its tmux pane id, or nothing

@@ -7,11 +7,11 @@ day and all five sessions ended mid-work, none landed. Their transcripts stay on
 
 A role's sessions are the transcripts Claude Code keeps for the clone the roles start in -
 `<config dir>/projects/<the clone's path, every character but a letter or digit made "-">/<session id>.jsonl` - whose
-`agent-setting` record names the role (`claude --agent girsa-<role>` writes it near the top). The latest is the one
+`agent-setting` record names the role (`claude --agent <role>` writes it near the top). The latest is the one
 written last. A role whose latest session is still running (`claude agents --json --all` lists it) is marked live:
 agents.sh never starts a second copy of it, and never falls back to an older session of a role that is running.
 
-usage:  python3 tools/role_sessions.py [--clone DIR] [--projects DIR] [--live-from FILE] ROLE...
+usage:  python3 role_sessions.py [--clone DIR] [--projects DIR] [--live-from FILE] ROLE...
 prints one line per ROLE, tab-separated:
   ROLE  SESSION_ID  LAST_WRITTEN       its latest session, not running - the one to resume
   ROLE  live  SESSION_ID               its latest session is running

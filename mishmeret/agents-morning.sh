@@ -1,12 +1,12 @@
 #!/bin/bash
-# agents-morning.sh - the morning restart of Girsa's five role sessions, run by the reviewer when they decide (the
+# agents-morning.sh - the morning restart of the project's role sessions, run by the reviewer when they decide (the
 # reviewer, 2026-10-06: "option (b) but tell me to do it and give me the script that makes it easy and waits for
 # everyone to idle if my morning connection kicked agents into action"; then "I don't care if the script types /land
 # in the agent's windows as long as I decide when to run it").
 #
 #   bash agents-morning.sh
 #
-# Run it from a terminal window OUTSIDE the "girsa" tmux session (the last step ends that session). It
+# Run it from a terminal window OUTSIDE the roles' tmux session (the last step ends that session). It
 #   1. waits until all five roles are idle - a role reconnecting in the morning may be busy for a while; when none of
 #      the five is running (after a restart of the Mac), it starts them with `bash agents.sh` and goes no further;
 #   2. on your "yes", types /land into the other four panes, runs `claude update` while they land, waits until all are
@@ -30,21 +30,21 @@
 #                                               reminder, which the night run's "Go" replaces
 #   bash agents-morning.sh --remove-night       removes it
 #   bash agents-morning.sh --night              the night run itself, now (launchd's command)
-#   GIRSA_NIGHT_DRY_RUN=1 bash agents-morning.sh --night   says what it would type, types nothing, ends after one check
+#   MISHMERET_NIGHT_DRY_RUN=1 bash agents-morning.sh --night   says what it would type, types nothing, ends after one check
 #   bash agents-morning.sh --skip-tonight       tonight's run does nothing; the job stays loaded (the reviewer, 2026-10-21:
 #                                               "a clean way to tell it not to run w/o turning it off")
 #   bash agents-morning.sh --skip               every run does nothing until --resume
 #   bash agents-morning.sh --resume             removes both
 #
 # Every half hour: when you have touched neither keyboard nor mouse for 15 minutes, each role that is idle, whose
-# last turn was 15 minutes ago or more AND WHOSE CONTEXT IS OVER 200,000 TOKENS (GIRSA_NIGHT_CONTEXT_LIMIT; the Board #11,
+# last turn was 15 minutes ago or more AND WHOSE CONTEXT IS OVER 200,000 TOKENS (the config's night.context_limit; the Board #11,
 # D4, and #31) is sent /land - one under it is sent /land too and then kept running, never cleared; once it is idle again and its pane says it is "ready to clear",
 # /clear and /exit. A role that lands without saying so is asked once to report back; one that still does not, or that
 # stops to ask you something, is left open and named in a notification - nothing is cleared that did not say it was ready. While roles are landing it looks every minute.
 # When every role is closed, kept running or left open: if any was closed, `claude update`, then an alert that waits for
 # you - "Go" starts the closed ones again with `bash agents.sh` in a new iTerm2 window (never --restart, which would end
 # the roles kept running); if none was closed, nothing more. The Mac is kept awake until then (caffeinate), not while the
-# alert waits. Its log: scratch/operator/night/<date>/log.txt.
+# alert waits. Its log: <the config's state_dir>/night/<date>/log.txt.
 # Since the Board #12 (2026-10-11): started by hand from a terminal, it does not wait for you to be idle; a role whose
 # last message says it is ready to clear, quiet two minutes, is cleared and closed at once (busy or idle, any context);
 # and a role whose only running task is a Board wait (`board.py wait`) counts as idle.
@@ -53,10 +53,10 @@
 # still running - not kept, left open or closed by this run - is not sent /land; it is looked at again next pass.
 
 set -u
-# the clone (GIRSA_DIR, else the main clone), the roles, the transcripts and the pane lookup: agents-lib.sh, shared with
-# agents.sh - which this run's Go and step 3 start, in the same clone (GIRSA_DIR is exported there)
+# the clone, the roles, the transcripts and the pane lookup (the project's config): agents-lib.sh, shared with
+# agents.sh - which this run's Go and step 3 start, in the same clone (MISHMERET_CONFIG is exported there)
 . "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/agents-lib.sh"
-LABEL="com.girsa.agents-morning-reminder"
+LABEL="$MM_LAUNCHD_PREFIX.agents-morning-reminder"
 PLIST="$HOME/Library/LaunchAgents/$LABEL.plist"
 
 if [ "${1:-}" = "--install-reminder" ]; then
@@ -73,10 +73,10 @@ if [ "${1:-}" = "--install-reminder" ]; then
   <key>ProgramArguments</key><array>
     <string>/usr/bin/osascript</string><string>-e</string>
     <string>beep</string><string>-e</string>
-    <string>display alert "Girsa: the agents' morning restart" message "Run, from a window outside tmux:  bash ~/work/sefer-digitization-pipeline/agents-morning.sh" buttons {"OK"} default button "OK"</string>
+    <string>display alert "$MM_PROJECT: the agents' morning restart" message "Run, from a window outside tmux:  bash ${DIR/#$HOME/~}/agents-morning.sh" buttons {"OK"} default button "OK"</string>
   </array>
   <key>StartCalendarInterval</key><array>$days</array>
-  <key>StandardErrorPath</key><string>$DIR/scratch/operator/morning-reminder.err</string>
+  <key>StandardErrorPath</key><string>$MM_STATE_DIR/morning-reminder.err</string>
 </dict>
 </plist>
 PLIST_END
@@ -89,26 +89,26 @@ if [ "${1:-}" = "--remove-reminder" ]; then
 fi
 
 # ---- THE NIGHT RUN (described at the top) ----
-NIGHT_LABEL="com.girsa.agents-night"
+NIGHT_LABEL="$MM_LAUNCHD_PREFIX.agents-night"
 NIGHT_PLIST="$HOME/Library/LaunchAgents/$NIGHT_LABEL.plist"
-CHECK_EVERY=${GIRSA_NIGHT_CHECK_EVERY:-1800}    # seconds between looks
-YOU_IDLE=${GIRSA_NIGHT_YOU_IDLE:-900}           # you: no keyboard or mouse for this long
-ROLE_IDLE=${GIRSA_NIGHT_ROLE_IDLE:-900}         # a role: idle, its last turn this long ago
-LANDED_QUIET=${GIRSA_NIGHT_LANDED_QUIET:-120}   # after /land: idle this long before its pane is read
+CHECK_EVERY=$MM_NIGHT_CHECK_EVERY    # seconds between looks
+YOU_IDLE=$MM_NIGHT_YOU_IDLE           # you: no keyboard or mouse for this long
+ROLE_IDLE=$MM_NIGHT_ROLE_IDLE         # a role: idle, its last turn this long ago
+LANDED_QUIET=$MM_NIGHT_LANDED_QUIET   # after /land: idle this long before its pane is read
 ASK_READY="Has this session finished every step of /land? If it has, end with the closing sentence the land command asks for. If it has not, finish landing first."   # never the phrase itself: the pane is read for it
-POLL=${GIRSA_NIGHT_POLL:-60}                    # while a role lands
+POLL=$MM_NIGHT_POLL                    # while a role lands
 # A ROLE IS CLOSED ONLY WHEN ITS CONTEXT DEGRADES, NOT EVERY NIGHT (the reviewer, the Board #11, 2026-10-10: "A - All five",
 # D4: "a role restarts only when its context degrades"): measured as the context its last turn carried, from its
 # transcript. Over this many tokens it lands and is closed; UNDER IT, IT LANDS BUT IS NOT CLEARED (the reviewer, the
 # Board #31, 2026-10-13: "c lower the limit to 200k so most times roles will be closed. if less than that - just land
 # but not clear" - at 500,000 the operator was kept at 486,593 tokens, unlanded). A context that cannot be read is
 # landed and kept too (Lesson 59: never closed on a guess).
-CONTEXT_LIMIT=${GIRSA_NIGHT_CONTEXT_LIMIT:-200000}
-GAP=${GIRSA_NIGHT_GAP:-5}                       # between /clear and /exit
-DRY="${GIRSA_NIGHT_DRY_RUN:-}"
+CONTEXT_LIMIT=$MM_NIGHT_CONTEXT_LIMIT
+GAP=$MM_NIGHT_GAP                       # between /clear and /exit
+DRY="${MISHMERET_NIGHT_DRY_RUN:-}"
 
 if [ "${1:-}" = "--install-night" ]; then
-  mkdir -p "$HOME/Library/LaunchAgents" "$DIR/scratch/operator/night"
+  mkdir -p "$HOME/Library/LaunchAgents" "$MM_STATE_DIR/night"
   cat > "$NIGHT_PLIST" <<PLIST_END
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -122,8 +122,8 @@ if [ "${1:-}" = "--install-night" ]; then
     <key>PATH</key><string>$HOME/.local/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
   </dict>
   <key>StartCalendarInterval</key><dict><key>Hour</key><integer>18</integer><key>Minute</key><integer>0</integer></dict>
-  <key>StandardOutPath</key><string>$DIR/scratch/operator/night/launchd.out</string>
-  <key>StandardErrorPath</key><string>$DIR/scratch/operator/night/launchd.err</string>
+  <key>StandardOutPath</key><string>$MM_STATE_DIR/night/launchd.out</string>
+  <key>StandardErrorPath</key><string>$MM_STATE_DIR/night/launchd.err</string>
 </dict>
 </plist>
 PLIST_END
@@ -140,7 +140,7 @@ if [ "${1:-}" = "--remove-night" ]; then
   launchctl bootout "gui/$(id -u)/$NIGHT_LABEL" 2>/dev/null; rm -f "$NIGHT_PLIST"; echo "Night run removed."; exit 0
 fi
 
-SKIP_DIR="$DIR/scratch/operator/night"
+SKIP_DIR="$MM_STATE_DIR/night"
 # the file that holds the run started on date $1, if any; read at the start and at every look (girsa-verifier's LOW on
 # 7ba22ad8: a run going since 18:00 kept landing and clearing after --skip-tonight said it would do nothing)
 skip_file() { local f; for f in "$SKIP_DIR/skip" "$SKIP_DIR/skip-$1"; do [ -e "$f" ] && { echo "$f"; return 0; }; done; return 1; }
@@ -171,12 +171,12 @@ if [ "${1:-}" = "--night" ]; then
     [ -z "$DRY" ] || echo "skipped: $f"
     exit 0
   fi
-  if [ -n "$DRY" ]; then NIGHT="$DIR/scratch/operator/night/dry-$(date +%F-%H%M%S)"; else NIGHT="$DIR/scratch/operator/night/$(date +%F)"; fi
+  if [ -n "$DRY" ]; then NIGHT="$MM_STATE_DIR/night/dry-$(date +%F-%H%M%S)"; else NIGHT="$MM_STATE_DIR/night/$(date +%F)"; fi
   mkdir -p "$NIGHT"
   say() { echo "$(date '+%F %H:%M:%S') $*" >> "$NIGHT/log.txt"; [ -z "$DRY" ] || echo "$*"; }
   notify() {
     say "told you: $*"
-    [ -n "$DRY" ] || osascript -e "display notification \"$*\" with title \"Girsa: the night run\"" >/dev/null 2>&1
+    [ -n "$DRY" ] || osascript -e "display notification \"$*\" with title \"$MM_PROJECT: the night run\"" >/dev/null 2>&1
   }
   type_in() {   # pane text
     if [ -n "$DRY" ]; then say "(dry run) would type $2 into $1"; else tmux send-keys -t "$1" "$2" Enter; fi
@@ -365,7 +365,7 @@ READY_END
       # WAITING FOR ANOTHER ROLE'S WORK (the comment at the top): that role still running, and not kept, left open or
       # closed by this run - so work may still come; tonight 2026-10-11 the builder's HANDOFF reached the verifier 37 s
       # after its /land
-      w=$("$PY" "$DIR/.claude/board/board.py" waiting-for "$r" 2>/dev/null)
+      w=$("$PY" "$HERE/board.py" waiting-for "$r" 2>/dev/null)
       if [ -n "$w" ] && [ "$(role_info "$w" | cut -d' ' -f1)" != "absent" ] \
           && [ ! -e "$NIGHT/$w.kept" ] && [ ! -e "$NIGHT/$w.left" ] && [ ! -e "$NIGHT/$w.closed" ]; then
         [ -e "$NIGHT/$r.waits" ] || { say "$r: its corner says it is waiting for $w, still running - not idle, looked at again next pass"; touch "$NIGHT/$r.waits"; }
@@ -393,14 +393,14 @@ READY_END
   v=$(claude --version 2>/dev/null)
   say "Claude Code is now $v"
   [ -z "$cafe" ] || kill "$cafe" 2>/dev/null   # the Mac may sleep while the alert waits
-  ans=$(osascript -e "display alert \"Girsa: $closed of the roles landed and closed\" message \"Claude Code is now $v. Go starts the closed roles again; the others keep running.\" buttons {\"Not today\", \"Go\"} default button \"Go\"" 2>>"$NIGHT/log.txt")
+  ans=$(osascript -e "display alert \"$MM_PROJECT: $closed of the roles landed and closed\" message \"Claude Code is now $v. Go starts the closed roles again; the others keep running.\" buttons {\"Not today\", \"Go\"} default button \"Go\"" 2>>"$NIGHT/log.txt")
   case "$ans" in
     *:Go)
       say "Go - starting the closed roles again"
       # in iTerm2, the reviewer's terminal (2026-10-10: "friday it started up the sessions in a terminal window instead of
       # iterm2")
       osascript -e 'tell application "iTerm"' -e 'activate' -e 'set w to (create window with default profile)' \
-        -e "tell current session of w to write text \"GIRSA_DIR='$DIR' bash '$DIR/agents.sh'\"" -e 'end tell' >/dev/null ;;   # never --restart: it would end the roles kept running; GIRSA_DIR: a new window does not inherit this run's
+        -e "tell current session of w to write text \"MISHMERET_CONFIG='$MISHMERET_CONFIG' bash '$DIR/agents.sh'\"" -e 'end tell' >/dev/null ;;   # never --restart: it would end the roles kept running; MISHMERET_CONFIG: a new window does not inherit this run's
     # "Not today" OR NO ANSWER: never started unattended (the reviewer, 2026-10-27: "no to restarting roles at night -
     # they will then start working w/o superv. [without supervision] and burn thru tokens")
     *) say "not started (${ans:-no answer}) - start them with: bash agents.sh" ;;
@@ -408,8 +408,8 @@ READY_END
   exit 0
 fi
 
-if [ -n "${TMUX:-}" ] && [ "$(tmux display-message -p '#S' 2>/dev/null)" = "girsa" ]; then
-  echo "This window is inside the 'girsa' tmux session, which the last step ends. Run it from another terminal window."
+if [ -n "${TMUX:-}" ] && [ "$(tmux display-message -p '#S' 2>/dev/null)" = "$SESSION" ]; then
+  echo "This window is inside the '$SESSION' tmux session, which the last step ends. Run it from another terminal window."
   exit 1
 fi
 
@@ -476,10 +476,10 @@ wait_landed() {
 }
 if [ "$answer" = "yes" ]; then
   # the operator last: the others land into the main tree, and the operator's own landing checks what they landed
-  send_land girsa-builder girsa-verifier girsa-ui-steward girsa-architect
+  send_land $(for r in $ROLES; do [ "$r" = "$MM_OPERATOR_ROLE" ] || printf '%s ' "$r"; done)
   update_claude
   wait_landed
-  send_land girsa-operator
+  send_land "$MM_OPERATOR_ROLE"
   wait_landed
 else
   read -r -p "         Press Enter once you have typed /land in all five panes (the operator last). " _
