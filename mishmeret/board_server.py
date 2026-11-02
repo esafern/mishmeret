@@ -734,6 +734,14 @@ class Handler(BaseHTTPRequestHandler):
             return self._send(200, json.dumps({"title": it["title"], "pages": board.mockup_pages(it)}, ensure_ascii=False))
         return self._send(404, "not found", "text/plain; charset=utf-8")
 
+    def _body(self):
+        """The request's JSON object; anything else a ValueError, which each route answers with its own code (a list
+        dropped the connection, the audit's item 18)."""
+        data = json.loads(self.rfile.read(int(self.headers.get("Content-Length") or 0)) or b"{}")
+        if not isinstance(data, dict):
+            raise ValueError("a JSON object is needed")
+        return data
+
     def do_POST(self):
         origin = self.headers.get("Origin") or ""
         own = {f"http://{h}:{self.server.server_address[1]}" for h in self.ALLOWED_HOSTS}
@@ -742,7 +750,7 @@ class Handler(BaseHTTPRequestHandler):
             return self._send(403, "answers are taken only from the Board's own page", "text/plain; charset=utf-8")
         if self.path == "/api/defer":
             try:
-                data = json.loads(self.rfile.read(int(self.headers.get("Content-Length") or 0)) or b"{}")
+                data = self._body()
                 board.defer(int(data.get("id")), data.get("defer") is True)
             except (ValueError, TypeError) as e:
                 return self._send(409, str(e), "text/plain; charset=utf-8")
@@ -750,7 +758,7 @@ class Handler(BaseHTTPRequestHandler):
         if self.path != "/api/answer":
             return self._send(404, "not found", "text/plain; charset=utf-8")
         try:
-            data = json.loads(self.rfile.read(int(self.headers.get("Content-Length") or 0)) or b"{}")
+            data = self._body()
             item = board.items().get(int(data.get("id")))
             # A CHANGED ANSWER (the reviewer, 2026-10-11: "change #13 answer to B. no option to do that on the board"):
             # an answered item takes a new answer only when the page asks for a change; a withdrawn one never

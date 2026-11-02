@@ -95,6 +95,45 @@ def test_the_reviewer_can_change_an_answer_on_the_board(tmp_path, monkeypatch):
     assert "data-change=" in page and "body.change = true" in page and "Changed from" in page
 
 
+def test_the_board_takes_answers_only_from_its_own_page_and_only_as_a_json_object(tmp_path, monkeypatch):
+    """The Mishmeret audit's items 8 and 18 (2026-11-01): the guard that keeps another website the reviewer visits from
+    answering a role's question had no test - switched off, every test passed; and a JSON list sent to either route
+    dropped the connection (AttributeError). Another Origin, another Host, or a body not sent as JSON is refused and the
+    item stays open; a list is refused with each route's own code."""
+    import importlib.util
+    import threading
+    import urllib.request
+    import urllib.error
+    monkeypatch.setenv("MISHMERET_BOARD_DIR", str(tmp_path / "board"))
+    monkeypatch.syspath_prepend(PKG)
+    spec = importlib.util.spec_from_file_location("board_server", os.path.join(PKG, "board_server.py"))
+    bs = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(bs)
+    bd = bs.board
+    one = bd.ask("ex-builder", "Placeholder question")
+    srv = bs.ThreadingHTTPServer(("127.0.0.1", 0), bs.Handler)
+    threading.Thread(target=srv.serve_forever, daemon=True).start()
+    port = srv.server_address[1]
+    own = {"Content-Type": "application/json", "Origin": f"http://127.0.0.1:{port}"}
+
+    def post(route, body, **headers):
+        req = urllib.request.Request(f"http://127.0.0.1:{port}{route}", data=json.dumps(body).encode(),
+                                     headers={**own, **headers})
+        try:
+            return urllib.request.urlopen(req, timeout=5).status
+        except urllib.error.HTTPError as e:
+            return e.code
+    try:
+        answer = {"id": one["id"], "answer": "placeholder"}
+        for headers in ({"Origin": "http://evil.example"}, {"Content-Type": "text/plain"}, {"Host": "evil.example"}):
+            assert post("/api/answer", answer, **headers) == 403, headers
+            assert bd.items()[one["id"]]["answer"] is None, headers
+        assert post("/api/defer", []) == 409 and post("/api/answer", []) == 400
+        assert post("/api/answer", answer) == 200, "the page's own answer is still taken"
+    finally:
+        srv.shutdown()
+
+
 def test_the_board_keeps_the_reviewers_own_questions_and_the_answers(tmp_path, monkeypatch, capsys):
     """The reviewer, 2026-10-13: "create another sub-board for my questions and agents answers - so they won't scroll
     away. if i ask the q in the session, each agent should copy the q and a to the board, and point me there with a quick
