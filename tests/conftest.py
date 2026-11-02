@@ -39,7 +39,7 @@ def project_config(root, **over):
            "effort": {"ex-operator": ["high", "bookkeeping"], "ex-builder": ["high", "the heaviest user"],
                       "ex-auditor": ["xhigh", "a one-off audit"]},
            "drafts": {"pattern": r"^draft_.*\.txt$", "check": "tools/check.py", "passed": "A draft: its rules are ex's.",
-                      "failed": "the check failed on {path} - fix the draft:"},
+                      "failed": "the check failed on {path} - fix the draft:", "timeout": 20},
            "guard": {"homes": "homes.json", "fallback_roots": [os.path.join(str(root), "fallback-book")],
                      "trees": [os.path.join(str(root), "checkout")], "retired_remotes": ["retired"],
                      "checks": ["check_lane.py", "pytest", "check_words.py", "check_draft.py"], "precommit": ".claude/hooks/time_check.py"},

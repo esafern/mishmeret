@@ -145,3 +145,9 @@ def test_the_draft_hook_runs_the_projects_check_on_a_written_draft_and_blocks_a_
     assert out.returncode == 2 and "BAD found in the draft" in out.stderr and out.stdout == "", out
     out = run("not json")
     assert (out.returncode, out.stdout, out.stderr) == (0, "", ""), out
+    # a check that hangs is stopped at the config's timeout and said (the Mishmeret audit's item 17)
+    slow = tmp_path / "slow_check.py"
+    slow.write_text("import time\ntime.sleep(30)\n", encoding="utf-8")
+    assert hook.TIMEOUT == 20
+    assert hook.run({"tool_input": {"file_path": str(good)}}, check=str(slow), timeout=1) == (
+        2, f"the draft check did not finish in 1 s: {slow} {good}")

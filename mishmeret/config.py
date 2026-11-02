@@ -45,7 +45,8 @@ FIELDS = {
     "sizes": dict,              # size_report: the start-up documents' limits and homes, the status items', the states'
     "start_reads": dict,        # start_reading_report: the briefs that name a START READS line, the logs never on it
     "effort": dict,             # effort_report: {role: [recommended effort, why]} - the roles whose agent files it reads
-    "drafts": dict,             # draft_check_hook: which written files are drafts, the check run on each, its two notes
+    "drafts": dict,             # draft_check_hook: which written files are drafts, the check run on each, its two notes,
+                                # its timeout in seconds (under the project's own hook timeout, so it fires first)
     "guard": dict,              # role_guard, time_precommit: the trees only the operator changes, the remotes never
                                 # pushed to, the checks whose status decides a commit, the pre-commit hook's own path
     "land": dict,               # land: the role whose code landing names a plan, the verifier a round goes back to, the
@@ -65,7 +66,7 @@ SIZES = {"warn_percent": int, "files": dict, "status_file": str, "item_pattern":
          "item_home": str, "state_files": str, "state_limit": int, "state_home": str}
 START_READS = {"briefs": str, "logs": list}
 BUDGET = {"warn_percent": int}
-DRAFTS = {"pattern": str, "check": str, "passed": str, "failed": str}
+DRAFTS = {"pattern": str, "check": str, "passed": str, "failed": str, "timeout": int}
 ROLE_KEYS = {"name": str, "short": str, "colour": str, "page_light": str, "page_dark": str, "corner": bool,
              "tmux": bool}
 

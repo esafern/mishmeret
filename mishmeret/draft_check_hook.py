@@ -22,15 +22,19 @@ _DRAFTS = config.load()["drafts"]   # the project's: which files are drafts, its
 CHECK = config.expand(_DRAFTS["check"])
 DRAFT = re.compile(_DRAFTS["pattern"])
 SKILL_NOTE = _DRAFTS["passed"]
+TIMEOUT = _DRAFTS["timeout"]
 
 
-def run(event, check=CHECK):
+def run(event, check=CHECK, timeout=TIMEOUT):
     """(exit status, message) for one hook event: 2 and check_draft's lines when a written draft fails, 0 and the skill's
     name when it passes, 0 and nothing for any other file."""
     path = (event.get("tool_input") or {}).get("file_path") or ""
     if not DRAFT.match(os.path.basename(path)) or not os.path.isfile(path):
         return 0, ""
-    out = subprocess.run([sys.executable, check, path], capture_output=True, text=True)
+    try:   # a check that hangs: said, before Claude Code's own hook timeout kills the hook unexplained (audit item 17)
+        out = subprocess.run([sys.executable, check, path], capture_output=True, text=True, timeout=timeout)
+    except subprocess.TimeoutExpired:
+        return 2, f"the draft check did not finish in {timeout} s: {check} {path}"
     if out.returncode == 0:
         return 0, SKILL_NOTE
     return 2, _DRAFTS["failed"].format(path=path) + f"\n{out.stdout}{out.stderr}"

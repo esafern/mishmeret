@@ -35,7 +35,7 @@ def sample():
                   "state_files": "STATE-*.md", "state_limit": 600, "state_home": "the log"},
         "start_reads": {"briefs": "roles/ex-*.md", "logs": ["STATUS.md"]},
         "effort": {"ex-operator": ["high", "bookkeeping"]},
-        "drafts": {"pattern": r"^draft_.*\.txt$", "check": "tools/check.py", "passed": "passed", "failed": "{path}"},
+        "drafts": {"pattern": r"^draft_.*\.txt$", "check": "tools/check.py", "passed": "passed", "failed": "{path}", "timeout": 20},
         "guard": {"homes": "homes.json", "fallback_roots": ["~/book"], "trees": ["~/checkout"], "retired_remotes": [],
                   "checks": ["pytest"], "precommit": ".claude/hooks/time_check.py"},
         "land": {"planned": "ex-builder", "verifier": "ex-operator", "lane_check": "tools/lanes.py",
