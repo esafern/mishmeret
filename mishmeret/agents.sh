@@ -38,7 +38,7 @@ load_tmux_conf() { [ -f "$TMUX_CONF" ] && tmux source-file "$TMUX_CONF"; return 
 # A ROLE WHOSE SESSION IS RUNNING ELSEWHERE IS NEVER STARTED AGAIN, in any mode (the reviewer, 2026-10-25: "confirm it will
 # not restart this sessions or other low-consumption sessions currently running" - an operator running outside tmux, its
 # pane back at the shell, would have got a second operator)
-SESSIONS=$("$PY" "$HERE/role_sessions.py" --clone "$DIR" $ROLES) || SESSIONS=""
+SESSIONS=$("$PY" "$HERE/role_sessions.py" $ROLES) || SESSIONS=""
 if [ "$MODE" = "--resume" ]; then
   echo "Resuming each role's last session:"; printf '%s\n' "$SESSIONS" | sed 's/^/  /'
 fi

@@ -68,6 +68,10 @@ def test_the_sample_loads_and_its_root_is_the_config_files_project(write, tmp_pa
     assert config.role_names() == ["ex-operator", "ex-builder", "ex-helper"]
     assert config.role_names(tmux=True) == ["ex-operator", "ex-builder"]
     assert config.expand("venv/bin/python") == os.path.join(str(tmp_path), "venv/bin/python")
+    # the transcripts' folder Claude Code keeps for a tree, under claude_projects: every character but a letter or digit
+    # made "-" (the audit's item 5: one reader replaced only "/" and ".", so "my_project" missed its memory index)
+    assert config.transcripts("/Users/x/work/my_project.v2") == os.path.expanduser(
+        "~/.claude/projects/-Users-x-work-my-project-v2")
 
 
 @pytest.mark.parametrize("change, said", [

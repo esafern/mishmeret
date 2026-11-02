@@ -12,7 +12,6 @@ Each transcript is parsed again only when its size or mtime changed. Needs only 
 import glob
 import json
 import os
-import re
 import sys
 from datetime import datetime
 
@@ -26,8 +25,7 @@ _CACHE = {}   # path: ((size, mtime), parsed)
 def project_dir():
     """Claude Code's transcripts folder for the project's tree (the config's root, so each worktree its own), under the
     config's claude_projects; MISHMERET_TRANSCRIPTS names the folder itself (a test's)."""
-    return os.environ.get("MISHMERET_TRANSCRIPTS") or os.path.join(
-        config.expand(config.load()["claude_projects"]), re.sub(r"[^A-Za-z0-9]", "-", config.root()))
+    return os.environ.get("MISHMERET_TRANSCRIPTS") or config.transcripts(config.root())
 
 
 def transcript(session_id):

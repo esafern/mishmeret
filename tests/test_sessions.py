@@ -11,7 +11,7 @@ import pytest
 from conftest import PKG, REPO  # noqa: F401  (REPO: the placeholder project's root, written by the fixture)
 
 
-def test_role_sessions_finds_each_roles_latest_session_for_agents_sh_resume(tmp_path, capsys):
+def test_role_sessions_finds_each_roles_latest_session_for_agents_sh_resume(tmp_path, capsys, monkeypatch):
     """The reviewer, 2026-10-11: "build the agents.sh resume option". tools/role_sessions.py names each role's LATEST
     transcript (by its agent-setting record): resumable, "live" when that session is running - never an older one of
     a running role - or "none". Placeholder roles and ids."""
@@ -45,8 +45,11 @@ def test_role_sessions_finds_each_roles_latest_session_for_agents_sh_resume(tmp_
     assert rs.main(["--projects", str(tmp_path), "--live-from", str(tmp_path / "missing"), "role-b"]) == 0
     out = capsys.readouterr()
     assert out.out.split("\t")[:2] == ["role-b", "bbbb-run"] and "could not read" in out.err
-    # the transcripts' folder Claude Code keeps for a clone: every character but a letter or digit made "-"
-    assert rs.projects_dir("/Users/x/work/a-b.c").endswith(os.path.join("projects", "-Users-x-work-a-b-c"))
+    # no --projects: the project's own folder (role_usage.project_dir, the config's rule - the audit's items 5 and 16:
+    # it was Mishmeret's own checkout, or ~/.claude whatever the config said)
+    monkeypatch.setenv("MISHMERET_TRANSCRIPTS", str(tmp_path))
+    assert rs.main(["--live-from", str(live), "role-a"]) == 0
+    assert capsys.readouterr().out.split("\t")[:2] == ["role-a", "aaaa-new"]
 
 
 def test_the_night_run_does_not_land_a_role_waiting_for_another_roles_work(tmp_path, monkeypatch, capsys):

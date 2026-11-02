@@ -84,6 +84,9 @@ def test_the_start_reading_report_sums_each_roles_start_and_refuses_a_log_on_it(
     assert any(line.startswith("ex-beta") and "not moved yet" in line for line in lines), lines
     assert any("STATUS.md is a log" in f for f in faults) and any("MISSING.md names no file" in f for f in faults)
     assert "ex-delta: 2 START READS lines - one only" in faults, faults
+    # the memory index in the config's transcripts folder for the tree, by the one rule (the audit's item 5)
+    memory = dict(sr.auto_loaded(str(tmp_path), home=str(tmp_path / "home")))["the memory index"]
+    assert memory == os.path.join(sr.config.transcripts(str(tmp_path)), "memory", "MEMORY.md"), memory
     assert not any(f.startswith("ex-alpha") or "epsilon" in f for f in faults), faults
     assert any(line.startswith("(not counted - the memory index not found at") for line in lines), lines
 

@@ -17,6 +17,7 @@ pinned commit its config names, so the code and the config it reads change toget
 """
 import json
 import os
+import re
 import shlex
 import subprocess
 import sys
@@ -180,6 +181,13 @@ def expand(p):
     """A config path: `~` expanded; a relative one taken from the project's root."""
     p = os.path.expanduser(p)
     return p if os.path.isabs(p) else os.path.join(root(), p)
+
+
+def transcripts(tree):
+    """Claude Code's folder for the sessions started in `tree`, under the config's claude_projects: the tree's absolute
+    path with every character but a letter or digit made "-" - the one rule (the audit's item 5: three, which
+    disagreed for a path holding "_" or a claude_projects of the project's own)."""
+    return os.path.join(expand(load()["claude_projects"]), re.sub(r"[^A-Za-z0-9]", "-", os.path.abspath(tree)))
 
 
 def role_names(**only):

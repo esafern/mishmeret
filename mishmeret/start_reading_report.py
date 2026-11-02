@@ -41,8 +41,7 @@ def main_clone(repo):
 
 def auto_loaded(repo, home=os.path.expanduser("~")):
     """[(name, path)] - what Claude Code puts into every session in this repository before its first message."""
-    folder = main_clone(repo).replace("/", "-").replace(".", "-")
-    memory = os.path.join(home, ".claude", "projects", folder, "memory", "MEMORY.md")
+    memory = os.path.join(config.transcripts(main_clone(repo)), "memory", "MEMORY.md")
     return [("CLAUDE.md", os.path.join(repo, "CLAUDE.md")), ("~/.claude/CLAUDE.md", os.path.join(home, ".claude",
             "CLAUDE.md")), ("the memory index", memory)]
 

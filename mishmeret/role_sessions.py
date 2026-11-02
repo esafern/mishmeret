@@ -5,35 +5,31 @@ The reviewer, 2026-10-11: "build the agents.sh resume option" - after the roles'
 day and all five sessions ended mid-work, none landed. Their transcripts stay on disk, so each can be resumed
 (`claude --resume <id>`) with its context; this finds which transcript is each role's latest.
 
-A role's sessions are the transcripts Claude Code keeps for the clone the roles start in -
-`<config dir>/projects/<the clone's path, every character but a letter or digit made "-">/<session id>.jsonl` - whose
-`agent-setting` record names the role (`claude --agent <role>` writes it near the top). The latest is the one
-written last. A role whose latest session is still running (`claude agents --json --all` lists it) is marked live:
+A role's sessions are the transcripts Claude Code keeps for the project's tree, where the roles start
+(`role_usage.project_dir()`: `<claude_projects>/<the tree's path, every character but a letter or digit made
+"-">/<session id>.jsonl`), whose `agent-setting` record names the role (`claude --agent <role>` writes it near the
+top). The latest is the one written last. A role whose latest session is still running (`claude agents --json --all` lists it) is marked live:
 agents.sh never starts a second copy of it, and never falls back to an older session of a role that is running.
 
-usage:  python3 role_sessions.py [--clone DIR] [--projects DIR] [--live-from FILE] ROLE...
+usage:  python3 role_sessions.py [--projects DIR] [--live-from FILE] ROLE...
 prints one line per ROLE, tab-separated:
   ROLE  SESSION_ID  LAST_WRITTEN       its latest session, not running - the one to resume
   ROLE  live  SESSION_ID               its latest session is running
   ROLE  none                           no session of this role in the clone
 --live-from FILE reads the session list from FILE instead of running `claude agents` (a test's placeholder); when the
 list cannot be read, every session counts as not running and a warning goes to stderr.
-Needs only Python's standard library.
 """
 import argparse
 import json
 import os
-import re
 import subprocess
 import sys
 import time
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import role_usage  # noqa: E402
+
 HEAD_LINES = 200        # the agent-setting record is among a transcript's first lines
-
-
-def projects_dir(clone):
-    base = os.environ.get("CLAUDE_CONFIG_DIR") or os.path.expanduser("~/.claude")
-    return os.path.join(base, "projects", re.sub(r"[^A-Za-z0-9]", "-", os.path.abspath(clone)))
 
 
 def role_of(path):
@@ -92,12 +88,11 @@ def latest_sessions(folder, roles):
 
 def main(argv):
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
-    ap.add_argument("--clone", default=os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    ap.add_argument("--projects", help="the transcripts' folder (default: Claude Code's, for --clone)")
+    ap.add_argument("--projects", help="the transcripts' folder (default: Claude Code's, for the project's tree)")
     ap.add_argument("--live-from")
     ap.add_argument("roles", nargs="+")
     args = ap.parse_args(argv)
-    found = latest_sessions(args.projects or projects_dir(args.clone), set(args.roles))
+    found = latest_sessions(args.projects or role_usage.project_dir(), set(args.roles))
     live = live_sessions(args.live_from)
     if live is None:
         print("role_sessions: could not read the running sessions (claude agents) - none counted as running",
