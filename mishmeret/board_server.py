@@ -650,7 +650,7 @@ def board_view():
     its = board.items(events)
     live = LIVE.get()
     roles = {}
-    for role, st in board.statuses().items():
+    for role, st in board.statuses(events).items():
         open_ids = sorted(i for i, it in its.items() if it["role"] == role and board.is_waiting(it))
         lv = live.get(role)
         shown, words = board.shown_state(st, lv and lv["status"], open_ids, lv and lv["last_prompt"])
@@ -671,7 +671,7 @@ def board_view():
                            session=board.session_record(lv["session_id"]) if lv and lv.get("session_id") else {})
     items = [dict(it, mockup_pages=len(board.mockup_pages(it))) for it in its.values()]
     held = board.held(events)
-    return {"roles": roles, "items": items, "plans": board.plans(), "held": held, "quiet": quiet(roles, live, its, held),
+    return {"roles": roles, "items": items, "plans": board.plans(events), "held": held, "quiet": quiet(roles, live, its, held),
             "qa": list(board.qas(events).values()),
             "landings": [with_facts(l) for l in board.landings(events)],
             "usage": board.usage(), "budget_warn": board.BUDGET_WARN}

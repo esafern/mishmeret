@@ -121,8 +121,7 @@ WATCH_TIMEOUT = 55 * 60   # seconds: `wait` and `quiet` end within the prompt ca
 def set_status(role, state=None, waiting_for=None, now=None, done=None, next_=None):
     """A role's corner (the reviewer, 2026-10-10: "each agent has it's own corner to report status - what it is working on,
     what just finished and what is next"). Only the fields given change; the rest keep their last value."""
-    if role not in ROLES:
-        raise ValueError(f"unknown role {role!r}: one of {', '.join(ROLES)}")
+    _check_role(role)
     if state is not None and state not in STATES:
         raise ValueError(f"a state is one of {', '.join(STATES)}, not {state!r}")
     if (state == "waiting-agent") != (waiting_for is not None):
@@ -246,8 +245,7 @@ def set_plan(role, effort, steps, note=""):
     show those steps in green bold and red in a window that hides when there's an active question but returns after -
     green completed bold in prog red coming"). Each publish gives the WHOLE list; the last one counts. A step is
     STATE=LABEL or STATE:DEPTH=LABEL (depth 0 or 1, a sub-step)."""
-    if role not in ROLES:
-        raise ValueError(f"unknown role {role!r}: one of {', '.join(ROLES)}")
+    _check_role(role)
     if not effort.strip():
         raise ValueError("an effort needs a name")
     out = []
@@ -294,8 +292,7 @@ def held(events=None):
 
 
 def hold(role, why):
-    if role not in ROLES:
-        raise ValueError(f"unknown role {role!r}: one of {', '.join(ROLES)}")
+    _check_role(role)
     if not why.strip():
         raise ValueError("say what the hold is for (--why)")
 
@@ -344,8 +341,7 @@ IMAGE_TYPES = (".png", ".jpg", ".jpeg", ".gif", ".webp")
 
 
 def ask(role, title, body="", kind="question", options=(), recommend=None, links=(), images=()):
-    if role not in ROLES:
-        raise ValueError(f"unknown role {role!r}: one of {', '.join(ROLES)}")
+    _check_role(role)
     if not title.strip():
         raise ValueError("a title is needed")
     opts = []
@@ -355,9 +351,7 @@ def ask(role, title, body="", kind="question", options=(), recommend=None, links
         if not key.strip() or not label.strip():
             raise ValueError(f"an option is KEY=label | what it means, not {raw!r}")
         opts.append({"key": key.strip(), "label": label.strip(), "detail": detail.strip()})
-    for x in links:                          # a link is a web address only (girsa-verifier: a javascript: link would run)
-        if x and not x.lower().startswith(("http://", "https://")):
-            raise ValueError(f"a link is an http:// or https:// address, not {x!r}")
+    links = _check_links(links)
     keys = {o["key"] for o in opts}
     pics, tied = [], []
     for raw in images:
@@ -379,7 +373,7 @@ def ask(role, title, body="", kind="question", options=(), recommend=None, links
                                                                  default=0),
                                    "ts": _now(), "role": role, "kind": kind, "title": title.strip(),
                                    "body": body.strip(), "options": opts, "recommend": recommend,
-                                   "links": [x for x in links if x], "images": pics, "image_options": tied})
+                                   "links": links, "images": pics, "image_options": tied})
 
 
 def answer(item_id, text, note=""):
@@ -409,8 +403,13 @@ def defer(item_id, on=True):
     return _append(lambda events: {"type": "defer", "id": item_id, "ts": _now(), "on": bool(on)})
 
 
+def _check_role(role):
+    if role not in ROLES:
+        raise ValueError(f"unknown role {role!r}: one of {', '.join(ROLES)}")
+
+
 def _check_links(links):
-    for x in links:                          # a link is a web address only, as an item's
+    for x in links:                          # a link is a web address only (girsa-verifier: a javascript: link would run)
         if x and not x.lower().startswith(("http://", "https://")):
             raise ValueError(f"a link is an http:// or https:// address, not {x!r}")
     return [x for x in links if x]
@@ -421,8 +420,7 @@ def qa(role, question, answer_text, links=()):
     2026-10-13: "create another sub-board for my questions and agents answers - so they won't scroll away. if i ask the q
     in the session, each agent should copy the q and a to the board, and point me there with a quick summary in the
     session"). Numbered on their own, Q&A #1, #2 ..., apart from the items the roles put to the reviewer."""
-    if role not in ROLES:
-        raise ValueError(f"unknown role {role!r}: one of {', '.join(ROLES)}")
+    _check_role(role)
     if not question.strip() or not answer_text.strip():
         raise ValueError("a Q&A needs the reviewer's question and the answer")
     links = _check_links(links)
@@ -440,8 +438,7 @@ def landed(role, summary, session=None, at=None):
     accomplishments"). The role's corner shows it until a session other than `session` runs as that role; every landing
     stays in the record, listed on the page under Landings. `at`: when it landed, where that was before it was posted
     (an ISO time from a record); a session posted again keeps only its last posting."""
-    if role not in ROLES:
-        raise ValueError(f"unknown role {role!r}: one of {', '.join(ROLES)}")
+    _check_role(role)
     if not summary.strip():
         raise ValueError("a landing needs its summary")
     if at is not None:   # one time without its offset broke every board_view() for good (the audit's item 3)
@@ -493,20 +490,23 @@ def started_since(role, landing):
         names = [n for n in os.listdir(folder) if n.endswith(".json")]
     except OSError:
         return False
+    if not posted:
+        return False
     for name in names:
         sid = name[:-5]
-        if sid == landing.get("session"):
+        # a record last written before the posting cannot have been seen after it (record_session writes seen_at, then
+        # the file), so it is not opened - every 5 s, for every record kept (the audit's item 14)
+        if sid == landing.get("session") or os.path.getmtime(os.path.join(folder, name)) <= posted.timestamp():
             continue
         rec = session_record(sid)
-        if rec.get("name") == role and posted and (rec.get("seen_at") or 0) > posted.timestamp():
+        if rec.get("name") == role and (rec.get("seen_at") or 0) > posted.timestamp():
             return True
     return False
 
 
 def qa_more(number, role, answer_text, question="", links=()):
     """A follow-up to Q&A #number: the reviewer's next question on it (optional) and the answer."""
-    if role not in ROLES:
-        raise ValueError(f"unknown role {role!r}: one of {', '.join(ROLES)}")
+    _check_role(role)
     if not answer_text.strip():
         raise ValueError("a follow-up needs its answer")
     links = _check_links(links)
@@ -593,19 +593,22 @@ def budget_notice(session_id):
     if not due or not session_id:
         return None
     told_path = os.path.join(board_dir(), "budget_told.json")
-    try:
-        with open(told_path, encoding="utf-8") as f:
-            told = json.load(f)
-    except (OSError, ValueError):
-        told = {}
-    keys = [f"{session_id} {k} {w['resets_at']}" for k, _, w in due]
-    if all(key in told for key in keys):
-        return None
-    told.update({key: int(time.time()) for key in keys})
-    tmp = f"{told_path}.{os.getpid()}.tmp"           # whole or not at all, as usage.json (girsa-verifier's note)
-    with open(tmp, "w", encoding="utf-8", newline="\n") as f:
-        json.dump(told, f)
-    os.replace(tmp, told_path)
+    os.makedirs(board_dir(), exist_ok=True)
+    with open(told_path + ".lock", "w") as lock:     # one writer at a time, as record_session (the audit's item 12)
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        try:
+            with open(told_path, encoding="utf-8") as f:
+                told = json.load(f)
+        except (OSError, ValueError):
+            told = {}
+        keys = [f"{session_id} {k} {w['resets_at']}" for k, _, w in due]
+        if all(key in told for key in keys):
+            return None
+        told.update({key: int(time.time()) for key in keys})
+        tmp = f"{told_path}.{os.getpid()}.tmp"       # whole or not at all, as usage.json (girsa-verifier's note)
+        with open(tmp, "w", encoding="utf-8", newline="\n") as f:
+            json.dump(told, f)
+        os.replace(tmp, told_path)
     said = "; ".join(f"the {label} window is at {w['used_percentage']:.0f}%, resetting "
                      f"{datetime.fromtimestamp(w['resets_at']).strftime('%a %H:%M')}" for k, label, w in due)
     return (f"THE PLAN'S BUDGET: {said}. Say so to the reviewer in your next reply, and keep working: do not land early "

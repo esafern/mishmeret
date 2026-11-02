@@ -27,6 +27,10 @@ def test_the_board_takes_a_roles_question_and_hands_back_the_reviewers_answer(tm
                  ["a=Do Y | the page shows Y", "b=Leave it"], "a", ["http://127.0.0.1:8421/entry/1"], [str(pic)])
     two = bd.ask("ex-verifier", "Placeholder question")
     assert (one["id"], two["id"]) == (1, 2)
+    for refused in (lambda: bd.ask("ex-nobody", "x"), lambda: bd.set_status("ex-nobody", "idle"),
+                    lambda: bd.hold("ex-nobody", "x"), lambda: bd.landed("ex-nobody", "- x")):
+        with pytest.raises(ValueError, match="unknown role 'ex-nobody': one of ex-operator, "):
+            refused()
     assert one["options"] == [{"key": "a", "label": "Do Y", "detail": "the page shows Y"},
                               {"key": "b", "label": "Leave it", "detail": ""}]
     for bad in (dict(role="someone", title="t"), dict(role="ex-builder", title=" "),
