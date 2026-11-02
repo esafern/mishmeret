@@ -364,3 +364,37 @@ def test_the_keepalive_check_says_a_crash_and_pings_a_due_role_once(tmp_path):
     assert out.returncode == 0 and out.stdout.startswith("PING ex-builder s-1 idle 50 min, context 30k, idle"), out.stdout + out.stderr
     out = run(rows)
     assert out.returncode == 1 and out.stdout == "", "pinged twice for the same call"
+
+
+def test_one_reader_of_a_transcripts_last_call_passes_over_a_notices_zeros(tmp_path, monkeypatch):
+    """The Mishmeret audit's item 9: the night run, the status line and the keep-alive check each read a transcript's
+    last call their own way, and two disagreed with the first - at a usage-limit notice (a `<synthetic>` record whose
+    usage is all zeros) the status line lost the corner's "it was Nk at" line and the keep-alive took the notice as the
+    last call, so that role was never pinged. role_usage.last_call is the one reader; each of the three gives the call
+    before the notice. Placeholder transcript."""
+    import importlib.util
+    path = tmp_path / "s-1.jsonl"
+    path.write_text("\n".join(json.dumps(r) for r in (
+        {"type": "assistant", "timestamp": "2030-01-02T10:00:00Z", "message": {"usage": {
+            "input_tokens": 5, "cache_read_input_tokens": 40000, "cache_creation_input_tokens": 0}}},
+        {"type": "assistant", "timestamp": "2030-01-02T10:05:00Z", "isSidechain": True, "message": {"usage": {
+            "input_tokens": 9}}},
+        {"type": "assistant", "timestamp": "2030-01-02T10:10:00Z", "message": {"model": "<synthetic>", "usage": {
+            "input_tokens": 0, "output_tokens": 0, "cache_read_input_tokens": 0, "cache_creation_input_tokens": 0}}},
+    )) + "\n", encoding="utf-8")
+    sys.path.insert(0, PKG)
+    import role_usage
+    at, ctx = role_usage.last_call(str(path))
+    assert (at.isoformat(), ctx) == ("2030-01-02T10:00:00+00:00", 40005)
+    out = subprocess.run([sys.executable, os.path.join(PKG, "role_usage.py"), "context", str(path)],
+                         capture_output=True, text=True, encoding="utf-8")
+    assert out.stdout == "40005\n", out                                              # the night run's context_of
+    spec = importlib.util.spec_from_file_location("statusline", os.path.join(PKG, "statusline.py"))
+    sl = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(sl)
+    assert sl.last_turn(str(path)) == {"context": 40005, "at": int(at.timestamp())}  # the corner's "it was Nk at"
+    spec = importlib.util.spec_from_file_location("keepalive_due", os.path.join(PKG, "keepalive_due.py"))
+    kd = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(kd)
+    monkeypatch.setattr(kd, "PROJECT", str(tmp_path))
+    assert kd.last_call("s-1") == (at, 40005)                                        # the keep-alive's

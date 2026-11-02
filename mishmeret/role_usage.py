@@ -50,6 +50,26 @@ def tail_records(path, nbytes):
             yield rec
 
 
+USAGE_KEYS = ("input_tokens", "cache_read_input_tokens", "cache_creation_input_tokens")
+
+
+def last_call(path, tail=4 * 1024 * 1024):
+    """(time, context tokens) of a transcript's newest main-chain API call, or None - the one reader the status line,
+    the keep-alive check and the night run share (the audit's item 9: three copies, which disagreed). A record whose
+    usage is all zeros is no call - a usage-limit or error notice Claude Code wrote itself - and is passed over: taken
+    as the last call, it hid the corner's context and kept the keep-alive from ever pinging that role."""
+    for rec in tail_records(path, tail):
+        u = (rec.get("message") or {}).get("usage") if rec.get("type") == "assistant" else None
+        ctx = sum(u.get(k) or 0 for k in USAGE_KEYS) if isinstance(u, dict) else 0
+        if not ctx:
+            continue
+        try:
+            return datetime.fromisoformat(rec["timestamp"].replace("Z", "+00:00")), ctx
+        except (KeyError, ValueError, AttributeError):
+            return None
+    return None
+
+
 def synthetic_after(path, since, tail=256 * 1024):
     """The text of a transcript's newest assistant record when Claude Code wrote it itself, no call made (model
     `<synthetic>`: a usage-limit or error notice), at or after `since` (epoch seconds) - else None. A /land so answered
@@ -246,6 +266,10 @@ def main(argv=None):
     argv = sys.argv[1:] if argv is None else argv
     if argv[:1] == ["synthetic-after"]:      # the night run's: synthetic-after PATH EPOCH - the notice's text, or nothing
         print(synthetic_after(argv[1], float(argv[2])) or "")
+        return
+    if argv[:1] == ["context"]:              # the night run's: context PATH - its last call's context, 0 when not read
+        lc = last_call(argv[1]) if os.path.exists(argv[1]) else None
+        print(lc[1] if lc else 0)
         return
     day = (argv or [None])[0]
     rows = sorted(role_usage(day).items(), key=lambda kv: -kv[1]["main"]["weighted"])

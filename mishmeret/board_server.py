@@ -528,14 +528,7 @@ def last_prompt(session_id, tail=512 * 1024):
     """The time of the last message put to a session (a prompt or a notification - not a tool's result), or None."""
     path = role_usage.transcript(session_id)
     if path:
-        with open(path, "rb") as fh:
-            fh.seek(max(0, os.path.getsize(path) - tail))
-            lines = fh.read().decode("utf-8", "replace").splitlines()
-        for line in reversed(lines):
-            try:
-                e = json.loads(line)
-            except ValueError:
-                continue
+        for e in role_usage.tail_records(path, tail):
             if e.get("type") != "user":
                 continue
             c = (e.get("message") or {}).get("content")

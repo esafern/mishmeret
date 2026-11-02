@@ -189,25 +189,7 @@ if [ "${1:-}" = "--night" ]; then
   context_of() {   # sessionId -> the tokens its last turn carried (input, cache read, cache written); 0 when not read
     local f; f=$(transcript_of "$1")
     [ -n "$f" ] || { echo 0; return; }
-    "$PY" - "$f" <<'CTX_END'
-import json, os, sys
-path = sys.argv[1]
-with open(path, "rb") as fh:
-    fh.seek(max(0, os.path.getsize(path) - 4 * 1024 * 1024))
-    lines = fh.read().decode("utf-8", "replace").splitlines()
-for line in reversed(lines):
-    try:
-        r = json.loads(line)
-    except ValueError:
-        continue
-    u = (r.get("message") or {}).get("usage") if r.get("type") == "assistant" else None
-    n = (u.get("input_tokens", 0) + u.get("cache_read_input_tokens", 0) + u.get("cache_creation_input_tokens", 0)) if u else 0
-    if n:      # a synthetic turn (a usage-limit or error notice) carries zeros: the last real turn is read (2026-10-11)
-        print(n)
-        break
-else:
-    print(0)
-CTX_END
+    "$PY" "$HERE/role_usage.py" context "$f" 2>/dev/null || echo 0   # a notice's zeros passed over (role_usage.last_call)
   }
   # A BOARD WAIT IS NOT WORK (the reviewer, 2026-10-11, Board #12: the steward's background `board.py wait` on its open
   # Board questions kept it "busy" all night - a running background task makes `claude agents` say busy - so the run

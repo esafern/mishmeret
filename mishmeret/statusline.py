@@ -17,6 +17,7 @@ from datetime import datetime
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))   # board.py is beside it
 import board  # noqa: E402
+import role_usage  # noqa: E402
 
 
 def line(data):
@@ -73,25 +74,10 @@ def last_turn(transcript_path, tail=4_000_000):
     no context until its next turn (the reviewer, 2026-10-28: "where are the context numbers on the board?"), so the
     corner says what it was at the last turn; read once per compaction, from the transcript's tail."""
     try:
-        with open(transcript_path, "rb") as f:
-            f.seek(max(0, os.path.getsize(transcript_path) - tail))
-            lines = f.read().decode("utf-8", "replace").splitlines()
+        lc = role_usage.last_call(transcript_path, tail)
     except (OSError, TypeError, ValueError):
         return None
-    for raw in reversed(lines):
-        try:
-            e = json.loads(raw)
-        except ValueError:
-            continue
-        usage = (e.get("message") or {}).get("usage") if isinstance(e, dict) and e.get("type") == "assistant" else None
-        if usage and not e.get("isSidechain"):
-            ctx = sum(usage.get(k) or 0 for k in USAGE_KEYS)
-            try:
-                at = int(datetime.fromisoformat(e["timestamp"].replace("Z", "+00:00")).timestamp())
-            except (KeyError, AttributeError, ValueError):
-                return None
-            return {"context": ctx, "at": at} if ctx else None
-    return None
+    return {"context": lc[1], "at": int(lc[0].timestamp())} if lc else None
 
 
 def session_fields(data):

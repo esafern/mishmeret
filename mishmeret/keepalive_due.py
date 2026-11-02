@@ -32,23 +32,7 @@ NIGHT_MARKS = ("kept", "landed-kept", "left", "cleared")
 def last_call(session_id):
     """(time, context tokens) of the transcript's last main-chain API call, or None."""
     path = os.path.join(PROJECT, session_id + ".jsonl")
-    if not os.path.exists(path):
-        return None
-    found = None
-    with open(path, encoding="utf-8") as f:
-        for line in f:
-            if '"usage"' not in line:
-                continue
-            try:
-                r = json.loads(line)
-            except ValueError:
-                continue
-            u = (r.get("message") or {}).get("usage")
-            if r.get("type") != "assistant" or r.get("isSidechain") or not u:
-                continue
-            ctx = u.get("input_tokens", 0) + u.get("cache_read_input_tokens", 0) + u.get("cache_creation_input_tokens", 0)
-            found = (datetime.datetime.fromisoformat(r["timestamp"].replace("Z", "+00:00")), ctx)
-    return found
+    return role_usage.last_call(path) if os.path.exists(path) else None
 
 
 def landed_tonight(role, last):
