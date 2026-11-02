@@ -866,7 +866,7 @@ def test_the_role_guard_keeps_the_file_tools_out_of_the_main_tree(tmp_path):
     NotebookEdit changed the main tree's files unguarded). The hook now runs on the file tools too (.claude/settings.json's
     matcher) and refuses every role but the operator a file in a guarded tree - judged by the nearest existing folder,
     so a new file in a new folder is caught - and lets a worktree, a copy and anything outside a repository through."""
-    import importlib.util, io, json as js
+    import importlib.util
     spec = importlib.util.spec_from_file_location("role_guard", os.path.join(PKG, "role_guard.py"))
     rg = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(rg)

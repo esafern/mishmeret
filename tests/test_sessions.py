@@ -2,7 +2,6 @@
 (tests/conftest.py): its roles are Girsa's shapes under the prefix "ex-"."""
 import json
 import os
-import re
 import subprocess
 import sys
 
@@ -34,22 +33,25 @@ def test_role_sessions_finds_each_roles_latest_session_for_agents_sh_resume(tmp_
     transcript("bbbb-old", "role-b", 1000)
     transcript("bbbb-run", "role-b", 2000)          # role-b's latest is running: never fall back to bbbb-old
     transcript("cccc-none", None, 4000)             # a session with no role is no role's
-    live = tmp_path / "live.json"
-    live.write_text(json.dumps([{"sessionId": "bbbb-run"}]), encoding="utf-8")
-    assert rs.main(["--projects", str(tmp_path), "--live-from", str(live), "role-a", "role-b", "role-c"]) == 0
+    monkeypatch.setenv("MISHMERET_TRANSCRIPTS", str(tmp_path))   # the project's folder (the config's rule, audit items 5, 16)
+    stub = tmp_path / "bin"
+    stub.mkdir()
+
+    def claude_prints(text):                        # `claude agents --json --all`, stubbed first on PATH
+        (stub / "claude").write_text(f"#!/bin/sh\nprintf '%s' '{text}'\n", encoding="utf-8")
+        (stub / "claude").chmod(0o755)
+    monkeypatch.setenv("PATH", f"{stub}{os.pathsep}{os.environ['PATH']}")
+    claude_prints(json.dumps([{"sessionId": "bbbb-run"}]))
+    assert rs.main(["role-a", "role-b", "role-c"]) == 0
     rows = [line.split("\t") for line in capsys.readouterr().out.splitlines()]
     assert rows[0][:2] == ["role-a", "aaaa-new"]
     assert rows[1] == ["role-b", "live", "bbbb-run"]
     assert rows[2] == ["role-c", "none"]
     # the running sessions unreadable: none counts as running, and it says so
-    assert rs.main(["--projects", str(tmp_path), "--live-from", str(tmp_path / "missing"), "role-b"]) == 0
+    claude_prints("not json")
+    assert rs.main(["role-b"]) == 0
     out = capsys.readouterr()
     assert out.out.split("\t")[:2] == ["role-b", "bbbb-run"] and "could not read" in out.err
-    # no --projects: the project's own folder (role_usage.project_dir, the config's rule - the audit's items 5 and 16:
-    # it was Mishmeret's own checkout, or ~/.claude whatever the config said)
-    monkeypatch.setenv("MISHMERET_TRANSCRIPTS", str(tmp_path))
-    assert rs.main(["--live-from", str(live), "role-a"]) == 0
-    assert capsys.readouterr().out.split("\t")[:2] == ["role-a", "aaaa-new"]
 
 
 def test_the_night_run_does_not_land_a_role_waiting_for_another_roles_work(tmp_path, monkeypatch, capsys):

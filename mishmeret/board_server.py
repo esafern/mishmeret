@@ -6,7 +6,7 @@ The reviewer, 2026-10-09: "we need a special screen where each agent can supply 
 decisions to me" (board.py says how the roles post and wait). Served on 127.0.0.1 only; it takes an answer only as JSON
 from its own page (Origin and Host checked), as the review server takes rulings. Started by the operator, detached:
 
-    python3 board_server.py --detach [--port PORT] [--log <board_dir>/server.log]
+    python3 board_server.py --detach [--port PORT]      # its output to <board_dir>/server.log
 Needs only Python's standard library."""
 import argparse
 import json
@@ -770,19 +770,19 @@ class Handler(BaseHTTPRequestHandler):
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     ap.add_argument("--port", type=int, default=config.load()["board_port"])
-    ap.add_argument("--detach", action="store_true", help="run in its own session, output to --log, and return")
-    ap.add_argument("--log", default=os.path.join(board.board_dir(), "server.log"))
+    ap.add_argument("--detach", action="store_true", help="run in its own session, output to <board_dir>/server.log, and return")
     args = ap.parse_args(argv)
+    log = os.path.join(board.board_dir(), "server.log")
     server = ThreadingHTTPServer(("127.0.0.1", args.port), Handler)      # bound before detaching: a busy port fails here
     if args.detach:                          # as scratch/serve_detached.py starts the review servers
         if os.fork() > 0:
-            print(f"the Board on http://127.0.0.1:{args.port}/ (log {args.log})")
+            print(f"the Board on http://127.0.0.1:{args.port}/ (log {log})")
             os._exit(0)
         os.setsid()
         if os.fork() > 0:
             os._exit(0)
-        os.makedirs(os.path.dirname(args.log), exist_ok=True)
-        fd_in, fd_out = os.open(os.devnull, os.O_RDONLY), os.open(args.log, os.O_WRONLY | os.O_CREAT | os.O_APPEND, 0o644)
+        os.makedirs(os.path.dirname(log), exist_ok=True)
+        fd_in, fd_out = os.open(os.devnull, os.O_RDONLY), os.open(log, os.O_WRONLY | os.O_CREAT | os.O_APPEND, 0o644)
         for fd, target in ((fd_in, 0), (fd_out, 1), (fd_out, 2)):
             os.dup2(fd, target)
     server.serve_forever()

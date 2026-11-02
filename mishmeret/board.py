@@ -32,7 +32,7 @@ stays private and no role's tree carries it): an item, its answer, a withdrawal,
                                        # by default, exits 1 "NO QUIET": read the corners, run it again
     python3 board.py list [--role ROLE] [--open]
     python3 board.py withdraw ID --why "..."        # an item no longer needed
-    python3 board.py defer ID [--undo]              # put off for later, or brought back (the page's)
+    python3 board.py defer ID                       # put off for later (the page also brings it back)
     python3 board.py answer ID --answer "..."       # the page's own route, for a relay or a test
     python3 board.py landed --role ROLE (--summary "..." | --summary-file F) [--session ID]
                                        # a session's landing: bullet points of what it accomplished - its corner says
@@ -694,7 +694,6 @@ def main(argv=None):
     wd.add_argument("--why", required=True)
     df = sub.add_parser("defer", help="put an item off for later (the page's own route, for a relay or a test)")
     df.add_argument("id", type=int)
-    df.add_argument("--undo", action="store_true", help="bring it back to Questions for you")
     st = sub.add_parser("status")
     st.add_argument("--role", required=True)
     st.add_argument("--state", choices=STATES)
@@ -828,7 +827,7 @@ def main(argv=None):
             withdraw(args.id, args.why)
             print(f"#{args.id} withdrawn")
         elif args.cmd == "defer":
-            defer(args.id, not args.undo)
+            defer(args.id)
             print(describe(items()[args.id]))
         elif args.cmd == "waiting-for":
             w = waiting_on(args.role)

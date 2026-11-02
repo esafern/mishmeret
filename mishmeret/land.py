@@ -28,7 +28,6 @@ must not depend on the code it lands. Exit 0 done, 1 a red gate, 2 refused.
 """
 import argparse
 import ast
-import hashlib
 import json
 import os
 import shlex

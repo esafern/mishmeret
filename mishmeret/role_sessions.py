@@ -11,13 +11,12 @@ A role's sessions are the transcripts Claude Code keeps for the project's tree, 
 top). The latest is the one written last. A role whose latest session is still running (`claude agents --json --all` lists it) is marked live:
 agents.sh never starts a second copy of it, and never falls back to an older session of a role that is running.
 
-usage:  python3 role_sessions.py [--projects DIR] [--live-from FILE] ROLE...
+usage:  python3 role_sessions.py ROLE...
 prints one line per ROLE, tab-separated:
   ROLE  SESSION_ID  LAST_WRITTEN       its latest session, not running - the one to resume
   ROLE  live  SESSION_ID               its latest session is running
   ROLE  none                           no session of this role in the clone
---live-from FILE reads the session list from FILE instead of running `claude agents` (a test's placeholder); when the
-list cannot be read, every session counts as not running and a warning goes to stderr.
+When the running sessions cannot be read, every session counts as not running and a warning goes to stderr.
 """
 import argparse
 import json
@@ -52,16 +51,11 @@ def role_of(path):
     return None
 
 
-def live_sessions(live_from=None):
+def live_sessions():
     """The ids of the sessions running now; None when the list cannot be read."""
     try:
-        if live_from:
-            with open(live_from, encoding="utf-8") as fh:
-                text = fh.read()
-        else:
-            text = subprocess.run(["claude", "agents", "--json", "--all"], capture_output=True, text=True,
-                                  timeout=30).stdout
-        rows = json.loads(text)
+        rows = json.loads(subprocess.run(["claude", "agents", "--json", "--all"], capture_output=True, text=True,
+                                         timeout=30).stdout)
     except (OSError, ValueError, subprocess.SubprocessError):
         return None
     if isinstance(rows, dict):
@@ -88,12 +82,10 @@ def latest_sessions(folder, roles):
 
 def main(argv):
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
-    ap.add_argument("--projects", help="the transcripts' folder (default: Claude Code's, for the project's tree)")
-    ap.add_argument("--live-from")
     ap.add_argument("roles", nargs="+")
     args = ap.parse_args(argv)
-    found = latest_sessions(args.projects or role_usage.project_dir(), set(args.roles))
-    live = live_sessions(args.live_from)
+    found = latest_sessions(role_usage.project_dir(), set(args.roles))
+    live = live_sessions()
     if live is None:
         print("role_sessions: could not read the running sessions (claude agents) - none counted as running",
               file=sys.stderr)

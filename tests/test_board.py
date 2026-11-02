@@ -2,8 +2,6 @@
 (tests/conftest.py): its roles are Girsa's shapes under the prefix "ex-"."""
 import json
 import os
-import re
-import subprocess
 import sys
 
 import pytest

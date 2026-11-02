@@ -1,6 +1,5 @@
 """The config loader (mishmeret/config.py): exact fields, typed, overridden by MISHMERET_<FIELD>, and every field read
 by some module. A placeholder project; no project's names."""
-import ast
 import glob
 import json
 import os

@@ -40,7 +40,8 @@ landing names its plan, the verifier a round goes back to, the project's lane ch
 loads, and the gate's lists (`land`).
 `MISHMERET_<FIELD>` overrides a field, `MISHMERET_NIGHT_<KEY>` one of the night run's; `MISHMERET_TRANSCRIPTS` names
 the transcripts folder itself, and `MISHMERET_NIGHT_DRY_RUN=1` makes the night run say what it would type. A command
-(never a hook) may run another tree with `MISHMERET_TREE`.
+(never a hook) may run another tree with `MISHMERET_TREE`. A project's shim sets `MISHMERET_AS` to the path it runs
+`board.py` by, for the commands the Board prints.
 
 ## What the project's sessions must say
 

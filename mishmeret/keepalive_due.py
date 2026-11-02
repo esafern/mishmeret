@@ -12,7 +12,7 @@ that sends the pings is warm when it wakes. NOT AT NIGHT AFTER THE NIGHT RUN HAS
 last call is not pinged; once someone works with it again its last call is newer and the pings resume. Prints one line per due session; exit 0
 if any, 1 if none (for an `until` loop). Remembers each (session, last call) it reported, so a session that did not
 answer is not reported twice for the same call."""
-import argparse, datetime, glob, json, os, subprocess, sys
+import argparse, datetime, json, os, subprocess, sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import config  # noqa: E402
