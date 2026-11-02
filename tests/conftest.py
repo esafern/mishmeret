@@ -47,7 +47,8 @@ def project_config(root, **over):
                     "ledger": "rulings.jsonl", "server": {"entry": "app/server.py", "folders": ["app", "lib", "tools"],
                                                           "page": "page/"},
                     "gate_sets": {"landing": ["tests/test_a.py", "tests/test_b.py"], "quick": ["tests/test_a.py"]},
-                    "gate_env": {"quick": {"EX_QUICK": "1"}}, "hand_run": {"tests/test_slow.py": "by hand"}}}
+                    "gate_env": {"quick": {"EX_QUICK": "1"}}, "hand_run": {"tests/test_slow.py": "by hand"}},
+           "budget": {"warn_percent": 80}}
     cfg.update(over)
     return cfg
 

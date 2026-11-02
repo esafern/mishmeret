@@ -749,8 +749,9 @@ def test_the_reviewer_defers_a_question_and_its_role_is_told_once(tmp_path, monk
 
 def test_the_plans_budget_is_recorded_shown_and_told_once_at_80_percent(tmp_path, monkeypatch):
     """Q&A #56 A (the reviewer, 2026-10-25: "a and c - good. go"): every session's status line records the plan's usage
-    windows for the Board's meter; at BUDGET_WARN percent a hook tells each session once per window and reset to land.
-    Placeholder readings in a temporary board."""
+    windows for the Board's meter; at BUDGET_WARN percent (the config's budget.warn_percent) a hook tells each session
+    once per window and reset to keep its work landable and keep working - never to land for the budget (the Board's
+    #118, A; the Mishmeret audit's item 6: the status line still said LAND). Placeholder readings in a temporary board."""
     import importlib.util
     import subprocess
     import time as _time
@@ -768,7 +769,8 @@ def test_the_plans_budget_is_recorded_shown_and_told_once_at_80_percent(tmp_path
     assert bs.board_view()["usage"]["five_hour"]["used_percentage"] == 42
     bd.record_usage({"five_hour": {"used_percentage": 80, "resets_at": soon}})
     said = bd.budget_notice("s1")
-    assert said and "5-hour window is at 80%" in said and "land" in said
+    assert said and "5-hour window is at 80%" in said and "never for the budget alone" in said, said
+    assert "land early" not in said and "2026-" not in said, "no project's dated words in the code"
     assert bd.budget_notice("s1") is None, "told once per session, window and reset"
     assert bd.budget_notice("s2"), "each session is told"
     bd.record_usage({"five_hour": {"used_percentage": 85, "resets_at": soon + 18000}})
@@ -779,7 +781,14 @@ def test_the_plans_budget_is_recorded_shown_and_told_once_at_80_percent(tmp_path
                          input=json.dumps({"session_name": "ex-builder", "context_window": {"current_usage": {
                              "input_tokens": 5, "cache_read_input_tokens": 120000}},
                              "rate_limits": {"five_hour": {"used_percentage": 90, "resets_at": soon}}})).stdout
-    assert out.startswith("context 120k · plan: 5-HOUR 90% (RESETS ") and out.rstrip().endswith(" - LAND"), out
+    assert out.startswith("context 120k · plan: 5-HOUR 90% (RESETS ") and "LAND" not in out, out
+    # the threshold is the project's: at 95, 90% is written as any other reading
+    from conftest import write_project
+    env95 = dict(env, MISHMERET_CONFIG=write_project(tmp_path / "p95", budget={"warn_percent": 95}))
+    out = subprocess.run([sys.executable, os.path.join(hook, "statusline.py")], env=env95, capture_output=True,
+                         text=True, input=json.dumps({"rate_limits": {"five_hour": {"used_percentage": 90,
+                                                                                   "resets_at": soon}}})).stdout
+    assert "plan: 5-hour 90% (resets " in out, out
     assert bd.usage()["five_hour"]["used_percentage"] == 90 and bd.usage()["session"] == "ex-builder"
     def run_hook(**data):
         return subprocess.run([sys.executable, os.path.join(hook, "board_hook.py")], env=env, capture_output=True,

@@ -35,7 +35,7 @@ def line(data):
         pct = float(w["used_percentage"])
         reset = datetime.fromtimestamp(int(w["resets_at"])).strftime("%H:%M" if key == "five_hour" else "%a %H:%M")
         text = f"{label} {pct:.0f}% (resets {reset})"
-        plan.append(text.upper() + " - LAND" if pct >= board.BUDGET_WARN else text)
+        plan.append(text.upper() if pct >= board.BUDGET_WARN else text)   # the capitals the eye-catcher; never "land"
     if plan:
         parts.append("plan: " + " · ".join(plan))
     return " · ".join(parts)

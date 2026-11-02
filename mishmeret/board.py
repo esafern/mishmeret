@@ -549,10 +549,10 @@ def waiting_on(role, events=None):
 
 # THE PLAN'S BUDGET (Q&A #56 A; the reviewer, 2026-10-25: "a and c - good. go"): every session's status line receives
 # the plan's usage windows (`rate_limits`, Claude Code's status line input) and records them here; the page shows them,
-# and at BUDGET_WARN percent of a window every role is told once, by a hook - to say so, NOT to land early (the reviewer,
-# 2026-10-29: "stop ending early just because of the budget. we have to get the release out, spend the tokens and get
-# it done"; Q&A #56 A's "land before it runs out" withdrawn).
-BUDGET_WARN = 80
+# and at BUDGET_WARN percent of a window (the config's budget.warn_percent) every role is told once, by a hook - to keep
+# its work landable and keep working, never to land for the budget alone: a landing buys nothing against a limit, which
+# stops the account, not the session.
+BUDGET_WARN = config.load()["budget"]["warn_percent"]
 WINDOWS = (("five_hour", "5-hour"), ("seven_day", "7-day"))
 
 
@@ -611,9 +611,9 @@ def budget_notice(session_id):
         os.replace(tmp, told_path)
     said = "; ".join(f"the {label} window is at {w['used_percentage']:.0f}%, resetting "
                      f"{datetime.fromtimestamp(w['resets_at']).strftime('%a %H:%M')}" for k, label, w in due)
-    return (f"THE PLAN'S BUDGET: {said}. Say so to the reviewer in your next reply, and keep working: do not land early "
-            f"for the budget (the reviewer, 2026-10-29: \"stop ending early just because of the budget. we have to get "
-            f"the release out, spend the tokens and get it done\"; the Board shows the meter).")
+    return (f"THE PLAN'S BUDGET: {said}. Say so to the reviewer in your next reply. Commit what is finished, keep your "
+            f"state file current, keep working; land when the piece is done or the reviewer says so, never for the "
+            f"budget alone (the Board shows the meter).")
 
 
 # EACH SESSION'S OWN STATE (Q&A #56, ideas 1, 2 and 5; the reviewer, 2026-10-25: "1. 2. 3. 4. 5. go"): the status line

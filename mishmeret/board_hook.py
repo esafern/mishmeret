@@ -6,7 +6,7 @@ go", then "1. 2. 3. 4. 5. go"). Runs on Notification, PostToolUse and UserPrompt
   `prompt`, which the page shows on the role's corner; the next tool run or prompt clears it (idea 1).
 - PostToolUse of Edit, Write or NotebookEdit: the file, recorded as the session's `editing` (idea 5).
 - PostToolUse and UserPromptSubmit: once per plan window and reset at board.BUDGET_WARN percent, a sentence telling the
-  session to land (A).
+  session to keep its work landable and keep working (board.budget_notice).
 
 Silent otherwise; never blocks."""
 import json

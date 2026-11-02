@@ -40,7 +40,8 @@ def sample():
                   "checks": ["pytest"], "precommit": ".claude/hooks/time_check.py"},
         "land": {"planned": "ex-builder", "verifier": "ex-operator", "lane_check": "tools/lanes.py",
                  "ledger": "rulings.jsonl", "server": {"entry": "app/server.py", "folders": ["app"], "page": "page/"},
-                 "gate_sets": {"landing": ["tests/test_a.py"]}, "gate_env": {}, "hand_run": {}}}
+                 "gate_sets": {"landing": ["tests/test_a.py"]}, "gate_env": {}, "hand_run": {}},
+        "budget": {"warn_percent": 70}}
 
 
 @pytest.fixture
@@ -97,6 +98,9 @@ def test_the_sample_loads_and_its_root_is_the_config_files_project(write, tmp_pa
     (lambda c: c["land"].update(planned="nobody"), "land.planned 'nobody' is not one of the roles"),
     (lambda c: c["land"].update(gate_sets={"quick": []}), "land.gate_sets must hold `landing`"),
     (lambda c: c["land"].update(gate_env={"other": {}}), "land.gate_env name only its sets"),
+    (lambda c: c.pop("budget"), "missing budget"),
+    (lambda c: c["budget"].update(warn_percent="80"), "budget.warn_percent must be int"),
+    (lambda c: c["budget"].update(warn_percent=0), "budget.warn_percent must be 1 to 100, not 0"),
 ])
 def test_a_field_missing_unknown_or_of_the_wrong_kind_is_refused_by_name(write, change, said):
     cfg = sample()

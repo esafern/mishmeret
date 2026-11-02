@@ -220,7 +220,7 @@ function fitCorners() {   // two lines each where they fit, else one line each (
 }
 addEventListener("resize", fitCorners);
 // THE PLAN'S BUDGET (Q&A #56 A): each window's use as the roles' status lines last read it, in the waiting colour at
-// BUDGET_WARN, when every role is told to land
+// BUDGET_WARN, when every role is told once to keep its work landable
 function drawUsage() {
   const u = data.usage, el = document.getElementById("usage");
   const t = (s, o) => new Date(s * 1000).toLocaleString([], o);

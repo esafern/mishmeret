@@ -50,6 +50,7 @@ FIELDS = {
                                 # pushed to, the checks whose status decides a commit, the pre-commit hook's own path
     "land": dict,               # land: the role whose code landing names a plan, the verifier a round goes back to, the
                                 # lane check it runs, the live ledger, what a review server loads, the gate's lists
+    "budget": dict,             # board, statusline: the plan window's percent at which each session is told once
 }
 GUARD = {"homes": str, "fallback_roots": list, "trees": list, "retired_remotes": list, "checks": list,
          "precommit": str}
@@ -63,6 +64,7 @@ NIGHT = {"check_every": int, "you_idle": int, "role_idle": int, "landed_quiet": 
 SIZES = {"warn_percent": int, "files": dict, "status_file": str, "item_pattern": str, "item_limit": int,
          "item_home": str, "state_files": str, "state_limit": int, "state_home": str}
 START_READS = {"briefs": str, "logs": list}
+BUDGET = {"warn_percent": int}
 DRAFTS = {"pattern": str, "check": str, "passed": str, "failed": str}
 ROLE_KEYS = {"name": str, "short": str, "colour": str, "page_light": str, "page_dark": str, "corner": bool,
              "tmux": bool}
@@ -152,7 +154,7 @@ def load(p=None):
     if cfg["operator"] not in {r["name"] for r in cfg["roles"]}:
         raise ConfigError(f"{p}: operator {cfg['operator']!r} is not one of the roles")
     for field, keys in (("sizes", SIZES), ("start_reads", START_READS), ("drafts", DRAFTS), ("guard", GUARD),
-                        ("land", LAND)):
+                        ("land", LAND), ("budget", BUDGET)):
         _exact(cfg[field], keys, f"{p}: {field}")
         for k, t in keys.items():
             _typed(f"{field}.{k}", t, cfg[field][k], p)
@@ -164,6 +166,8 @@ def load(p=None):
             raise ConfigError(f"{p}: land.{k} {cfg['land'][k]!r} is not one of the roles")
     if "landing" not in cfg["land"]["gate_sets"] or not set(cfg["land"]["gate_env"]) <= set(cfg["land"]["gate_sets"]):
         raise ConfigError(f"{p}: land.gate_sets must hold `landing`, and land.gate_env name only its sets")
+    if not 0 < cfg["budget"]["warn_percent"] <= 100:
+        raise ConfigError(f"{p}: budget.warn_percent must be 1 to 100, not {cfg['budget']['warn_percent']}")
     _rows(cfg["sizes"]["files"], (int, str), f"{p}: sizes.files")
     _rows(cfg["effort"], (str, str), f"{p}: effort")
     return cfg
