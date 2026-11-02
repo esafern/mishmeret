@@ -516,9 +516,16 @@ def test_a_landing_shows_on_its_corner_until_the_next_session_and_stays_in_the_h
     bd.landed("ex-builder", "- second", "s2")
     assert [l["summary"] for l in bs.board_view()["landings"]] == ["- built X (abc123)\n- open: Y", "- second"]
     # posted again for the same session: its last posting only; `at` is when it landed
-    bd.landed("ex-builder", "- second, fuller", "s2", at="2030-01-02T12:30:00+02:00")
+    # - an ISO time with its offset (the audit's item 3: one without broke every board_view() for good), stored in the
+    # local form the other landings have
+    for bad in ("2030-01-02T12:30", "yesterday"):
+        with pytest.raises(ValueError, match="UTC offset"):
+            bd.landed("ex-builder", "- second, fuller", "s2", at=bad)
+    bd.landed("ex-builder", "- second, fuller", "s2", at="2030-01-02T10:30:00Z")
     got = bs.board_view()["landings"]
-    assert [l["summary"] for l in got][-1] == "- second, fuller" and len(got) == 2 and got[-1]["ts"].startswith("2030-01-02T12:30")
+    assert [l["summary"] for l in got][-1] == "- second, fuller" and len(got) == 2
+    from datetime import datetime
+    assert got[-1]["ts"] == datetime.fromisoformat("2030-01-02T10:30:00+00:00").astimezone().isoformat(), got[-1]["ts"]
     # how long the session ran, and which of its role's sessions that day: from the transcripts (placeholders)
     tx = tmp_path / "tx"
     tx.mkdir()

@@ -430,6 +430,11 @@ def landed(role, summary, session=None, at=None):
         raise ValueError(f"unknown role {role!r}: one of {', '.join(ROLES)}")
     if not summary.strip():
         raise ValueError("a landing needs its summary")
+    if at is not None:   # one time without its offset broke every board_view() for good (the audit's item 3)
+        when = _when(at)
+        if when is None or when.tzinfo is None:
+            raise ValueError(f"--at is an ISO time with its UTC offset, not {at!r}")
+        at = when.astimezone().isoformat(timespec="seconds")     # the form _now() writes, so landings sort by it
     return _append(lambda events: {"type": "landed", "ts": at or _now(), "posted": _now(), "role": role,
                                    "session": session, "summary": summary.strip()})
 
