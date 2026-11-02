@@ -99,12 +99,15 @@ def test_the_night_run_lands_a_role_under_the_limit_and_keeps_it_uncleared():
     assert 'rm -f "$NIGHT/$r.kept" "$NIGHT/$r.landed-kept"' in script       # worked with again: looked at afresh
 
 
-@pytest.mark.parametrize("kind", ["notice", "no record", "landed"])
+@pytest.mark.parametrize("kind", ["notice", "notice while waiting", "old notice", "no record", "landed"])
 def test_the_night_run_does_not_take_a_land_answered_by_a_notice_for_a_landing(tmp_path, kind):
     """2026-10-30 and 10-31 (the Mishmeret audit's item 1, re-scoped by girsa-verifier): every role's /land was answered
     by a `<synthetic>` record, "You've hit your weekly limit", or left no record at all; the run read each as landed,
     typed the ask-ready sentence, and left it open. Now a notice is named in the night log and a transcript unchanged
-    since /land is said not to have got it - neither asked to report back; a real landing still is. A whole night run,
+    since /land is said not to have got it - neither asked to report back, nor, when the role waits, said to be asking
+    you something (girsa-verifier's LOW 1: 2 of the 10-30 notices); a notice from BEFORE /land, the transcript changed
+    after it, is no answer to it (LOW 2: on 10-31 three roles' newest assistant record was 10-30's notice) - that role,
+    as a real landing, is asked to report back. A whole night run,
     not a dry one, behind stub claude, tmux, sleep, caffeinate and osascript: one role idle, its /land sent 20 minutes
     ago, its pane this test's parent process."""
     import datetime
@@ -119,11 +122,13 @@ def test_the_night_run_does_not_take_a_land_answered_by_a_notice_for_a_landing(t
     def rec(kind_, at, **extra):
         stamp = datetime.datetime.fromtimestamp(now + at, datetime.timezone.utc).isoformat().replace("+00:00", "Z")
         return json.dumps({"type": kind_, "timestamp": stamp, **extra})
-    records = [rec("user", -1199, message={"role": "user", "content": "/land"})]
-    if kind == "notice":
-        records.append(rec("assistant", -1198, isApiErrorMessage=True, message={
-            "model": "<synthetic>", "content": [{"type": "text", "text": "You've hit your weekly limit"}],
-            "usage": {"input_tokens": 0, "output_tokens": 0}}))
+    notice = lambda at: rec("assistant", at, isApiErrorMessage=True, message={
+        "model": "<synthetic>", "content": [{"type": "text", "text": "You've hit your weekly limit"}],
+        "usage": {"input_tokens": 0, "output_tokens": 0}})
+    records = [notice(-1300)] if kind == "old notice" else []
+    records.append(rec("user", -1199, message={"role": "user", "content": "/land"}))
+    if kind.startswith("notice"):
+        records.append(notice(-1198))
     elif kind == "landed":
         records.append(rec("assistant", -1100, message={
             "model": "placeholder-model", "content": [{"type": "text", "text": "Landed."}],
@@ -133,7 +138,8 @@ def test_the_night_run_does_not_take_a_land_answered_by_a_notice_for_a_landing(t
     transcript.write_text("\n".join(records if kind != "no record" else records[:0]) + "\n", encoding="utf-8")
     written = now - (1800 if kind == "no record" else 600)                 # before /land, or after it
     os.utime(transcript, (written, written))
-    rows = json.dumps([{"name": "ex-builder", "status": "idle", "sessionId": "s-1", "pid": os.getpid()}])
+    status = "waiting" if kind == "notice while waiting" else "idle"
+    rows = json.dumps([{"name": "ex-builder", "status": status, "sessionId": "s-1", "pid": os.getpid()}])
     typed = tmp_path / "typed.txt"
     stubs = {"claude": f"if [ \"$1\" = agents ]; then echo '{rows}'; fi",
              "tmux": f"case \"$1\" in list-panes) echo '{os.getppid()} %1' ;; send-keys) echo \"$*\" >> '{typed}' ;; esac",
@@ -148,12 +154,14 @@ def test_the_night_run_does_not_take_a_land_answered_by_a_notice_for_a_landing(t
     log = (night / "log.txt").read_text(encoding="utf-8")
     assert out.returncode == 0, out.stdout + out.stderr + log
     sent = typed.read_text(encoding="utf-8") if typed.exists() else ""
-    expected = {"notice": "ex-builder: /land was answered by a notice, not a landing - You've hit your weekly limit - "
-                          "left open for you",
+    named = "ex-builder: /land was answered by a notice, not a landing - You've hit your weekly limit - left open for you"
+    asked = "ex-builder: landed without saying it is ready to clear - asked to report back"
+    expected = {"notice": named, "notice while waiting": named, "old notice": asked,
                 "no record": "ex-builder: its transcript has not changed since /land was typed - /land did not reach it",
-                "landed": "ex-builder: landed without saying it is ready to clear - asked to report back"}[kind]
+                "landed": asked}[kind]
     assert expected in log, log
-    assert ("Has this session finished every step of /land?" in sent) == (kind == "landed"), sent
+    assert "stopped to ask you something" not in log and (named in log) == kind.startswith("notice"), log
+    assert ("Has this session finished every step of /land?" in sent) == (expected == asked), sent
     assert (night / "ex-builder.left").exists()
 
 

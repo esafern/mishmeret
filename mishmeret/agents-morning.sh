@@ -314,10 +314,10 @@ READY_END
         [ -e "$NIGHT/$r.left" ] && continue
         landing=$((landing + 1))
         q=$(quiet_for "$sid")
-        if [ "$st" = "idle" ] && [ "$q" -ge "$LANDED_QUIET" ]; then
-          # /LAND NOT LANDED (2026-10-30 and 10-31: every role idle after /land was asked to report back, then left
-          # open): answered by a notice Claude Code wrote itself, its weekly limit - or, where it left no record, its
-          # transcript unchanged since /land was typed. Neither is asked to report back.
+        # /LAND NOT LANDED (2026-10-30 and 10-31: every role after /land was asked to report back or said to be asking
+        # you something, then left open): answered by a notice Claude Code wrote itself, its weekly limit - or, where
+        # it left no record, its transcript unchanged since /land was typed. Named for what it is, idle or waiting.
+        if { [ "$st" = "idle" ] && [ "$q" -ge "$LANDED_QUIET" ]; } || [ "$st" = "waiting" ]; then
           sent=$(stat -f %m "$NIGHT/$r.land-sent")
           if [ $(( $(date +%s) - q )) -lt "$sent" ]; then
             notify "$r: its transcript has not changed since /land was typed - /land did not reach it; left open for you"
@@ -328,6 +328,8 @@ READY_END
             notify "$r: /land was answered by a notice, not a landing - $n - left open for you"
             touch "$NIGHT/$r.left"; continue
           fi
+        fi
+        if [ "$st" = "idle" ] && [ "$q" -ge "$LANDED_QUIET" ]; then
           # THE PANE'S RECENT HISTORY, ITS WRAPPED LINES JOINED (2026-10-09, the night of 10-08: the builder and the verifier
           # said "ready to clear" and were left open - the phrase had scrolled above the visible pane, or a narrow pane
           # broke it across two lines; the steward wrote "can be cleared")
