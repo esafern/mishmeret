@@ -134,6 +134,26 @@ def test_the_board_takes_answers_only_from_its_own_page_and_only_as_a_json_objec
         srv.shutdown()
 
 
+def test_a_cut_off_line_in_the_record_stops_no_board_command(tmp_path, monkeypatch, capsys):
+    """The Mishmeret audit's item 7: a write cut off mid-line (power loss, a full disk) made every later read raise -
+    every command, every landing's hold and the page. The line is skipped and named; the next event starts a line of its
+    own; nothing is rewritten. A temporary board."""
+    import importlib.util
+    monkeypatch.setenv("MISHMERET_BOARD_DIR", str(tmp_path / "board"))
+    spec = importlib.util.spec_from_file_location("board", os.path.join(PKG, "board.py"))
+    bd = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(bd)
+    one = bd.ask("ex-builder", "Placeholder question")
+    with open(bd._path(), "a", encoding="utf-8") as fh:
+        fh.write('{"type": "item", "id"')
+    assert [e["id"] for e in bd.read_events()] == [one["id"]]
+    assert "line 2 of" in capsys.readouterr().err
+    two = bd.ask("ex-verifier", "Another placeholder question")
+    lines = open(bd._path(), encoding="utf-8").read().splitlines()
+    assert lines[1] == '{"type": "item", "id"' and json.loads(lines[2])["id"] == two["id"]
+    assert [e["id"] for e in bd.read_events()] == [one["id"], two["id"]]
+
+
 def test_the_board_keeps_the_reviewers_own_questions_and_the_answers(tmp_path, monkeypatch, capsys):
     """The reviewer, 2026-10-13: "create another sub-board for my questions and agents answers - so they won't scroll
     away. if i ask the q in the session, each agent should copy the q and a to the board, and point me there with a quick

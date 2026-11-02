@@ -76,10 +76,23 @@ def _now():
     return datetime.now(timezone.utc).astimezone().isoformat(timespec="seconds")
 
 
+def _events(lines):
+    """The record's events; a line that is not whole (a write cut off by power loss or a full disk) is skipped and named,
+    so one stops no Board command (the audit's item 7). The record stays append-only: nothing is rewritten."""
+    out = []
+    for n, line in enumerate(lines, 1):
+        if line.strip():
+            try:
+                out.append(json.loads(line))
+            except ValueError:
+                print(f"board: line {n} of {_path()} is not whole - skipped", file=sys.stderr)
+    return out
+
+
 def read_events():
     try:
         with open(_path(), encoding="utf-8") as fh:
-            return [json.loads(line) for line in fh if line.strip()]
+            return _events(fh)
     except FileNotFoundError:
         return []
 
@@ -90,10 +103,11 @@ def _append(make):
     with open(_path(), "a+", encoding="utf-8", newline="\n") as fh:
         fcntl.flock(fh, fcntl.LOCK_EX)
         fh.seek(0)
-        events = [json.loads(line) for line in fh if line.strip()]
-        event = make(events)
+        lines = fh.readlines()
+        event = make(_events(lines))
         fh.seek(0, os.SEEK_END)
-        fh.write(json.dumps(event, ensure_ascii=False) + "\n")
+        cut = lines and not lines[-1].endswith("\n")       # the new event on a line of its own after a cut-off one
+        fh.write(("\n" if cut else "") + json.dumps(event, ensure_ascii=False) + "\n")
         fh.flush()
         os.fsync(fh.fileno())
         return event
