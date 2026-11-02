@@ -280,3 +280,38 @@ def test_the_morning_run_starts_the_roles_when_none_is_running(tmp_path):
     assert out.returncode == 1, out.stdout + out.stderr
     assert "they stopped during the landing" in out.stdout and "bash agents.sh --resume" in out.stdout, out.stdout
     assert "starting them" not in out.stdout and "placeholder agents.sh ran" not in out.stdout, out.stdout
+
+
+def test_the_keepalive_check_says_a_crash_and_pings_a_due_role_once(tmp_path):
+    """The Mishmeret audit's item 4: the operator runs `until keepalive_due.py --self <id>; do sleep 300; done`, exit 1
+    meaning none due - and a crash (an empty `claude agents` answer) exited 1 too, so the loop slept on and no role was
+    ever pinged. A crash now prints KEEPALIVE CHECK FAILED and exits 0. And the check itself, its first test: one idle
+    role 50 minutes past its last call with 30k context is due, and not again for the same call. Placeholder project,
+    stub `claude`, placeholder transcripts."""
+    import datetime
+    from conftest import write_project
+    cfg = write_project(tmp_path)
+    (tmp_path / "scratch" / "state").mkdir(parents=True)
+    tx = tmp_path / "tx"
+    tx.mkdir()
+    (tmp_path / "bin").mkdir()
+    claude = tmp_path / "bin" / "claude"
+    env = dict(os.environ, MISHMERET_CONFIG=cfg, MISHMERET_TRANSCRIPTS=str(tx),
+               MISHMERET_BOARD_DIR=str(tmp_path / "board"), PATH=f"{tmp_path / 'bin'}{os.pathsep}{os.environ['PATH']}")
+    def run(answer):
+        claude.write_text(f"#!/bin/sh\ncat <<'END'\n{answer}\nEND\n", encoding="utf-8")
+        claude.chmod(0o755)
+        return subprocess.run([sys.executable, os.path.join(PKG, "keepalive_due.py"), "--self", "me"], env=env,
+                              capture_output=True, text=True, encoding="utf-8", timeout=60)
+    out = run("")
+    assert out.returncode == 0 and out.stdout.startswith("KEEPALIVE CHECK FAILED: JSONDecodeError"), out.stdout + out.stderr
+    when = (datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(minutes=50)).isoformat()
+    (tx / "s-1.jsonl").write_text(json.dumps({"type": "assistant", "timestamp": when, "message": {
+        "usage": {"input_tokens": 10, "cache_read_input_tokens": 30000, "cache_creation_input_tokens": 0}}}) + "\n",
+        encoding="utf-8")
+    rows = json.dumps([{"name": "ex-builder", "kind": "interactive", "sessionId": "s-1", "status": "idle",
+                        "pid": os.getpid()}])
+    out = run(rows)
+    assert out.returncode == 0 and out.stdout.startswith("PING ex-builder s-1 idle 50 min, context 30k, idle"), out.stdout + out.stderr
+    out = run(rows)
+    assert out.returncode == 1 and out.stdout == "", "pinged twice for the same call"

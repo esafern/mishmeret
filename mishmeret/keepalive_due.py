@@ -81,6 +81,16 @@ def has_background_run(pid):
 
 
 def main():
+    """A crash is said, and ends the operator's `until` loop (exit 0): its exit 1 read as "none due", and the loop slept
+    on with no role ever pinged (the audit's item 4). `_main`'s own exits, and argparse's, pass through."""
+    try:
+        _main()
+    except Exception as e:
+        print(f"KEEPALIVE CHECK FAILED: {type(e).__name__}: {e}", flush=True)
+        sys.exit(0)
+
+
+def _main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--self", dest="me", required=True, help="the operator's own session id")
     a = ap.parse_args()
