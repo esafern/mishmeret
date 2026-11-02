@@ -585,6 +585,15 @@ def usage():
     return rec
 
 
+def at_limit():
+    """The windows at their limit now, as "the 7-day window, resets Sun 15:00", or None. The night run sends no /land
+    then: a session at the limit answers it with a notice and lands nothing (2026-10-30, the audit's item 1)."""
+    rec = usage() or {}
+    full = [f"the {label} window, resets {datetime.fromtimestamp(rec[k]['resets_at']).strftime('%a %H:%M')}"
+            for k, label in WINDOWS if k in rec and rec[k]["used_percentage"] >= 100]
+    return "; ".join(full) or None
+
+
 def budget_notice(session_id):
     """The sentence a session is told when a window reaches BUDGET_WARN - once per session, window and reset - or
     None."""
@@ -707,6 +716,7 @@ def main(argv=None):
     rl.add_argument("--role", required=True)
     wf = sub.add_parser("waiting-for", help="print the role ROLE's corner says it waits for (nothing if none)")
     wf.add_argument("role")
+    sub.add_parser("at-limit", help="print the plan windows at their limit now (nothing if none)")
     an = sub.add_parser("answer")
     an.add_argument("id", type=int)
     an.add_argument("--answer", required=True)
@@ -824,6 +834,10 @@ def main(argv=None):
             w = waiting_on(args.role)
             if w:
                 print(w)
+        elif args.cmd == "at-limit":
+            lim = at_limit()
+            if lim:
+                print(lim)
         elif args.cmd == "answer":
             answer(args.id, args.answer, args.note)
             print(describe(items()[args.id]))

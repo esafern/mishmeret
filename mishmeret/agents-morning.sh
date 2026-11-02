@@ -375,6 +375,13 @@ READY_END
         [ -e "$NIGHT/$r.nopane" ] || { notify "$r: its tmux pane was not found - not landed"; touch "$NIGHT/$r.nopane"; }
         pending=$((pending - 1)); continue      # nothing more this run can do for it
       fi
+      # A PLAN WINDOW AT ITS LIMIT: no /land, which a session at the limit answers with a notice and lands nothing
+      # (2026-10-30; the Board's #118, A). Named once; the first night run after the reset lands it.
+      lim=$("$PY" "$HERE/board.py" at-limit 2>/dev/null)
+      if [ -n "$lim" ]; then
+        [ -e "$NIGHT/$r.limit" ] || { notify "$r: not landed - limit, $lim; the next night run tries again"; touch "$NIGHT/$r.limit"; }
+        pending=$((pending - 1)); continue
+      fi
       # WAITING FOR ANOTHER ROLE'S WORK (the comment at the top): that role still running, and not kept, left open or
       # closed by this run - so work may still come; tonight 2026-10-11 the builder's HANDOFF reached the verifier 37 s
       # after its /land
@@ -399,7 +406,7 @@ READY_END
     if [ "$landing" -gt 0 ]; then sleep "$POLL"; else sleep "$CHECK_EVERY"; fi
   done
   closed=$(ls "$NIGHT"/*.closed 2>/dev/null | wc -l | tr -d ' ')
-  say "the night's work is done: $closed closed ($(ls "$NIGHT"/*.outside 2>/dev/null | wc -l | tr -d ' ') of them outside this run), $(ls "$NIGHT"/*.kept 2>/dev/null | wc -l | tr -d ' ') kept running, $(ls "$NIGHT"/*.left 2>/dev/null | wc -l | tr -d ' ') left open for you, $(ls "$NIGHT"/*.nopane 2>/dev/null | wc -l | tr -d ' ') whose pane was not found"
+  say "the night's work is done: $closed closed ($(ls "$NIGHT"/*.outside 2>/dev/null | wc -l | tr -d ' ') of them outside this run), $(ls "$NIGHT"/*.kept 2>/dev/null | wc -l | tr -d ' ') kept running, $(ls "$NIGHT"/*.left 2>/dev/null | wc -l | tr -d ' ') left open for you, $(ls "$NIGHT"/*.nopane 2>/dev/null | wc -l | tr -d ' ') whose pane was not found, $(ls "$NIGHT"/*.limit 2>/dev/null | wc -l | tr -d ' ') not landed for the plan's limit"
   if [ "$closed" -eq 0 ]; then say "no role was closed - no update, no Go"; exit 0; fi
   if [ -n "$DRY" ]; then say "(dry run) would run claude update, then wait for your Go"; exit 0; fi
   claude update >> "$NIGHT/log.txt" 2>&1

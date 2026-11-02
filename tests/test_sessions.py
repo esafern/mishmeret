@@ -157,6 +157,52 @@ def test_the_night_run_does_not_take_a_land_answered_by_a_notice_for_a_landing(t
     assert (night / "ex-builder.left").exists()
 
 
+@pytest.mark.parametrize("percent", [100, 60])
+def test_the_night_run_sends_no_land_while_a_plan_window_is_at_its_limit(tmp_path, percent):
+    """The Board's #118, A, with girsa-verifier's ANSWER: on 2026-10-30 the night run sent /land into five sessions at the
+    weekly limit, and each answered with a notice. A window at its limit in the Board's usage record (board.usage(),
+    which drops a window once its reset has passed): the role is named "not landed - limit" with the reset, and no
+    /land typed - the first night run after the reset lands it. Under the limit, /land as before. A whole night run
+    behind stubs (ioreg saying you are idle), one role idle 20 minutes, a placeholder Board."""
+    import datetime
+    import time
+    from conftest import write_project
+    cfg = write_project(tmp_path)
+    now = time.time()
+    night = tmp_path / "scratch" / "state" / "night" / datetime.date.today().isoformat()
+    (tmp_path / "board").mkdir()
+    (tmp_path / "board" / "usage.json").write_text(json.dumps({
+        "seven_day": {"used_percentage": percent, "resets_at": int(now) + 86400}, "seen_at": int(now), "session": None}),
+        encoding="utf-8")
+    transcript = tmp_path / "projects" / "the-project" / "s-1.jsonl"
+    transcript.parent.mkdir(parents=True)
+    transcript.write_text(json.dumps({"type": "assistant", "timestamp": "2026-01-01T00:00:00Z", "message": {
+        "model": "placeholder-model", "usage": {"input_tokens": 10}}}) + "\n", encoding="utf-8")
+    os.utime(transcript, (now - 1200, now - 1200))
+    rows = json.dumps([{"name": "ex-builder", "status": "idle", "sessionId": "s-1", "pid": os.getpid()}])
+    typed = tmp_path / "typed.txt"
+    stubs = {"claude": f"if [ \"$1\" = agents ]; then echo '{rows}'; fi",
+             "tmux": f"case \"$1\" in list-panes) echo '{os.getppid()} %1' ;; send-keys) echo \"$*\" >> '{typed}' ;; esac",
+             "ioreg": "echo '  \"HIDIdleTime\" = 9000000000000'", "sleep": "exit 0", "caffeinate": "exit 0",
+             "osascript": "exit 0"}
+    (tmp_path / "bin").mkdir()
+    for name, body in stubs.items():
+        (tmp_path / "bin" / name).write_text(f"#!/bin/sh\n{body}\n", encoding="utf-8")
+        (tmp_path / "bin" / name).chmod(0o755)
+    env = dict(os.environ, MISHMERET_CONFIG=cfg, PATH=f"{tmp_path / 'bin'}{os.pathsep}{os.environ['PATH']}")
+    env.pop("MISHMERET_BOARD_DIR", None)
+    out = subprocess.run(["bash", os.path.join(PKG, "agents-morning.sh"), "--night"], env=env,
+                         stdin=subprocess.DEVNULL, capture_output=True, text=True, encoding="utf-8", timeout=60)
+    log = (night / "log.txt").read_text(encoding="utf-8")
+    assert out.returncode == 0, out.stdout + out.stderr + log
+    sent = typed.read_text(encoding="utf-8") if typed.exists() else ""
+    limited = "ex-builder: not landed - limit, the 7-day window, resets " in log
+    assert limited == (percent == 100), log
+    assert ("/land" in sent) == (percent < 100), sent
+    if limited:
+        assert "1 not landed for the plan's limit" in log, log
+
+
 def test_the_night_run_can_be_skipped_without_turning_it_off(tmp_path):
     """The reviewer, 2026-10-21: "give me a clean way to tell it not to run w/o turning it off". --skip-tonight holds
     today's run, --skip every run, --resume removes both; a held run ends before it looks at anything (a dry run in a
