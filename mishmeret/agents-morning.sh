@@ -333,6 +333,19 @@ READY_END
         landing=$((landing + 1))
         q=$(quiet_for "$sid")
         if [ "$st" = "idle" ] && [ "$q" -ge "$LANDED_QUIET" ]; then
+          # /LAND NOT LANDED (2026-10-30 and 10-31: every role idle after /land was asked to report back, then left
+          # open): answered by a notice Claude Code wrote itself, its weekly limit - or, where it left no record, its
+          # transcript unchanged since /land was typed. Neither is asked to report back.
+          sent=$(stat -f %m "$NIGHT/$r.land-sent")
+          if [ $(( $(date +%s) - q )) -lt "$sent" ]; then
+            notify "$r: its transcript has not changed since /land was typed - /land did not reach it; left open for you"
+            touch "$NIGHT/$r.left"; continue
+          fi
+          n=$("$PY" "$HERE/role_usage.py" synthetic-after "$(transcript_of "$sid")" "$sent" 2>/dev/null)
+          if [ -n "$n" ]; then
+            notify "$r: /land was answered by a notice, not a landing - $n - left open for you"
+            touch "$NIGHT/$r.left"; continue
+          fi
           # THE PANE'S RECENT HISTORY, ITS WRAPPED LINES JOINED (2026-10-09, the night of 10-08: the builder and the verifier
           # said "ready to clear" and were left open - the phrase had scrolled above the visible pane, or a narrow pane
           # broke it across two lines; the steward wrote "can be cleared")

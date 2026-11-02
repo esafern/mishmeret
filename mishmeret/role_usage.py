@@ -37,6 +37,41 @@ def transcript(session_id):
     return path if path and os.path.exists(path) else None
 
 
+def tail_records(path, nbytes):
+    """A transcript's main-chain records (dicts; subagents' sidechain records left out) in its last `nbytes`, newest
+    first; a line that does not parse (the first, cut by the seek) is skipped."""
+    with open(path, "rb") as fh:
+        fh.seek(max(0, os.path.getsize(path) - nbytes))
+        lines = fh.read().decode("utf-8", "replace").splitlines()
+    for line in reversed(lines):
+        try:
+            rec = json.loads(line)
+        except ValueError:
+            continue
+        if isinstance(rec, dict) and not rec.get("isSidechain"):
+            yield rec
+
+
+def synthetic_after(path, since, tail=256 * 1024):
+    """The text of a transcript's newest assistant record when Claude Code wrote it itself, no call made (model
+    `<synthetic>`: a usage-limit or error notice), at or after `since` (epoch seconds) - else None. A /land so answered
+    is no landing (2026-10-30 and 10-31: the night run's /land answered "You've hit your weekly limit", then read as
+    landed and asked to report back)."""
+    for rec in tail_records(path, tail):
+        if rec.get("type") != "assistant":
+            continue
+        m = rec.get("message") or {}
+        try:
+            when = datetime.fromisoformat(rec["timestamp"].replace("Z", "+00:00")).timestamp()
+        except (KeyError, ValueError, AttributeError):
+            return None
+        if m.get("model") != "<synthetic>" or when < since:
+            return None
+        blocks = m.get("content") if isinstance(m.get("content"), list) else []
+        return " ".join(b.get("text", "") for b in blocks if isinstance(b, dict)).strip() or "(no text)"
+    return None
+
+
 def turn_ended(session_id, tail=256 * 1024):
     """True when a session's last turn has ended - its transcript's last main-chain record is the turn's closing `system`
     record (`turn_duration`), with no prompt or answer after it - else False, unknown included (Lesson 59). `claude
@@ -45,16 +80,7 @@ def turn_ended(session_id, tail=256 * 1024):
     path = transcript(session_id)
     if not path:
         return False
-    with open(path, "rb") as fh:
-        fh.seek(max(0, os.path.getsize(path) - tail))
-        lines = fh.read().decode("utf-8", "replace").splitlines()
-    for line in reversed(lines):
-        try:
-            rec = json.loads(line)
-        except ValueError:
-            continue
-        if not isinstance(rec, dict) or rec.get("isSidechain"):
-            continue
+    for rec in tail_records(path, tail):
         if rec.get("type") in ("user", "assistant"):
             return False
         if rec.get("type") == "system" and rec.get("subtype") == "turn_duration":
@@ -219,7 +245,11 @@ def role_week(day=None, n=7):
 
 
 def main(argv=None):
-    day = (argv or sys.argv[1:] or [None])[0]
+    argv = sys.argv[1:] if argv is None else argv
+    if argv[:1] == ["synthetic-after"]:      # the night run's: synthetic-after PATH EPOCH - the notice's text, or nothing
+        print(synthetic_after(argv[1], float(argv[2])) or "")
+        return
+    day = (argv or [None])[0]
     rows = sorted(role_usage(day).items(), key=lambda kv: -kv[1]["main"]["weighted"])
     print(f"{'role':24} {'sessions':>8} {'calls':>6} {'weighted':>12} {'cache write':>12} {'cache read':>12} {'output':>9} "
           f"{'compactions':>11}  subagents (model: weighted)")

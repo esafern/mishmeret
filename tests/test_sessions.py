@@ -96,6 +96,64 @@ def test_the_night_run_lands_a_role_under_the_limit_and_keeps_it_uncleared():
     assert 'rm -f "$NIGHT/$r.kept" "$NIGHT/$r.landed-kept"' in script       # worked with again: looked at afresh
 
 
+@pytest.mark.parametrize("kind", ["notice", "no record", "landed"])
+def test_the_night_run_does_not_take_a_land_answered_by_a_notice_for_a_landing(tmp_path, kind):
+    """2026-10-30 and 10-31 (the Mishmeret audit's item 1, re-scoped by girsa-verifier): every role's /land was answered
+    by a `<synthetic>` record, "You've hit your weekly limit", or left no record at all; the run read each as landed,
+    typed the ask-ready sentence, and left it open. Now a notice is named in the night log and a transcript unchanged
+    since /land is said not to have got it - neither asked to report back; a real landing still is. A whole night run,
+    not a dry one, behind stub claude, tmux, sleep, caffeinate and osascript: one role idle, its /land sent 20 minutes
+    ago, its pane this test's parent process."""
+    import datetime
+    import time
+    from conftest import write_project
+    cfg = write_project(tmp_path)
+    now = time.time()
+    night = tmp_path / "scratch" / "state" / "night" / datetime.date.today().isoformat()
+    night.mkdir(parents=True)
+    (night / "ex-builder.land-sent").touch()
+    os.utime(night / "ex-builder.land-sent", (now - 1200, now - 1200))
+    def rec(kind_, at, **extra):
+        stamp = datetime.datetime.fromtimestamp(now + at, datetime.timezone.utc).isoformat().replace("+00:00", "Z")
+        return json.dumps({"type": kind_, "timestamp": stamp, **extra})
+    records = [rec("user", -1199, message={"role": "user", "content": "/land"})]
+    if kind == "notice":
+        records.append(rec("assistant", -1198, isApiErrorMessage=True, message={
+            "model": "<synthetic>", "content": [{"type": "text", "text": "You've hit your weekly limit"}],
+            "usage": {"input_tokens": 0, "output_tokens": 0}}))
+    elif kind == "landed":
+        records.append(rec("assistant", -1100, message={
+            "model": "placeholder-model", "content": [{"type": "text", "text": "Landed."}],
+            "usage": {"input_tokens": 10, "output_tokens": 5}}))
+    transcript = tmp_path / "projects" / "the-project" / "s-1.jsonl"
+    transcript.parent.mkdir(parents=True)
+    transcript.write_text("\n".join(records if kind != "no record" else records[:0]) + "\n", encoding="utf-8")
+    written = now - (1800 if kind == "no record" else 600)                 # before /land, or after it
+    os.utime(transcript, (written, written))
+    rows = json.dumps([{"name": "ex-builder", "status": "idle", "sessionId": "s-1", "pid": os.getpid()}])
+    typed = tmp_path / "typed.txt"
+    stubs = {"claude": f"if [ \"$1\" = agents ]; then echo '{rows}'; fi",
+             "tmux": f"case \"$1\" in list-panes) echo '{os.getppid()} %1' ;; send-keys) echo \"$*\" >> '{typed}' ;; esac",
+             "sleep": "exit 0", "caffeinate": "exit 0", "osascript": "exit 0"}
+    (tmp_path / "bin").mkdir()
+    for name, body in stubs.items():
+        (tmp_path / "bin" / name).write_text(f"#!/bin/sh\n{body}\n", encoding="utf-8")
+        (tmp_path / "bin" / name).chmod(0o755)
+    env = dict(os.environ, MISHMERET_CONFIG=cfg, PATH=f"{tmp_path / 'bin'}{os.pathsep}{os.environ['PATH']}")
+    out = subprocess.run(["bash", os.path.join(PKG, "agents-morning.sh"), "--night"], env=env,
+                         stdin=subprocess.DEVNULL, capture_output=True, text=True, encoding="utf-8", timeout=60)
+    log = (night / "log.txt").read_text(encoding="utf-8")
+    assert out.returncode == 0, out.stdout + out.stderr + log
+    sent = typed.read_text(encoding="utf-8") if typed.exists() else ""
+    expected = {"notice": "ex-builder: /land was answered by a notice, not a landing - You've hit your weekly limit - "
+                          "left open for you",
+                "no record": "ex-builder: its transcript has not changed since /land was typed - /land did not reach it",
+                "landed": "ex-builder: landed without saying it is ready to clear - asked to report back"}[kind]
+    assert expected in log, log
+    assert ("Has this session finished every step of /land?" in sent) == (kind == "landed"), sent
+    assert (night / "ex-builder.left").exists()
+
+
 def test_the_night_run_can_be_skipped_without_turning_it_off(tmp_path):
     """The reviewer, 2026-10-21: "give me a clean way to tell it not to run w/o turning it off". --skip-tonight holds
     today's run, --skip every run, --resume removes both; a held run ends before it looks at anything (a dry run in a
