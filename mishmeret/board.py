@@ -53,9 +53,9 @@ from datetime import datetime, timezone
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import config  # noqa: E402  (the project's config: mishmeret/config.py)
 
-# every role LANES.md names, so each holds main under its own name (girsa-demo-operator, 2026-10-18: holding as
-# girsa-operator, one operator's release freed the other's hold). The page draws a corner for the five it lists;
-# the demo operator reports in its own pane (LANES.md)
+# every role the config names, so each holds main under its own name (girsa-demo-operator, 2026-10-18: holding as
+# girsa-operator, one operator's release freed the other's hold). The page draws a corner for each role the config
+# marks `corner`; a role without one reports in its own pane
 ROLES = tuple(config.role_names())   # the config's roles, in its order (mishmeret/config.py)
 
 

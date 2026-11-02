@@ -258,6 +258,15 @@ def test_the_morning_run_starts_the_roles_when_none_is_running(tmp_path):
                          capture_output=True, text=True, encoding="utf-8", timeout=60)
     assert out.returncode == 0, out.stdout + out.stderr
     assert "starting them: bash agents.sh" in out.stdout and "placeholder agents.sh ran with: []" in out.stdout, out.stdout
+    # A PROJECT OF FOUR ROLES, none running, is started too (the Mishmeret audit's item 2: `-eq 5` sent it on to step 2)
+    from conftest import project_config
+    four = tmp_path / "four"
+    roles = [dict(r, tmux=False, colour="") if r["short"] == "architect" else r for r in project_config(four)["roles"]]
+    env4 = dict(env, MISHMERET_CONFIG=write_project(four, roles=roles))
+    (four / "agents.sh").write_text('echo "placeholder agents.sh ran with: [$*]"\n', encoding="utf-8")
+    out = subprocess.run(["bash", os.path.join(PKG, "agents-morning.sh")], env=env4, stdin=subprocess.DEVNULL,
+                         capture_output=True, text=True, encoding="utf-8", timeout=60)
+    assert out.returncode == 0 and "starting them: bash agents.sh" in out.stdout, out.stdout + out.stderr
     # ALL FIVE IDLE AT STEP 1, NONE AFTER STEP 2'S `claude update`: a stop that names --resume, agents.sh not run
     rows = json.dumps([{"name": r, "status": "idle", "sessionId": "-", "pid": 1} for r in
                        ("ex-operator", "ex-builder", "ex-verifier", "ex-ui-steward", "ex-architect")])

@@ -1,5 +1,5 @@
 #!/bin/bash
-# agents.sh - start Girsa's five role sessions in one tmux window, one pane each, each pane labelled in its role's colour.
+# agents.sh - start the project's role sessions in one tmux window, one pane each, each pane labelled in its role's colour.
 #
 #   bash agents.sh             start them; if the roles' tmux session (the config's tmux_session) is already running, start again each role whose
 #                              pane is back at its shell, then attach to it

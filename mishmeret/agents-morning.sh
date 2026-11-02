@@ -7,12 +7,12 @@
 #   bash agents-morning.sh
 #
 # Run it from a terminal window OUTSIDE the roles' tmux session (the last step ends that session). It
-#   1. waits until all five roles are idle - a role reconnecting in the morning may be busy for a while; when none of
-#      the five is running (after a restart of the Mac), it starts them with `bash agents.sh` and goes no further;
-#   2. on your "yes", types /land into the other four panes, runs `claude update` while they land, waits until all are
+#   1. waits until all the roles are idle - a role reconnecting in the morning may be busy for a while; when none of
+#      them is running (after a restart of the Mac), it starts them with `bash agents.sh` and goes no further;
+#   2. on your "yes", types /land into every pane but the operator's, runs `claude update` while they land, waits until all are
 #      idle, then types /land into the operator's;
 #   3. asks you whether every pane said it is ready to clear, and only on "yes" runs `bash agents.sh --restart`,
-#      which ends the tmux session and starts the five roles fresh - on the updated Claude Code - each given its first
+#      which ends the tmux session and starts the roles fresh - on the updated Claude Code - each given its first
 #      message by agents.sh.
 # Ctrl-C at any point stops it; nothing is typed or restarted without your "yes".
 #
@@ -442,13 +442,13 @@ wait_all_idle() {   # $1 = seconds every running role must stay idle in a row; $
   # agents when appr. [appropriate] rather than tell me to do it" - after a restart of the Mac it said "Start them with:
   # bash agents.sh"); plain agents.sh, never --restart, ends nothing. Gone during step 2's landing, they stopped without
   # landing: a stop that names --resume, never fresh sessions over them (girsa-verifier's LOW on c524fb2e)
-  if [ "$(echo $a | wc -w)" -eq 5 ]; then
+  if [ "$(echo $a | wc -w)" -eq "$(echo $ROLES | wc -w)" ]; then
     if [ "${2:-}" = "start" ]; then
-      echo "  No role session is running (claude agents lists none of the five) - starting them: bash agents.sh"
+      echo "  No role session is running (claude agents lists none of the roles) - starting them: bash agents.sh"
       exec bash "$DIR/agents.sh"
     fi
     echo
-    echo "  No role session is running any more (claude agents lists none of the five): they stopped during the landing."
+    echo "  No role session is running any more (claude agents lists none of the roles): they stopped during the landing."
     echo "  Resume each with its context: bash agents.sh --resume"
     exit 1
   fi
@@ -461,12 +461,12 @@ wait_all_idle() {   # $1 = seconds every running role must stay idle in a row; $
   echo
 }
 
-echo "Step 1 - waiting until all five roles are idle."
+echo "Step 1 - waiting until all the roles are idle."
 wait_all_idle 30 start
 echo
-echo "Step 2 - /land in each of the five panes. Each lands its session and ends by saying it is ready to clear;"
+echo "Step 2 - /land in each role's pane. Each lands its session and ends by saying it is ready to clear;"
 echo "         answer any question one asks you in its pane."
-read -r -p "         Type yes to send /land - to the other four first, the operator last (anything else: you type it): " answer
+read -r -p "         Type yes to send /land - to the others first, the operator last (anything else: you type it): " answer
 send_land() {   # roles...
   local r pane
   for r in "$@"; do
@@ -484,7 +484,7 @@ update_claude() {   # while the sessions land: a running session keeps the versi
 }
 wait_landed() {
   sleep 30
-  echo "         Waiting until all five have been idle for two minutes running."
+  echo "         Waiting until all have been idle for two minutes running."
   wait_all_idle 120
 }
 if [ "$answer" = "yes" ]; then
@@ -495,13 +495,13 @@ if [ "$answer" = "yes" ]; then
   send_land "$MM_OPERATOR_ROLE"
   wait_landed
 else
-  read -r -p "         Press Enter once you have typed /land in all five panes (the operator last). " _
+  read -r -p "         Press Enter once you have typed /land in every role's pane (the operator last). " _
   update_claude
   wait_all_idle 120
 fi
 echo
 echo "Step 3 - did every pane say it is ready to clear?"
-read -r -p "         Type yes to restart all five (bash agents.sh --restart), anything else to stop here: " answer
+read -r -p "         Type yes to restart all the roles (bash agents.sh --restart), anything else to stop here: " answer
 if [ "$answer" != "yes" ]; then
   echo "Stopped. Nothing restarted. Finish the landing in the pane that is not ready, then run this again."
   exit 0
