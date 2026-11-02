@@ -194,9 +194,9 @@ def test_the_role_guard_sends_every_commit_and_landing_in_this_repository_throug
                          ("git -C /work/book-builder commit -m x", "/tmp"), ("bash c.sh", "/work/book-builder"),
                          ("git -C /work/book merge --ff-only builder", "/work/book-builder")):
             why = no(role, cmd, cwd)
-            assert why and "tools/land.py" in why, (role, cmd)
-    assert "tools/land.py commit" in no("ex-operator", "git commit -m x", "/work/book")
-    assert "tools/land.py land" in no(rg.NO_ROLE, "git -C /work/book merge --ff-only x", "/work/book-x")
+            assert why and "`land.py " in why, (role, cmd)
+    assert "`land.py commit ROLE" in no("ex-operator", "git commit -m x", "/work/book")
+    assert "`land.py land ROLE" in no(rg.NO_ROLE, "git -C /work/book merge --ff-only x", "/work/book-x")
     for fine, cwd in (("git commit -m x", "/work/copy"), ("git -C /work/root commit -m x", "/work/book"),
                       ("git merge --ff-only main", "/work/book-builder"), ("git merge --abort", "/work/book"),
                       ("git commit-tree t -m x", "/work/book-builder"), ('echo "git commit -m x"', "/work/book")):
@@ -523,7 +523,7 @@ def test_land_commit_stages_what_it_names_and_refuses_the_rest(tmp_path, monkeyp
     assert calls["board"] == ["hold", "release"] and calls["gate"] == [str(main)]
 
 
-def test_land_lands_on_main_and_releases_the_hold_on_every_exit(tmp_path, monkeypatch):
+def test_land_lands_on_main_and_releases_the_hold_on_every_exit(tmp_path, monkeypatch, capsys):
     """tools/land.py land: a refused hold merges nothing; a red gate merges nothing and releases the hold; a stopped
     rebase releases the hold; a replayed commit continued with a wrong resolution is refused, after main moves too; taken
     back, checked at its stop and continued, it lands - main fast-forwarded and gated again on a frozen copy holding the
@@ -582,6 +582,12 @@ def test_land_lands_on_main_and_releases_the_hold_on_every_exit(tmp_path, monkey
     git(tree, "add", "placeholder.py")
     subprocess.run(["git", "-C", str(tree), "-c", "core.editor=true", "rebase", "--continue"], check=True,
                    capture_output=True)
+    # A PAGE FILE IN THE LANDING says the servers restart (girsa-verifier's LOW on step 4: `land.server.page` pinned by
+    # no test)
+    (tree / "page").mkdir()
+    (tree / "page" / "look.js").write_text("// placeholder\n", encoding="utf-8")
+    git(tree, "add", "page/look.js")
+    git(tree, "commit", "-q", "-m", "placeholder: a page file")
     # THE FROZEN COPY IS GATED WITH THE LIVE RULINGS FILE (girsa-verifier's LOW 1): main's has a ruling git does not
     (main / "rulings.jsonl").write_text('{"placeholder": "a pending ruling"}\n{"placeholder": "a Save"}\n',
                                                  encoding="utf-8")
@@ -591,6 +597,7 @@ def test_land_lands_on_main_and_releases_the_hold_on_every_exit(tmp_path, monkey
     calls["gate"].clear()
     head = land.land("ex-builder", "code", cwd=str(tree), plan="plan.md")
     assert git(main, "rev-parse", "main").strip() == head
+    assert "  the servers load: restart - page/look.js\n" in capsys.readouterr().out
     assert calls["board"][-2:] == ["hold", "release"] and len(calls["gate"]) == 2      # the worktree, then main's copy
     assert calls["gate"][0] == str(tree.resolve()) and "example-land-" in calls["gate"][1]
     assert seen[-1] == (main / "rulings.jsonl").read_text(encoding="utf-8")
@@ -1063,3 +1070,22 @@ def test_check_conflict_compares_three_versions_statement_by_statement():
     resolved = good.replace("return 1", "return 3")
     assert [k for k, _w in land.merged_statement_faults(base, ours_both, both, resolved)] == ["shared"]
     assert land.merged_statement_faults(base, ours_both, both, resolved, accept=("shared",)) == []
+
+
+def test_no_refusal_cites_one_projects_documents_board_items_or_dated_incidents():
+    """Mishmeret is general-purpose (the reviewer in Girsa, 2026-11-01: "the next project will have different roles"):
+    a refusal keeps its reason and its remedy, and cites no project's document, Board item, status id or dated incident
+    (girsa-verifier's LOW on step 4; the words girsa-operator's). Every string a return or raise in the guard, the
+    landing tool and the commit check builds; comments and docstrings are history and not read."""
+    import ast
+    cited = re.compile(r"Board #|LANES|START_HERE|WRITING\.md|\b0[A-Z]{2}\b|skill `|tools/land\.py|corpus root|"
+                       r"rulings file|20\d\d-\d\d-\d\d")
+    found = []
+    for name in ("role_guard.py", "land.py", "time_precommit.py"):
+        tree = ast.parse(open(os.path.join(PKG, name), encoding="utf-8").read())
+        for node in ast.walk(tree):
+            if isinstance(node, (ast.Return, ast.Raise)):
+                for c in ast.walk(node):
+                    if isinstance(c, ast.Constant) and isinstance(c.value, str) and cited.search(c.value):
+                        found.append(f"{name}:{c.lineno}: {c.value}")
+    assert not found, "\n".join(found)

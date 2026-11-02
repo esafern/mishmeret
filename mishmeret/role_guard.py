@@ -92,8 +92,8 @@ SETS_AGENT = re.compile(r"(?<![\w$])CLAUDE_CODE_AGENT=")
 # role, and `git merge` in the main tree (a landing) too, but `git merge --abort`: land.py commit and land.py land do
 # both, with the lane check, the gate and the hold. A session with no role keeps its commits in a worktree (it cannot
 # name a role to land.py).
-THROUGH_LAND = {"commit": "`tools/land.py commit ROLE notes|code -F MESSAGE NAME...`",
-                "merge": f"`tools/land.py land ROLE notes|code` ({PLANNED}'s code: `--plan PLAN`), from your worktree"}
+THROUGH_LAND = {"commit": "`land.py commit ROLE notes|code -F MESSAGE NAME...`",
+                "merge": f"`land.py land ROLE notes|code` ({PLANNED}'s code: `--plan PLAN`), from your worktree"}
 # ...and the other git commands that make a commit on main, which CHANGES_MAIN already refuses every other role there:
 # refused to the operator too in this repository's main tree (girsa-verifier's LOW on 23be3451; the reviewer, Board #87
 # A), but each one's --abort.
@@ -314,14 +314,14 @@ def refusal(role, command, cwd, main_tree=is_main_tree, read=_read, depth=0, pro
             where = _git_where(command, masked, m, cwd)
             in_main = main_tree(where)
             if (verb == "commit" or in_main) and not (role == NO_ROLE and not in_main) and project_tree(where):
-                return (f"refused by the role guard: `git {verb}` in this repository goes through {THROUGH_LAND[verb]} "
-                        "(skill `landing`; the reviewer, 2026-10-26)" + no_role)
+                return (f"refused by the role guard: `git {verb}` in this repository goes through {THROUGH_LAND[verb]}"
+                        + no_role)
         if role == OPERATOR and verb in OPERATOR_THROUGH_LAND and "--abort" not in rest:
             where = _git_where(command, masked, m, cwd)
             if main_tree(where) and project_tree(where):
                 return (f"refused by the role guard: `git {verb}` in the main tree makes a commit no gate saw - make the "
-                        "change in a worktree and land it with `tools/land.py land`, or commit its result with "
-                        "`tools/land.py commit` (Board #87 A)")
+                        "change in a worktree and land it with `land.py land`, or commit its result with "
+                        "`land.py commit`")
         if verb == "push":
             if role != OPERATOR:
                 return (f"refused by the role guard: pushing is the operator's ({OPERATOR}), on the reviewer's "
@@ -335,19 +335,18 @@ def refusal(role, command, cwd, main_tree=is_main_tree, read=_read, depth=0, pro
         elif (verb == "stash" and not (rest[:1] and rest[0] in LEAVES_IT["stash"])
               and project_tree(_git_where(command, masked, m, cwd))):
             return ("refused by the role guard: `git stash` in this repository - its stash list is shared by the main "
-                    "clone and every worktree, so a pop can take another role's work (LANES.md; 2026-10-20: one role "
-                    "popped another's) - set the work aside as a patch: `git diff > <file>.patch`" + no_role)
+                    "clone and every worktree, so a pop can take another role's work - set the work aside as a patch: `git diff > <file>.patch`" + no_role)
         elif verb in CHANGES_MAIN and role != OPERATOR:
             leaves = LEAVES_IT.get(verb, ())
             if (rest[:1] and rest[0] in leaves) if verb == "stash" else any(w in rest for w in leaves):
                 continue
             if main_tree(_git_where(command, masked, m, cwd)):
-                return (f"refused by the role guard: `git {verb}` would change the main tree or a book's corpus "
-                        "root, which are the operator's alone - work in your worktree or a copy and land with `git "
+                return (f"refused by the role guard: `git {verb}` would change the main tree or a root the "
+                        "project lists, which are the operator's alone - work in your worktree or a copy and land with `git "
                         "merge --ff-only`, or send the operator a HANDOFF" + no_role)
     if SETS_AGENT.search(masked):
         return ("refused by the role guard: a command may not set CLAUDE_CODE_AGENT - Claude Code sets it to the "
-                "session's role, and tools/land.py lands as that role (Board #86 A)" + no_role)
+                "session's role, and land.py lands as that role" + no_role)
     for m in LAND.finditer(masked):
         verb = m.group(1)
         if verb not in LAND_AS_ROLE:
@@ -356,10 +355,10 @@ def refusal(role, command, cwd, main_tree=is_main_tree, read=_read, depth=0, pro
         named = _expand(_unquote(words[0]), command[:m.start()]) if words else ""
         if named != role:
             return (f"refused by the role guard: `land.py {verb}` names the role {named or '(none)'}, and this session "
-                    f"is {role} - a role commits and lands only as itself (Board #86 A)" + no_role)
+                    f"is {role} - a role commits and lands only as itself" + no_role)
         if verb == "commit" and role != OPERATOR and main_tree(_dir_before(command, masked, m.start(), cwd)):
             return ("refused by the role guard: `land.py commit` in the main tree is the operator's alone - commit in "
-                    "your worktree and land with `land.py land` (Board #86 A)" + no_role)
+                    "your worktree and land with `land.py land`" + no_role)
     return None
 
 
@@ -391,7 +390,7 @@ def copy_refusal(command, cwd, is_worktree=lambda p: os.path.isfile(os.path.join
             path = os.path.join(here, _expand(_unquote(src), command[:m.start(1)]))    # an assignment may lead it
             if is_worktree(path.rstrip("/") or "/"):
                 return (f"refused by the role guard: `cp` of {src}, a linked worktree - its .git is a file pointing "
-                        "into the main repository, so git in the copy changes that worktree (LANES.md, 2026-10-02); "
+                        "into the main repository, so git in the copy changes that worktree; "
                         f"a rehearsal copies the main clone: `cp -c -R {_home_as_tilde(HOOK_REPO)} <copy>`")
     return None
 
@@ -475,7 +474,7 @@ def tmux_refusal(command, cwd, read=_read, own_env=False, depth=0):
             if re.fullmatch(r"[A-Za-z][\w.-]*", session) and session != ROLES_SESSION:
                 continue                    # another session on the live server, named outright: not the roles'
         return (f"refused by the role guard: `tmux {verb}` here would reach the LIVE tmux server - the one every "
-                f"role's session runs in (2026-10-11 17:51: a test's kill-server stopped every role, none landed). "
+                f"role's session runs in. "
                 "A test server is reached only as `env -u TMUX TMUX_TMPDIR=<its own folder> tmux ...` or `tmux -S "
                 f"<its own socket> ...`; the live server and the {ROLES_SESSION} session are the reviewer's to stop")
     for m in PKILL.finditer(masked):
@@ -665,8 +664,7 @@ def check_status_refusal(command, cwd, read=_read, depth=0):
             else:
                 how = "it is followed by `;` or a new line with no `set -e` before it"
         return (f"refused by the role guard: `{check}` cannot stop `{later}` later in this command - {how}. A check's "
-                "own exit status decides the step after it (START_HERE; the reviewer, 2026-10-13: \"this issue keeps "
-                "biting us\"): put `set -e` first and the check alone on its line, or `if ! <check>; then ...; exit 1; "
+                "own exit status decides the step after it: put `set -e` first and the check alone on its line, or `if ! <check>; then ...; exit 1; "
                 "fi`; send its output to a file and read the file, never through a pipe")
     return None
 
@@ -733,7 +731,7 @@ def piped_check_refusal(command, cwd, read=_read, depth=0):
 
 def _piped_why(hidden, last):
     return (f"refused by the role guard: `{hidden}` is piped into `{last}`, so the exit status you see is `{last}`'s "
-            "and a failure reads as a pass (Board #66 A). Write its output to a file and read the check's own status: "
+            "and a failure reads as a pass. Write its output to a file and read the check's own status: "
             "`<check> > log 2>&1; echo \"rc=$?\"; tail log` - or put `set -o pipefail` first, or read "
             "`${PIPESTATUS[0]}` in the next statement")
 
@@ -757,7 +755,7 @@ def future_time_refusal(text, now=None):
     # no date, the dated check let it through, and the correction cost turns) - "19:1x", "14:xx"; never a slice's "1:x"
     if (x := _X_MINUTE.search(text or "")):
         return (f"refused by the role guard: {x.group(0)!r} leaves a minute as x - read `date` or the record, "
-                "and write the minute it says, or no time at all (WRITING.md)")
+                "and write the minute it says, or no time at all")
     stamp = re.compile(re.escape(now.strftime("%Y-%m-%d")) + r"(?:,\s*|\s+|T)" + _CLOCK)
     for m in stamp.finditer(text or ""):
         times, at = [m.groups()], m.end()
@@ -768,7 +766,7 @@ def future_time_refusal(text, now=None):
             written = text[m.start():at].strip()
             if not mm.isdigit():
                 return (f"refused by the role guard: {written!r} leaves a minute as x - read `date` or the record, "
-                        "and write the minute it says, or no time at all (WRITING.md)")
+                        "and write the minute it says, or no time at all")
             try:
                 t = now.replace(hour=int(hh), minute=int(mm), second=0, microsecond=0)
             except ValueError:
@@ -780,7 +778,7 @@ def future_time_refusal(text, now=None):
             if t > now + timedelta(minutes=1):
                 return (f"refused by the role guard: {written!r} is later than the clock ({now:%H:%M}) - a time is "
                         "read from `date` or a record, never typed ahead; tell events in order and by their record "
-                        "(a commit, a ruling, a Board item), and write a plan's time without the date (WRITING.md)")
+                        "(a commit, a ruling, a Board item), and write a plan's time without the date")
     return None
 
 
@@ -832,7 +830,7 @@ def edit_refusal(role, path, main_tree=is_main_tree):
     if main_tree(here):
         no_role = (" (this session was started without a role: a one-off session works in a worktree)"
                    if role == NO_ROLE else "")
-        return ("refused by the role guard: this file is in the main tree or a book's corpus root, which only the "
+        return ("refused by the role guard: this file is in the main tree or a root the project lists, which only the "
                 f"operator ({OPERATOR}) changes - edit your worktree's copy and land with `git merge --ff-only`, or "
                 "send the operator a HANDOFF" + no_role)
     return None

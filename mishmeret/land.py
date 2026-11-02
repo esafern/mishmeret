@@ -178,7 +178,7 @@ def commit(role, kind, message, names, tests=None, because=None, cwd="."):
         raise Refused(refusal)
     if _staged(where.top):
         raise Refused(f"the index already holds {', '.join(_staged(where.top))} - stage nothing by hand: name the "
-                      f"files here, and nothing of another's is swept in (0KE)")
+                      f"files here, and nothing of another's is swept in")
     head = said(where.top, "rev-parse", "HEAD")
     with open(message, encoding="utf-8") as fh:
         text = fh.read().strip()
@@ -314,7 +314,7 @@ def _landing(role, kind, where, branch, accept=(), plan=None, because=None):
         if not conflicted:
             raise Refused(f"the rebase stopped: {(rebased.stderr or rebased.stdout).strip()}")
         raise Refused("the rebase stopped on a conflict in " + ", ".join(conflicted) + ". Resolve each file, check it "
-                      "(`land.py check-conflict " + " ".join(shlex.quote(f) for f in conflicted) + "`; LANES.md: a "
+                      "(`land.py check-conflict " + " ".join(shlex.quote(f) for f in conflicted) + "`; a "
                       "conflict resolved by keeping both sides is checked function by function), `git add` them, "
                       "`git rebase --continue`, and land again - the landing checks every replayed commit itself. A "
                       f"code round goes back to {VERIFIER}.")
@@ -480,9 +480,9 @@ def _frozen_gate(where):
             shutil.copyfile(live, os.path.join(tree, LEDGER))
             with open(live, "rb") as a, open(os.path.join(tree, LEDGER), "rb") as b:
                 if a.read() != b.read():
-                    raise Refused("the live rulings file changed while it was copied: gate main again")
+                    raise Refused(f"the live ledger ({LEDGER}) changed while it was copied: gate main again")
         if run_gate(tree, "landing"):
-            raise Red("LANDED, and the gate on main is red - the fix is yours (LANES.md)")
+            raise Red("LANDED, and the gate on main is red - the fix is yours")
     finally:
         shutil.rmtree(copy, ignore_errors=True)
 
