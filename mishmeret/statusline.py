@@ -66,9 +66,6 @@ def board_row(role):
 CACHE_FIELDS = ("warm", "hit_ratio", "misses", "expires_at", "recache_tokens_if_cold", "last_miss_cause")
 
 
-USAGE_KEYS = ("input_tokens", "cache_creation_input_tokens", "cache_read_input_tokens")
-
-
 def last_turn(transcript_path, tail=4_000_000):
     """{"context", "at"} of the session's last call in its transcript, or None. A session compacted while idle reports
     no context until its next turn (the reviewer, 2026-10-28: "where are the context numbers on the board?"), so the
@@ -85,7 +82,7 @@ def session_fields(data):
     it reports no context (compacted, not yet called again), the context of its last turn."""
     pc = data.get("prompt_cache") or {}
     used = (data.get("context_window") or {}).get("current_usage") or {}
-    ctx = sum(used.get(k) or 0 for k in USAGE_KEYS)
+    ctx = sum(used.get(k) or 0 for k in role_usage.USAGE_KEYS)
     before = None
     if not ctx:
         before = board.session_record(data.get("session_id")).get("last_turn") or last_turn(data.get("transcript_path"))
