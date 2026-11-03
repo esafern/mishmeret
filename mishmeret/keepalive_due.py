@@ -15,23 +15,21 @@ answer is not reported twice for the same call."""
 import argparse, datetime, json, os, subprocess, sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import config  # noqa: E402
-import board  # noqa: E402
+import config  # noqa: E402  (reads no config at import; `board` does, so it is imported in _main, inside main's catch)
 import role_usage  # noqa: E402
 
-PROJECT = role_usage.project_dir()          # the project tree's transcripts (the config)
-REPO = config.root()
-STATE = config.expand(config.load()["state_dir"])
-SEEN = os.path.join(STATE, "keepalive_seen.json")
 MIN_AGE, MAX_AGE, MIN_CTX = 45, 58, 20_000
-NIGHT_DIR = os.path.join(STATE, "night")
 NIGHT_MARKS = ("kept", "landed-kept", "left", "cleared")
 
+
+def _state(*parts):
+    """A path under the config's state_dir - read when asked, so a bad config fails inside main's catch."""
+    return os.path.join(config.expand(config.load()["state_dir"]), *parts)
 
 
 def last_call(session_id):
     """(time, context tokens) of the transcript's last main-chain API call, or None."""
-    path = os.path.join(PROJECT, session_id + ".jsonl")
+    path = os.path.join(role_usage.project_dir(), session_id + ".jsonl")
     return role_usage.last_call(path) if os.path.exists(path) else None
 
 
@@ -42,7 +40,7 @@ def landed_tonight(role, last):
         return False
     night = (now if now.hour >= 18 else now - datetime.timedelta(days=1)).strftime("%Y-%m-%d")
     for mark in NIGHT_MARKS:
-        path = os.path.join(NIGHT_DIR, night, f"{role}.{mark}")
+        path = _state("night", night, f"{role}.{mark}")
         if os.path.exists(path) and os.path.getmtime(path) >= last.timestamp():
             return True
     return False
@@ -78,9 +76,11 @@ def _main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--self", dest="me", required=True, help="the operator's own session id")
     a = ap.parse_args()
+    import board  # noqa: E402  (reads the config at import: here, so a bad one is said - the loop's exit 0)
+    seen_path = _state("keepalive_seen.json")
     now = datetime.datetime.now(datetime.timezone.utc)
     sessions = json.loads(subprocess.run(["claude", "agents", "--json", "--all"], capture_output=True, text=True).stdout)
-    seen = json.load(open(SEEN, encoding="utf-8")) if os.path.exists(SEEN) else {}
+    seen = json.load(open(seen_path, encoding="utf-8")) if os.path.exists(seen_path) else {}
     due, waiting_any, me_row = [], False, None
     for s in sessions:
         if s.get("kind") != "interactive" or not s.get("sessionId"):
@@ -112,7 +112,7 @@ def _main():
         print(f"{kind} {name} {sid[:8]} idle {age:.0f} min, context {ctx // 1000}k, {why}", flush=True)
         seen[sid] = ts
     if due:
-        with open(SEEN, "w", encoding="utf-8", newline="\n") as f:
+        with open(seen_path, "w", encoding="utf-8", newline="\n") as f:
             json.dump(seen, f, indent=1)
     sys.exit(0 if due else 1)
 

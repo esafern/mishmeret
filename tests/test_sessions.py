@@ -364,6 +364,14 @@ def test_the_keepalive_check_says_a_crash_and_pings_a_due_role_once(tmp_path):
                               capture_output=True, text=True, encoding="utf-8", timeout=60)
     out = run("")
     assert out.returncode == 0 and out.stdout.startswith("KEEPALIVE CHECK FAILED: JSONDecodeError"), out.stdout + out.stderr
+    # a bad config is said the same way: it was read at import, before main's catch, and exited 1 ("none due")
+    # (Girsa's loose ends E4, Board #131 B)
+    bad = tmp_path / "bad.json"
+    bad.write_text("{ not json", encoding="utf-8")
+    good, env["MISHMERET_CONFIG"] = env["MISHMERET_CONFIG"], str(bad)
+    out = run("[]")
+    assert out.returncode == 0 and out.stdout.startswith("KEEPALIVE CHECK FAILED: ConfigError"), out.stdout + out.stderr
+    env["MISHMERET_CONFIG"] = good
     when = (datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(minutes=50)).isoformat()
     (tx / "s-1.jsonl").write_text(json.dumps({"type": "assistant", "timestamp": when, "message": {
         "usage": {"input_tokens": 10, "cache_read_input_tokens": 30000, "cache_creation_input_tokens": 0}}}) + "\n",
@@ -406,5 +414,5 @@ def test_one_reader_of_a_transcripts_last_call_passes_over_a_notices_zeros(tmp_p
     spec = importlib.util.spec_from_file_location("keepalive_due", os.path.join(PKG, "keepalive_due.py"))
     kd = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(kd)
-    monkeypatch.setattr(kd, "PROJECT", str(tmp_path))
+    monkeypatch.setenv("MISHMERET_TRANSCRIPTS", str(tmp_path))     # last_call asks role_usage.project_dir() when called
     assert kd.last_call("s-1") == (at, 40005)                                        # the keep-alive's
