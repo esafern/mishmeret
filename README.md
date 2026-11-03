@@ -1,11 +1,26 @@
 # Mishmeret
 
-משמרת - a watch, a shift of duty. The process that runs a team of Claude Code sessions, each in a standing role, on
-one project: the Board where the roles put their questions to a person and the person answers, the roles' tmux
-session, the night run that lands and clears them, the session hooks and the status line, and the reports a role or
-the project's gate runs - the start-up documents' sizes, what each role reads at start, each role's effort, and the
-check of a draft the moment a session writes it. Extracted from Girsa, a digitization project, where it was built; it
-names no project of its own.
+משמרת - a watch, a shift of duty.
+
+Mishmeret runs a software project with a team of Claude Code sessions, each in a standing role with its own git
+worktree. It is the process around the agents, not the agents themselves: what each role may do, how its work lands,
+and how one person stays in charge of every decision that is theirs.
+
+- **The role guard** (`role_guard.py`): a Claude Code hook that refuses any command or file edit outside the session's
+  role, such as a write to the main tree or a push to a protected remote.
+- **Landing** (`land.py`): one procedure for every commit and merge, running the project's checks, with a round back
+  to the verifier role.
+- **The Board** (`board.py`, `board_server.py`): a local web page where the roles put their questions and decisions to
+  the person in charge, and wait for the answer.
+- **Sessions and the night run** (`agents.sh`, `agents-morning.sh`): start the roles in tmux, keep them warm, and clear
+  the ones that have finished.
+- **Reports**: tokens per role, start-up reading sizes, each role's effort setting, and a check of every draft the
+  moment it is written.
+
+I built Mishmeret to develop Girsa (girsa.net), which turns scanned 19th-century Hebrew books into corrected digital
+editions: 140,000+ lines of code and tests, and 19 release candidates since July 2026, written by Claude Code sessions
+(since October, these roles) and reviewed by me. Mishmeret names no project of its own; a project supplies its roles
+and rules in one config file (below).
 
 Standard library only. The sessions (`agents.sh`, `agents-morning.sh`) are macOS-only: tmux, launchd, osascript and
 iTerm2. The Board, the hooks, the status line and the reports are portable.
