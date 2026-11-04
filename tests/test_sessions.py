@@ -213,6 +213,52 @@ def test_the_night_run_sends_no_land_while_a_plan_window_is_at_its_limit(tmp_pat
         assert "1 not landed for the plan's limit" in log, log
 
 
+@pytest.mark.parametrize("kind", ["cleared", "worked"])
+def test_the_night_run_sends_exit_not_land_to_a_pane_holding_only_a_clear(tmp_path, kind):
+    """2026-11-04, the architect's finding: a pane cleared by hand and left open - its transcript the /clear alone, no
+    assistant turn - was sent a whole /land ("its context could not be read"). Now it is sent /exit, never /land, and
+    counted closed; a session with an assistant turn is sent /land as before. A whole night run behind stubs (ioreg
+    saying you are idle; claude listing the role until /exit is typed), one role idle 20 minutes."""
+    import datetime
+    import time
+    from conftest import write_project
+    cfg = write_project(tmp_path)
+    now = time.time()
+    night = tmp_path / "scratch" / "state" / "night" / datetime.date.today().isoformat()
+    (tmp_path / "board").mkdir()
+    records = [{"type": "custom-title", "customTitle": "ex-builder", "sessionId": "s-1"},
+               {"type": "user", "isMeta": True, "message": {"role": "user", "content": "<local-command-caveat>"}},
+               {"type": "user", "message": {"role": "user", "content": "<command-name>/clear</command-name>"}}]
+    if kind == "worked":
+        records.append({"type": "assistant", "timestamp": "2026-01-01T00:00:00Z", "message": {
+            "model": "placeholder-model", "usage": {"input_tokens": 10}}})
+    transcript = tmp_path / "projects" / "the-project" / "s-1.jsonl"
+    transcript.parent.mkdir(parents=True)
+    transcript.write_text("".join(json.dumps(r) + "\n" for r in records), encoding="utf-8")
+    os.utime(transcript, (now - 1200, now - 1200))
+    rows = json.dumps([{"name": "ex-builder", "status": "idle", "sessionId": "s-1", "pid": os.getpid()}])
+    typed = tmp_path / "typed.txt"
+    stubs = {"claude": f"if [ \"$1\" = agents ]; then grep -qs /exit '{typed}' && echo '[]' || echo '{rows}'; fi",
+             "tmux": f"case \"$1\" in list-panes) echo '{os.getppid()} %1' ;; send-keys) echo \"$*\" >> '{typed}' ;; esac",
+             "ioreg": "echo '  \"HIDIdleTime\" = 9000000000000'", "sleep": "exit 0", "caffeinate": "exit 0",
+             "osascript": "exit 0"}
+    (tmp_path / "bin").mkdir()
+    for name, body in stubs.items():
+        (tmp_path / "bin" / name).write_text(f"#!/bin/sh\n{body}\n", encoding="utf-8")
+        (tmp_path / "bin" / name).chmod(0o755)
+    env = dict(os.environ, MISHMERET_CONFIG=cfg, PATH=f"{tmp_path / 'bin'}{os.pathsep}{os.environ['PATH']}")
+    env.pop("MISHMERET_BOARD_DIR", None)
+    out = subprocess.run(["bash", os.path.join(PKG, "agents-morning.sh"), "--night"], env=env,
+                         stdin=subprocess.DEVNULL, capture_output=True, text=True, encoding="utf-8", timeout=60)
+    log = (night / "log.txt").read_text(encoding="utf-8")
+    assert out.returncode == 0, out.stdout + out.stderr + log
+    sent = typed.read_text(encoding="utf-8") if typed.exists() else ""
+    assert ("/land" in sent) == (kind == "worked") and ("/exit" in sent) == (kind == "cleared"), sent
+    assert ("ex-builder: its pane holds only a /clear - nothing to land; /exit" in log) == (kind == "cleared"), log
+    if kind == "cleared":
+        assert "ex-builder: not running - closed by this run (cleared, then /exit)" in log, log
+
+
 def test_the_night_run_can_be_skipped_without_turning_it_off(tmp_path):
     """The reviewer, 2026-10-21: "give me a clean way to tell it not to run w/o turning it off". --skip-tonight holds
     today's run, --skip every run, --resume removes both; a held run ends before it looks at anything (a dry run in a

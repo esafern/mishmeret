@@ -51,6 +51,8 @@
 # A ROLE WAITING FOR ANOTHER ROLE'S WORK IS NOT IDLE (the reviewer, 2026-10-11: "night run should not have told the ver to
 # land when it had work to do. it should not have been idle."): a role whose Board corner says it is waiting for a role
 # still running - not kept, left open or closed by this run - is not sent /land; it is looked at again next pass.
+# A role whose transcript holds no assistant turn (its pane cleared by hand, holding only the /clear) is never sent
+# /land: it is sent /exit and counted closed (2026-11-04).
 
 set -u
 # the clone, the roles, the transcripts and the pane lookup (the project's config): agents-lib.sh, shared with
@@ -268,7 +270,7 @@ READY_END
         # were counted both ways - "5 closed, 3 kept running" for five roles - and "closed" read as the run's own doing;
         # girsa-verifier the same morning: a role left open for you and then closed kept its `left` mark the same way)
         if [ ! -e "$NIGHT/$r.closed" ]; then
-          if [ -e "$NIGHT/$r.cleared" ]; then say "$r: not running - closed by this run (it had said it was ready to clear)"
+          if [ -e "$NIGHT/$r.cleared" ]; then say "$r: not running - closed by this run (cleared, then /exit)"
           elif [ -e "$NIGHT/$r.land-sent" ]; then say "$r: not running - closed after its /land"
           else say "$r: not running - closed outside this run"; touch "$NIGHT/$r.outside"; fi
           rm -f "$NIGHT/$r.kept" "$NIGHT/$r.left" "$NIGHT/$r.nopane"; touch "$NIGHT/$r.closed"
@@ -358,6 +360,15 @@ READY_END
       if [ -z "$pane" ]; then
         [ -e "$NIGHT/$r.nopane" ] || { notify "$r: its tmux pane was not found - not landed"; touch "$NIGHT/$r.nopane"; }
         pending=$((pending - 1)); continue      # nothing more this run can do for it
+      fi
+      # A PANE HOLDING ONLY A /clear HAS NOTHING TO LAND (2026-11-04, the architect's finding: a pane cleared by hand and
+      # left open was sent a whole /land, "its context could not be read"): no assistant turn in its transcript - /exit,
+      # closed like one this run cleared, and started again on your Go
+      f=$(transcript_of "$sid")
+      if [ -n "$f" ] && ! grep -Eq '"type": ?"assistant"' "$f"; then
+        say "$r: its pane holds only a /clear - nothing to land; /exit"
+        type_in "$pane" "/exit"; sleep "$GAP"
+        rm -f "$NIGHT/$r.kept" "$NIGHT/$r.left"; touch "$NIGHT/$r.cleared"; landing=$((landing + 1)); continue
       fi
       # A PLAN WINDOW AT ITS LIMIT: no /land, which a session at the limit answers with a notice and lands nothing
       # (2026-10-30; the Board's #118, A). Named once; the first night run after the reset lands it.
