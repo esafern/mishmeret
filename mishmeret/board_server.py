@@ -55,6 +55,10 @@ h1{font-size:14px;font-weight:600;margin:0;white-space:nowrap}
 .corner{grid-area:var(--area);min-height:0;overflow:hidden;background:var(--card);border:1px solid var(--line);
  box-shadow:inset 0 2px 0 var(--role);border-radius:4px;padding:9px 12px;display:flex;flex-direction:column;gap:6px}
 .corner.not-running{opacity:.6}
+/* A ROLE WITH NO CORNER: its open messages on a line under the corners, its name muted (no colour in the config),
+   lined up with the corners' names - not in the header, full at 1229 wide (the UI steward's measure) */
+#cornerless{flex:none;padding:6px 26px 0}#cornerless:empty{display:none}
+#cornerless>div{display:flex;align-items:center;gap:10px;min-width:0}#cornerless .rname{color:var(--muted)}
 .stall{flex:0 1 auto;min-width:0;max-width:45%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11.5px;font-weight:600;
  color:var(--st-waiting-agent);border:1px solid var(--st-waiting-agent);border-radius:4px;padding:0 6px}
 .landed-sum{white-space:pre-wrap;overflow:auto;min-height:0;font-size:12.5px}
@@ -129,8 +133,9 @@ h1{font-size:14px;font-weight:600;margin:0;white-space:nowrap}
 .qa .ask{white-space:pre-wrap;font-weight:600;margin:0}.qa .ans{white-space:pre-wrap;margin:0}
 .qa .more{border-top:1px dashed var(--line);margin-top:8px;padding-top:2px}
 </style></head><body>
-<header><h1>Girsa Board</h1><div class="key" id="key"></div><div id="usage"></div><div id="quiet"></div><div id="nocorner"></div><div id="held"></div></header>
+<header><h1>Girsa Board</h1><div class="key" id="key"></div><div id="usage"></div><div id="quiet"></div><div id="held"></div></header>
 <section id="roles"></section>
+<section id="cornerless"></section>
 <section id="q"><div class="qhead"><h2 id="qtitle">Questions for you</h2><button id="toggle"></button><button id="deftoggle"></button><button id="qatoggle"></button><button id="tokentoggle">Tokens by role</button><button id="visittoggle">Visitors</button><button id="landtoggle"></button></div>
 <div id="qlist"></div></section>
 <script>
@@ -163,17 +168,18 @@ function tele(s) {
   return ask || parts.length ? `<div class="tele">${ask}<span title="${esc(parts.join(" · "))}">${esc(parts.join(" · "))}</span></div>` : "";
 }
 // THE MESSAGES TO A ROLE NOT YET ACTED ON (Board #150 B), their texts on hover - in its corner, or, for a role with no
-// corner, in the header with its name (message #14)
-const openPill = (ms, who) => ms.length ? `<span class="stall" title="${esc(ms.map(m => `message #${m.msg} from ${m.role}, ${when(m.ts)}: ${m.text}`).join("\n\n"))}">${esc(who)}${ms.length} open message${ms.length > 1 ? "s" : ""}</span>` : "";
+// corner, on a line of its own under the corners, its name first (message #14)
+const openPill = ms => ms.length ? `<span class="stall" title="${esc(ms.map(m => `message #${m.msg} from ${m.role}, ${when(m.ts)}: ${m.text}`).join("\n\n"))}">${ms.length} open message${ms.length > 1 ? "s" : ""}</span>` : "";
 function drawNoCorner() {
-  document.getElementById("nocorner").innerHTML = Object.entries(data.no_corner || {}).map(([role, ms]) => openPill(ms, role + ": ")).join("");
+  document.getElementById("cornerless").innerHTML = Object.entries(data.no_corner || {})
+    .map(([role, ms]) => `<div><span class="rname">${esc(role)}</span>${openPill(ms)}</div>`).join("");
 }
 function corner(short) {
   const r = data.roles["girsa-" + short] || {}, wide = short === "builder";
   const row = (label, text) => `<dt>${label}</dt><dd dir="auto" class="${text ? "" : "none"}" title="${esc(text)}">${text ? esc(text) : "not reported"}</dd>`;
   return `<div class="corner ${esc(r.shown || "")}${wide ? " wide" : ""}" style="--area:${short};--role:${ROLE_VAR(short)};--sc:var(--st-${esc(r.shown || "idle")})">
     <div class="chead"><span class="rname">girsa-${short}</span><span class="badge" title="${esc(r.shown_words)}">${esc(r.shown_words || "")}</span>${r.also_words ? `<span class="badge" style="--sc:var(--st-waiting-agent)" title="${esc(r.also_words)}">${esc(r.also_words)}</span>` : ""}
-      ${r.stall ? `<span class="stall" title="${esc(r.stall)}">${esc(r.stall)}</span>` : ""}${openPill(r.unacted || [], "")}${tele(r.session || {})}<span class="age">${esc(ago(r.ts))}${r.behind ? " - before its current work" : ""}</span></div>
+      ${r.stall ? `<span class="stall" title="${esc(r.stall)}">${esc(r.stall)}</span>` : ""}${openPill(r.unacted || [])}${tele(r.session || {})}<span class="age">${esc(ago(r.ts))}${r.behind ? " - before its current work" : ""}</span></div>
     ${r.landing ? `<div class="landed-sum" dir="auto" title="${esc(r.landing.summary)}">${esc(r.landing.summary)}</div>`
       : `<dl class="rows">${row("Working on", r.now)}${row("Just finished", r.done)}${row("Next", r.next)}</dl>`}</div>`;
 }

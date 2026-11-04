@@ -248,17 +248,26 @@ def test_a_message_between_roles_is_kept_until_its_receiver_marks_it_done(tmp_pa
     bd.send("ex-operator", "ex-demo-operator", "REQUEST placeholder two")
     assert {r: [m["text"] for m in ms] for r, ms in bs.board_view()["no_corner"].items()} == \
         {"ex-demo-operator": ["REQUEST placeholder two"]}, "only the role with no corner, and only while one is open"
-    assert "${esc(who)}${ms.length} open message${ms.length > 1 ? \"s\" : \"\"}</span>" in bs.PAGE
+    assert "\">${ms.length} open message${ms.length > 1 ? \"s\" : \"\"}</span>" in bs.PAGE
     assert 'title="${esc(ms.map(' in bs.PAGE, "a role's text escaped in the title (the browser test reads it)"
-    assert "openPill(r.unacted || [], \"\")" in bs.PAGE and "openPill(ms, role + \": \")" in bs.PAGE, "one pill, two places"
+    assert "openPill(r.unacted || [])" in bs.PAGE and "${openPill(ms)}</div>" in bs.PAGE, "one pill, two places"
+
+
+STRIP = """() => { const h = document.querySelector("header"), s = document.getElementById("cornerless");
+    const r = s.querySelector(".rname"), p = s.querySelector(".stall");
+    return {in_header: !!h.querySelector(".stall"), after_roles: document.getElementById("roles").nextElementSibling.id,
+            height: s.getBoundingClientRect().height, header: h.getBoundingClientRect().height,
+            line: r ? parseFloat(getComputedStyle(r).lineHeight) : 0, name: r ? [r.scrollWidth, r.clientWidth] : [],
+            pill: p ? [p.scrollWidth, p.clientWidth] : [], text: p ? p.textContent : "", title: p ? p.title : ""}; }"""
 
 
 def test_a_corners_name_and_state_stay_whole_beside_two_pills(tmp_path, monkeypatch):
     """The UI steward's measure of the mailbox's pill (2026-11-04), at the reviewer's smaller window, 1229x673: a stall
     pill and the messages' pill, each kept whole at up to 45% of the head, squeezed the state to 0 px and wrapped the
     role's name onto two lines. The name and the state now keep their width and the pills shorten, their text on hover.
-    A role with no corner has its pill in the header, with its name (message #14). The real page from a scratch Board,
-    in a headless browser; skipped where Playwright is not installed."""
+    A role with no corner has its pill on a line of its own under the corners, its name first (message #14) - not in
+    the header, which is full at this size with "Main held" and "Nothing is moving" (the steward's measure: the count
+    cut). The real page from a scratch Board, in a headless browser; skipped where Playwright is not installed."""
     sync_api = pytest.importorskip("playwright.sync_api")
     import importlib.util
     import threading
@@ -269,7 +278,10 @@ def test_a_corners_name_and_state_stay_whole_beside_two_pills(tmp_path, monkeypa
     spec.loader.exec_module(bs)
     said = 'REQUEST "placeholder" <b>x</b>'        # a role's text, a quote and a tag in it, into a title attribute
     bs.board.send("ex-operator", "ex-architect", said)
-    bs.board.send("ex-operator", "ex-demo-operator", "REQUEST placeholder")      # a role with no corner: the header
+    bs.board.send("ex-operator", "ex-demo-operator", "REQUEST placeholder")      # a role with no corner
+    bs.board.hold("ex-operator", "the placeholder fix round abc1234, its gate")      # the header as full as it gets
+    monkeypatch.setattr(bs, "quiet", lambda *a, **k: {"since": 1893600000, "minutes": 52, "stuck": {"ex-builder": "ex-verifier"},
+                                                      "next": {"ex-builder": "placeholder next"}})
     monkeypatch.setattr(bs.LIVE, "get", lambda: {"ex-architect": {"status": "idle", "last_prompt": None, "session_id": None}})
     monkeypatch.setattr(bs, "stalled", lambda st, lv, shown, also: "waiting for ex-builder for 3 h 12 min"
                         if lv else None)
@@ -286,7 +298,11 @@ def test_a_corners_name_and_state_stay_whole_beside_two_pills(tmp_path, monkeypa
                 return {name: r.getBoundingClientRect().height, line: parseFloat(getComputedStyle(r).lineHeight),
                         badge: b.clientWidth, needs: b.scrollWidth,
                         pills: [...c.querySelectorAll(".stall")].map(s => s.title)}; }""")
-            header = page.locator("#nocorner .stall").evaluate_all("els => els.map(e => [e.textContent, e.title])")
+            strip = page.evaluate(STRIP)
+            bs.board.done(2, "ex-demo-operator")
+            page.reload()
+            corner.locator(".stall").nth(1).wait_for()
+            after = page.evaluate(STRIP)
             browser.close()
     finally:
         server.shutdown()
@@ -294,8 +310,12 @@ def test_a_corners_name_and_state_stay_whole_beside_two_pills(tmp_path, monkeypa
         got["pills"][1].startswith("message #1 from ex-operator") and got["pills"][1].endswith(": " + said), got
     assert got["name"] < 1.5 * got["line"], f"the role's name wrapped: {got}"
     assert 0 < got["needs"] <= got["badge"], f"the state cut: {got}"
-    assert [t for t, _ in header] == ["ex-demo-operator: 1 open message"] and \
-        header[0][1].startswith("message #2 from ex-operator"), header
+    assert not strip["in_header"] and strip["after_roles"] == "cornerless", strip
+    assert strip["height"] < 1.5 * strip["line"], f"the line under the corners is more than one line: {strip}"
+    assert strip["name"][0] <= strip["name"][1] and strip["pill"][0] <= strip["pill"][1], f"cut: {strip}"
+    assert strip["text"] == "1 open message" and strip["title"].startswith("message #2 from ex-operator") and \
+        strip["title"].endswith(": REQUEST placeholder"), strip
+    assert after["height"] == 0 and after["header"] == strip["header"], f"done, the line goes; the header unchanged: {after}"
 
 
 def test_the_boards_corners_and_mockup_pages(tmp_path, monkeypatch):
