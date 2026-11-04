@@ -234,7 +234,10 @@ def test_the_night_run_sends_exit_not_land_to_a_pane_holding_only_a_clear(tmp_pa
             "model": "placeholder-model", "usage": {"input_tokens": 10}}})
     transcript = tmp_path / "projects" / "the-project" / "s-1.jsonl"
     transcript.parent.mkdir(parents=True)
-    transcript.write_text("".join(json.dumps(r) + "\n" for r in records), encoding="utf-8")
+    # compact, as Claude Code writes its transcripts (girsa-verifier's MEDIUM 1 on f4edc08: 273 of 438 real ones hold
+    # `"type":"assistant"`, none the spaced form); the limit tests keep json.dumps's spaced form, so each half of the
+    # guard's ` ?` has a test
+    transcript.write_text("".join(json.dumps(r, separators=(",", ":")) + "\n" for r in records), encoding="utf-8")
     os.utime(transcript, (now - 1200, now - 1200))
     rows = json.dumps([{"name": "ex-builder", "status": "idle", "sessionId": "s-1", "pid": os.getpid()}])
     typed = tmp_path / "typed.txt"
