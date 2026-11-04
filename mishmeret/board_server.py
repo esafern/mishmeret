@@ -55,7 +55,7 @@ h1{font-size:14px;font-weight:600;margin:0;white-space:nowrap}
 .corner{grid-area:var(--area);min-height:0;overflow:hidden;background:var(--card);border:1px solid var(--line);
  box-shadow:inset 0 2px 0 var(--role);border-radius:4px;padding:9px 12px;display:flex;flex-direction:column;gap:6px}
 .corner.not-running{opacity:.6}
-.stall{flex:none;max-width:45%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11.5px;font-weight:600;
+.stall{flex:0 1 auto;min-width:0;max-width:45%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11.5px;font-weight:600;
  color:var(--st-waiting-agent);border:1px solid var(--st-waiting-agent);border-radius:4px;padding:0 6px}
 .landed-sum{white-space:pre-wrap;overflow:auto;min-height:0;font-size:12.5px}
 .landing .sum{white-space:pre-wrap;margin:4px 0 0}
@@ -65,8 +65,8 @@ h1{font-size:14px;font-weight:600;margin:0;white-space:nowrap}
 .tokens th:first-child,.tokens td:first-child,.tokens td:last-child{text-align:left}
 .tokens.visits td:last-child{text-align:right}
 .chead{display:flex;align-items:center;gap:10px;min-width:0}
-.rname{font-weight:600;color:var(--role)}.age{margin-left:auto;color:var(--muted);font-size:11.5px;white-space:nowrap}
-.badge{color:var(--sc);font-size:12px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:60%}
+.rname{flex:none;white-space:nowrap;font-weight:600;color:var(--role)}.age{margin-left:auto;color:var(--muted);font-size:11.5px;white-space:nowrap}
+.badge{flex:none;color:var(--sc);font-size:12px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:60%}
 .badge::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--sc);margin-right:6px;
  vertical-align:1px}
 .rows{display:grid;grid-template-columns:auto 1fr;grid-auto-rows:max-content;column-gap:10px;row-gap:5px;min-height:0;margin:0}

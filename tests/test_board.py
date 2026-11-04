@@ -246,6 +246,45 @@ def test_a_message_between_roles_is_kept_until_its_receiver_marks_it_done(tmp_pa
     assert "message${r.unacted.length > 1 ? \"s\" : \"\"} not acted on</span>" in bs.PAGE
 
 
+def test_a_corners_name_and_state_stay_whole_beside_two_pills(tmp_path, monkeypatch):
+    """girsa-ui-steward's measure of the mailbox's pill (2026-11-04), at the reviewer's smaller window, 1229x673: a stall
+    pill and the messages' pill, each kept whole at up to 45% of the head, squeezed the state to 0 px and wrapped the
+    role's name onto two lines. The name and the state now keep their width and the pills shorten, their text on hover.
+    The real page from a scratch Board, in a headless browser; skipped where Playwright is not installed."""
+    sync_api = pytest.importorskip("playwright.sync_api")
+    import importlib.util
+    import threading
+    monkeypatch.setenv("MISHMERET_BOARD_DIR", str(tmp_path / "board"))
+    monkeypatch.syspath_prepend(PKG)
+    spec = importlib.util.spec_from_file_location("board_server", os.path.join(PKG, "board_server.py"))
+    bs = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(bs)
+    bs.board.send("ex-operator", "ex-architect", "REQUEST placeholder")
+    monkeypatch.setattr(bs.LIVE, "get", lambda: {"ex-architect": {"status": "idle", "last_prompt": None, "session_id": None}})
+    monkeypatch.setattr(bs, "stalled", lambda st, lv, shown, also: "waiting for ex-builder for 3 h 12 min"
+                        if lv else None)
+    server = bs.ThreadingHTTPServer(("127.0.0.1", 0), bs.Handler)
+    threading.Thread(target=server.serve_forever, daemon=True).start()
+    try:
+        with sync_api.sync_playwright() as p:
+            browser = p.chromium.launch()
+            page = browser.new_page(viewport={"width": 1229, "height": 673}, device_scale_factor=2)
+            page.goto(f"http://127.0.0.1:{server.server_address[1]}/")
+            corner = page.locator(".corner", has=page.locator(".rname", has_text="ex-architect"))
+            corner.locator(".stall").nth(1).wait_for()
+            got = corner.evaluate("""c => { const r = c.querySelector(".rname"), b = c.querySelector(".badge");
+                return {name: r.getBoundingClientRect().height, line: parseFloat(getComputedStyle(r).lineHeight),
+                        badge: b.clientWidth, needs: b.scrollWidth,
+                        pills: [...c.querySelectorAll(".stall")].map(s => s.title)}; }""")
+            browser.close()
+    finally:
+        server.shutdown()
+    assert got["pills"] == ["waiting for ex-builder for 3 h 12 min", got["pills"][1]] and \
+        got["pills"][1].startswith("message #1 from ex-operator"), got
+    assert got["name"] < 1.5 * got["line"], f"the role's name wrapped: {got}"
+    assert 0 < got["needs"] <= got["badge"], f"the state cut: {got}"
+
+
 def test_the_boards_corners_and_mockup_pages(tmp_path, monkeypatch):
     """The reviewer, 2026-10-10: "divide it up like these screens, so each agent has it's own corner to report status -
     what it is working on, what just finished and what is next - always in the same place, no scrolling. status should
