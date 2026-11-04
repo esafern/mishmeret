@@ -41,6 +41,11 @@ stays private and no role's tree carries it): an item, its answer, a withdrawal,
                                        # a question the reviewer asked in a role's pane, and the role's answer, kept
     python3 board.py qa-more N --role ROLE [--question "..."] (--answer "..." | --answer-file F)
                                        # a follow-up to Q&A #N: the reviewer's next question on it, or more answer
+    python3 board.py send --role ROLE --to ROLE (--text "..." | --text-file F)
+                                       # a message to another role, kept until it is acted on; then send it to the
+                                       # role's session as well, headed with its number (the doorbell)
+    python3 board.py inbox --role ROLE # the messages to ROLE not yet acted on - read at a role's start
+    python3 board.py done N [N ...] --role ROLE    # messages acted on, marked by their receiver
 Needs only Python's standard library."""
 import argparse
 import fcntl
@@ -530,6 +535,52 @@ def qas(events=None):
     return out
 
 
+def send(role, to, text):
+    """A MESSAGE BETWEEN ROLES, KEPT (Board #150 B; the reviewer, 2026-11-04: "B"): a message sent from one session to
+    another was lost when the receiver's session ended - nothing on disk held it, and the next session under that name
+    never saw it. Each is also written here with its receiver, numbered on its own (message #1, #2 ...); the receiver reads
+    what is open for it at its start (`inbox`) and marks each one done when acted on. The live message stays the
+    doorbell."""
+    _check_role(role)
+    if to not in ROLES or to == role:
+        raise ValueError(f"--to is another role, not {to!r}")
+    if not text.strip():
+        raise ValueError("a message needs its text")
+    return _append(lambda events: {"type": "message", "msg": 1 + max((e["msg"] for e in events
+                                                                      if e.get("type") == "message"), default=0),
+                                   "ts": _now(), "role": role, "to": to, "text": text.strip()})
+
+
+def messages(events=None):
+    """{number: message} - each with `done`, when its receiver marked it acted on, or None."""
+    out = {}
+    for e in events if events is not None else read_events():
+        if e.get("type") == "message":
+            out[e["msg"]] = dict(e, done=None)
+        elif e.get("type") == "message-done" and e.get("msg") in out:
+            out[e["msg"]]["done"] = e["ts"]
+    return out
+
+
+def unacted(role, events=None):
+    """The messages to `role` not yet marked done, oldest first."""
+    return [m for _, m in sorted(messages(events).items()) if m["to"] == role and not m["done"]]
+
+
+def done(number, role):
+    """Message #number acted on - marked by its receiver only, once."""
+    def make(events):
+        m = messages(events).get(number)
+        if m is None:
+            raise ValueError(f"no message #{number}")
+        if m["to"] != role:
+            raise ValueError(f"message #{number} is to {m['to']}, not {role}")
+        if m["done"]:
+            raise ValueError(f"message #{number} was marked done at {m['done']}")
+        return {"type": "message-done", "msg": number, "ts": _now(), "role": role}
+    return _append(make)
+
+
 def describe(it):
     a = it["answer"]
     picked = next((o for o in it["options"] if a and o["key"] == a["answer"]), None)
@@ -739,13 +790,24 @@ def main(argv=None):
     qm.add_argument("--answer")
     qm.add_argument("--answer-file")
     qm.add_argument("--link", action="append", default=[])
+    se = sub.add_parser("send")
+    se.add_argument("--role", required=True)
+    se.add_argument("--to", required=True)
+    se.add_argument("--text")
+    se.add_argument("--text-file")
+    ib = sub.add_parser("inbox")
+    ib.add_argument("--role", required=True)
+    dn = sub.add_parser("done")
+    dn.add_argument("number", type=int, nargs="+")
+    dn.add_argument("--role", required=True)
     args = ap.parse_args(argv)
+    me = os.environ.get("MISHMERET_AS", "board.py")
     try:
         if args.cmd == "ask":
             body = open(args.body_file, encoding="utf-8").read() if args.body_file else args.body
             it = ask(args.role, args.title, body, args.kind, args.option, args.recommend, args.link, args.image)
             print(f'#{it["id"]} on the Board ({_url()}#item-{it["id"]}) - wait for it: '
-                  f'python3 {os.environ.get("MISHMERET_AS", "board.py")} wait {it["id"]}')
+                  f'python3 {me} wait {it["id"]}')
         elif args.cmd == "wait":
             start = time.time()
             first = items().get(args.id)
@@ -849,6 +911,24 @@ def main(argv=None):
             else:
                 n = qa_more(args.number, args.role, text, args.question, args.link)["qa"]
             print(f"Q&A #{n} on the Board: {_url()}#qa-{n} - give the reviewer this link and a short summary")
+        elif args.cmd == "send":
+            if (args.text is None) == (args.text_file is None):
+                raise ValueError("give the text once: --text or --text-file")
+            text = open(args.text_file, encoding="utf-8").read() if args.text_file else args.text
+            m = send(args.role, args.to, text)
+            print(f"message #{m['msg']} to {m['to']} kept on the Board - now send it to {m['to']}'s session as well, "
+                  f"headed \"message #{m['msg']}\"; {m['to']} marks it done: python3 {me} done {m['msg']} --role {m['to']}")
+        elif args.cmd == "inbox":
+            _check_role(args.role)
+            open_ = unacted(args.role)
+            for m in open_:
+                print(f"message #{m['msg']} from {m['role']}, {m['ts']}:\n{m['text']}\n")
+            print(f"{len(open_)} not acted on" + (f" - mark each done when acted on: python3 {me} done N --role "
+                                                   f"{args.role}" if open_ else ""))
+        elif args.cmd == "done":
+            for n in args.number:
+                done(n, args.role)
+                print(f"message #{n} done")
     except ValueError as e:
         print(f"board: {e}", file=sys.stderr)
         return 2

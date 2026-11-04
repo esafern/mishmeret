@@ -167,7 +167,7 @@ function corner(short) {
   const row = (label, text) => `<dt>${label}</dt><dd dir="auto" class="${text ? "" : "none"}" title="${esc(text)}">${text ? esc(text) : "not reported"}</dd>`;
   return `<div class="corner ${esc(r.shown || "")}${wide ? " wide" : ""}" style="--area:${short};--role:${ROLE_VAR(short)};--sc:var(--st-${esc(r.shown || "idle")})">
     <div class="chead"><span class="rname">girsa-${short}</span><span class="badge" title="${esc(r.shown_words)}">${esc(r.shown_words || "")}</span>${r.also_words ? `<span class="badge" style="--sc:var(--st-waiting-agent)" title="${esc(r.also_words)}">${esc(r.also_words)}</span>` : ""}
-      ${r.stall ? `<span class="stall" title="${esc(r.stall)}">${esc(r.stall)}</span>` : ""}${tele(r.session || {})}<span class="age">${esc(ago(r.ts))}${r.behind ? " - before its current work" : ""}</span></div>
+      ${r.stall ? `<span class="stall" title="${esc(r.stall)}">${esc(r.stall)}</span>` : ""}${(r.unacted || []).length ? `<span class="stall" title="${esc(r.unacted.map(m => `message #${m.msg} from ${m.role}, ${when(m.ts)}: ${m.text}`).join("\n\n"))}">${r.unacted.length} message${r.unacted.length > 1 ? "s" : ""} not acted on</span>` : ""}${tele(r.session || {})}<span class="age">${esc(ago(r.ts))}${r.behind ? " - before its current work" : ""}</span></div>
     ${r.landing ? `<div class="landed-sum" dir="auto" title="${esc(r.landing.summary)}">${esc(r.landing.summary)}</div>`
       : `<dl class="rows">${row("Working on", r.now)}${row("Just finished", r.done)}${row("Next", r.next)}</dl>`}</div>`;
 }
@@ -659,7 +659,7 @@ def board_view():
             landing = None
         also_words = board.also_waiting(st, lv and lv["status"], lv and lv["last_prompt"])
         roles[role] = dict(st, shown=shown, shown_words=words, landing=landing, stall=stalled(st, lv, shown, also_words),
-                           also_words=also_words,
+                           also_words=also_words, unacted=board.unacted(role, events),
                            behind=board.behind_its_work(st, lv and lv["status"], lv and lv["last_prompt"]),
                            session=board.session_record(lv["session_id"]) if lv and lv.get("session_id") else {})
     items = [dict(it, mockup_pages=len(board.mockup_pages(it))) for it in its.values()]

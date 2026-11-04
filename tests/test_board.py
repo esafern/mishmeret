@@ -196,6 +196,56 @@ def test_the_board_keeps_the_reviewers_own_questions_and_the_answers(tmp_path, m
         assert needed in page, needed
 
 
+def test_a_message_between_roles_is_kept_until_its_receiver_marks_it_done(tmp_path, monkeypatch, capsys):
+    """Board #150 B (the reviewer, 2026-11-04: "B"): messages sent to a role were lost when its session ended - three in
+    one day. board.py send keeps each with its receiver, numbered on its own; inbox gives a role's next session what is
+    still open for it; done is marked by the receiver alone, once; the corner counts the unacted, the texts on hover.
+    Placeholder messages in a temporary board, read back through a fresh module, as a new session would."""
+    import importlib.util
+    monkeypatch.setenv("MISHMERET_BOARD_DIR", str(tmp_path / "board"))
+    monkeypatch.syspath_prepend(PKG)
+
+    def load(name):
+        spec = importlib.util.spec_from_file_location(name, os.path.join(PKG, name + ".py"))
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+        return mod
+    bd = load("board")
+    bd.ask("ex-builder", "Placeholder decision")                   # an item does not take a message number
+    assert bd.send("ex-operator", "ex-builder", " REQUEST: placeholder one ")["msg"] == 1
+    text = tmp_path / "msg.txt"
+    text.write_text("LANDED placeholder,\non two lines.", encoding="utf-8")
+    assert bd.main(["send", "--role", "ex-architect", "--to", "ex-builder", "--text-file", str(text)]) == 0
+    assert 'headed "message #2"' in capsys.readouterr().out, "the sender is told to ring the doorbell with the number"
+    bd.send("ex-builder", "ex-verifier", "HANDOFF placeholder")
+    for bad in (lambda: bd.send("someone", "ex-builder", "x"), lambda: bd.send("ex-builder", "someone", "x"),
+                lambda: bd.send("ex-builder", "ex-builder", "x"), lambda: bd.send("ex-operator", "ex-builder", " "),
+                lambda: bd.done(9, "ex-builder"), lambda: bd.done(1, "ex-verifier")):
+        with pytest.raises(ValueError):
+            bad()
+    assert bd.main(["send", "--role", "ex-operator", "--to", "ex-builder"]) == 2, "no text given"
+    capsys.readouterr()
+    # the receiver's next session: a fresh module over the same record
+    bd = load("board")
+    assert bd.main(["inbox", "--role", "ex-builder"]) == 0
+    out = capsys.readouterr().out
+    assert "message #1 from ex-operator" in out and "REQUEST: placeholder one" in out
+    assert "LANDED placeholder,\non two lines." in out and "HANDOFF" not in out and "2 not acted on" in out
+    assert bd.main(["done", "1", "--role", "ex-builder"]) == 0
+    assert bd.main(["done", "1", "--role", "ex-builder"]) == 2, "marked done twice"
+    assert [m["msg"] for m in bd.unacted("ex-builder")] == [2] and bd.messages()[1]["done"]
+    bd.done(2, "ex-builder")
+    capsys.readouterr()
+    assert bd.main(["inbox", "--role", "ex-builder"]) == 0 and capsys.readouterr().out == "0 not acted on\n"
+    # the corner: the unacted messages to each role, whatever its state
+    bs = load("board_server")
+    monkeypatch.setattr(bs.LIVE, "get", lambda: {})
+    roles = bs.board_view()["roles"]
+    assert roles["ex-builder"]["unacted"] == [] and [m["text"] for m in roles["ex-verifier"]["unacted"]] == \
+        ["HANDOFF placeholder"], "not running, and the message still shown"
+    assert "message${r.unacted.length > 1 ? \"s\" : \"\"} not acted on</span>" in bs.PAGE
+
+
 def test_the_boards_corners_and_mockup_pages(tmp_path, monkeypatch):
     """The reviewer, 2026-10-10: "divide it up like these screens, so each agent has it's own corner to report status -
     what it is working on, what just finished and what is next - always in the same place, no scrolling. status should
