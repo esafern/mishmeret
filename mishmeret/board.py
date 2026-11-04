@@ -102,6 +102,11 @@ def read_events():
         return []
 
 
+def _next(events, kind, key):
+    """The next number in `kind`'s own series (items, Q&A, messages), read under _append's lock."""
+    return 1 + max((e[key] for e in events if e.get("type") == kind), default=0)
+
+
 def _append(make):
     """Append the event `make(events)` returns, under a lock - so two roles asking at once get two ids."""
     os.makedirs(board_dir(), exist_ok=True)
@@ -374,9 +379,7 @@ def ask(role, title, body="", kind="question", options=(), recommend=None, links
             raise ValueError(f"an image is an existing .png, .jpg, .gif or .webp file, not {x!r}")
     if recommend is not None and recommend not in {o["key"] for o in opts}:
         raise ValueError(f"the recommendation {recommend!r} is not one of the options")
-    return _append(lambda events: {"type": "item", "id": 1 + max((e["id"] for e in events if e.get("type") == "item"),
-                                                                 default=0),
-                                   "ts": _now(), "role": role, "kind": kind, "title": title.strip(),
+    return _append(lambda events: {"type": "item", "id": _next(events, "item", "id"), "ts": _now(), "role": role, "kind": kind, "title": title.strip(),
                                    "body": body.strip(), "options": opts, "recommend": recommend,
                                    "links": links, "images": pics, "image_options": tied})
 
@@ -429,9 +432,7 @@ def qa(role, question, answer_text, links=()):
     if not question.strip() or not answer_text.strip():
         raise ValueError("a Q&A needs the reviewer's question and the answer")
     links = _check_links(links)
-    return _append(lambda events: {"type": "qa", "qa": 1 + max((e["qa"] for e in events if e.get("type") == "qa"),
-                                                               default=0),
-                                   "ts": _now(), "role": role, "question": question.strip(),
+    return _append(lambda events: {"type": "qa", "qa": _next(events, "qa", "qa"), "ts": _now(), "role": role, "question": question.strip(),
                                    "answer": answer_text.strip(), "links": links})
 
 
@@ -546,9 +547,7 @@ def send(role, to, text):
         raise ValueError(f"--to is another role, not {to!r}")
     if not text.strip():
         raise ValueError("a message needs its text")
-    return _append(lambda events: {"type": "message", "msg": 1 + max((e["msg"] for e in events
-                                                                      if e.get("type") == "message"), default=0),
-                                   "ts": _now(), "role": role, "to": to, "text": text.strip()})
+    return _append(lambda events: {"type": "message", "msg": _next(events, "message", "msg"), "ts": _now(), "role": role, "to": to, "text": text.strip()})
 
 
 def messages(events=None):

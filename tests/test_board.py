@@ -244,10 +244,11 @@ def test_a_message_between_roles_is_kept_until_its_receiver_marks_it_done(tmp_pa
     assert roles["ex-builder"]["unacted"] == [] and [m["text"] for m in roles["ex-verifier"]["unacted"]] == \
         ["HANDOFF placeholder"], "not running, and the message still shown"
     assert "${r.unacted.length} open message${r.unacted.length > 1 ? \"s\" : \"\"}</span>" in bs.PAGE
+    assert 'title="${esc(r.unacted.map(' in bs.PAGE, "a role's text escaped in the title (the browser test reads it)"
 
 
 def test_a_corners_name_and_state_stay_whole_beside_two_pills(tmp_path, monkeypatch):
-    """girsa-ui-steward's measure of the mailbox's pill (2026-11-04), at the reviewer's smaller window, 1229x673: a stall
+    """The UI steward's measure of the mailbox's pill (2026-11-04), at the reviewer's smaller window, 1229x673: a stall
     pill and the messages' pill, each kept whole at up to 45% of the head, squeezed the state to 0 px and wrapped the
     role's name onto two lines. The name and the state now keep their width and the pills shorten, their text on hover.
     The real page from a scratch Board, in a headless browser; skipped where Playwright is not installed."""
@@ -259,7 +260,8 @@ def test_a_corners_name_and_state_stay_whole_beside_two_pills(tmp_path, monkeypa
     spec = importlib.util.spec_from_file_location("board_server", os.path.join(PKG, "board_server.py"))
     bs = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(bs)
-    bs.board.send("ex-operator", "ex-architect", "REQUEST placeholder")
+    said = 'REQUEST "placeholder" <b>x</b>'        # a role's text, a quote and a tag in it, into a title attribute
+    bs.board.send("ex-operator", "ex-architect", said)
     monkeypatch.setattr(bs.LIVE, "get", lambda: {"ex-architect": {"status": "idle", "last_prompt": None, "session_id": None}})
     monkeypatch.setattr(bs, "stalled", lambda st, lv, shown, also: "waiting for ex-builder for 3 h 12 min"
                         if lv else None)
@@ -280,7 +282,7 @@ def test_a_corners_name_and_state_stay_whole_beside_two_pills(tmp_path, monkeypa
     finally:
         server.shutdown()
     assert got["pills"] == ["waiting for ex-builder for 3 h 12 min", got["pills"][1]] and \
-        got["pills"][1].startswith("message #1 from ex-operator"), got
+        got["pills"][1].startswith("message #1 from ex-operator") and got["pills"][1].endswith(": " + said), got
     assert got["name"] < 1.5 * got["line"], f"the role's name wrapped: {got}"
     assert 0 < got["needs"] <= got["badge"], f"the state cut: {got}"
 
