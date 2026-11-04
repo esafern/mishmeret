@@ -230,20 +230,20 @@ def test_a_message_between_roles_is_kept_until_its_receiver_marks_it_done(tmp_pa
     assert bd.main(["inbox", "--role", "ex-builder"]) == 0
     out = capsys.readouterr().out
     assert "message #1 from ex-operator" in out and "REQUEST: placeholder one" in out
-    assert "LANDED placeholder,\non two lines." in out and "HANDOFF" not in out and "2 not acted on" in out
+    assert "LANDED placeholder,\non two lines." in out and "HANDOFF" not in out and "2 open - mark each done" in out
     assert bd.main(["done", "1", "--role", "ex-builder"]) == 0
     assert bd.main(["done", "1", "--role", "ex-builder"]) == 2, "marked done twice"
     assert [m["msg"] for m in bd.unacted("ex-builder")] == [2] and bd.messages()[1]["done"]
     bd.done(2, "ex-builder")
     capsys.readouterr()
-    assert bd.main(["inbox", "--role", "ex-builder"]) == 0 and capsys.readouterr().out == "0 not acted on\n"
+    assert bd.main(["inbox", "--role", "ex-builder"]) == 0 and capsys.readouterr().out == "0 open\n"
     # the corner: the unacted messages to each role, whatever its state
     bs = load("board_server")
     monkeypatch.setattr(bs.LIVE, "get", lambda: {})
     roles = bs.board_view()["roles"]
     assert roles["ex-builder"]["unacted"] == [] and [m["text"] for m in roles["ex-verifier"]["unacted"]] == \
         ["HANDOFF placeholder"], "not running, and the message still shown"
-    assert "message${r.unacted.length > 1 ? \"s\" : \"\"} not acted on</span>" in bs.PAGE
+    assert "${r.unacted.length} open message${r.unacted.length > 1 ? \"s\" : \"\"}</span>" in bs.PAGE
 
 
 def test_a_corners_name_and_state_stay_whole_beside_two_pills(tmp_path, monkeypatch):

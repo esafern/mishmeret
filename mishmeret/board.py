@@ -923,7 +923,7 @@ def main(argv=None):
             open_ = unacted(args.role)
             for m in open_:
                 print(f"message #{m['msg']} from {m['role']}, {m['ts']}:\n{m['text']}\n")
-            print(f"{len(open_)} not acted on" + (f" - mark each done when acted on: python3 {me} done N --role "
+            print(f"{len(open_)} open" + (f" - mark each done when acted on: python3 {me} done N --role "
                                                    f"{args.role}" if open_ else ""))
         elif args.cmd == "done":
             for n in args.number:
