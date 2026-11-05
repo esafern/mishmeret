@@ -33,9 +33,12 @@ def lane(role, path, rows):
 
 
 def forbidden():
-    """(pattern, why names are unchecked or None): the roster's names and addresses, and the home folder."""
+    """(pattern, why names are unchecked or None): the roster's names and addresses, the home folder, and the login
+    name alone - a path folded into one word (`-Users-<login>-work-...`, Claude Code's own folder names) carries it
+    without the home folder's slashes (girsa-verifier's LOW 1 on 37f9e61)."""
     main = os.path.dirname(git("rev-parse", "--path-format=absolute", "--git-common-dir").strip())
-    pats, why = [re.escape(os.path.expanduser("~"))], None
+    home = os.path.expanduser("~")
+    pats, why = [re.escape(home), r"\b" + re.escape(os.path.basename(home)) + r"\b"], None
     try:
         with open(os.path.join(main, ".claude", "roster.local.json"), encoding="utf-8") as fh:
             people = json.load(fh)["reviewers"].values()

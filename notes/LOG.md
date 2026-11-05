@@ -15,3 +15,8 @@ M01. **[2026-11-05, Mishmeret's own .claude/ (Board #156 B, #153 B; notes/PLAN-O
       `git commit` (THROUGH_LAND), so `land.py commit` and a lane check are needed; six config fields only one
       project could fill were required (now optional, A2).
     * A VERIFIED (girsa-verifier), merged to main 96d073d. Its LOW 1 and the recommendation (foreign optional): a5faac2.
+    * **[15:04]** A2 and B VERIFIED at 37f9e61 (girsa-verifier: 104 passed, the guard end to end 12 of 12, Girsa's
+      config unchanged loads under a5faac2 - its bump is the pin alone). Its LOW 1, the lane check let the login pass
+      folded into one word (`-Users-<login>-work-...`): the bare login added, on word boundaries; red without it. Sent:
+      the HANDOFF of A2 and B; this round back to it. NOT RUN by anyone: `land.py commit mishmeret-builder` through the
+      shim (another role's session may not name this role) - the builder's first commit is its first run.

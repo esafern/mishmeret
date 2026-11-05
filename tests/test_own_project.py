@@ -68,7 +68,9 @@ def test_every_commit_is_scanned_for_an_address_a_roster_name_and_the_home_folde
     stage("notes/ok.md", "write to someone" + "@" + "example.org\n")
     rc, out = check("mishmeret-builder")
     assert rc == 0 and "no name was checked" in out, out
-    for i, line in enumerate(("mail pp" + "@" + "mail.co\n", "kept in " + os.path.expanduser("~") + "/x\n")):
+    login = os.path.basename(os.path.expanduser("~"))
+    for i, line in enumerate(("mail pp" + "@" + "mail.co\n", "kept in " + os.path.expanduser("~") + "/x\n",
+                              "a folder -Users-" + login + "-work-x\n")):     # the login folded into one word
         stage(f"notes/bad{i}.md", line)
         rc, out = check("mishmeret-builder")
         assert rc == 1 and f"notes/bad{i}.md: 1 added line carries" in out and line.strip() not in out, out
