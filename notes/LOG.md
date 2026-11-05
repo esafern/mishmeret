@@ -3,6 +3,15 @@
 Findings, decisions and open work, each the moment it is known; a time from `date`. One item per run of work, newest
 first (`M01.`, `M02.` ...); what git records (what each commit did) is not repeated here.
 
+M03. **[2026-11-05, copy-on-select (notes/PLAN-COPY-SELECT.md)]**
+    * **[15:55]** The drill-down VERIFIED (girsa-verifier, one LOW at the page's next touch) and merged by girsa-operator
+      (main 59178bf, not pushed). Sent, live: the merge's REQUEST to girsa-operator. The LOW pinned first, 9c9fa8b.
+    * FOUND, in the prototype's measure: Chromium's `getSelection()` holds a textarea's selected text, so without the
+      box's rule a draft's word overwrote the clipboard (red). The sign shows when the write resolves, after the
+      mouse-up: a test reading it at once reads the one before - the test waits for it.
+    * To send at this commit, live: the look's QUESTION to girsa-ui-steward (three, with pictures); the plan's HANDOFF
+      to girsa-verifier.
+
 M02. **[2026-11-05, the Board's open-messages drill-down (notes/PLAN-OPEN-MESSAGES.md)]**
     * **[15:38]** The first session as mishmeret-builder, started in `~/work/mishmeret`. Received, live: girsa-operator's
       NOTE that the Board on 8451 runs (Girsa's Board #160 A) and the next work is the two Board asks. The reviewer's

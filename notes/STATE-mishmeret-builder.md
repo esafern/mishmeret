@@ -5,22 +5,23 @@ Rewritten in place when a piece lands and at the end of a session; the log is `n
 ## Built, on main
 
 - c1963d1: A (`guard.foreign`), A2 (seven config fields optional) and B (Mishmeret's own `.claude/`, `notes/`, the
-  lane check), each verified by girsa-verifier (notes/PLAN-OWN-CLAUDE.md). The Board on 8451 runs from the main clone
-  (girsa-operator, on the reviewer's Girsa Board #160 A).
+  lane check), each verified by girsa-verifier (notes/PLAN-OWN-CLAUDE.md). The Board on 8451 runs from the main clone.
+- 59178bf: the open-messages drill-down (notes/PLAN-OPEN-MESSAGES.md; the look 4e1ac02, the behaviour 59178bf),
+  verified; merged by girsa-operator, not pushed. Girsa's pin bump to it is girsa-builder's.
 
 ## Now
 
-- The open-messages drill-down (notes/PLAN-OPEN-MESSAGES.md), branch `builder-open-messages` in
-  `~/work/mishmeret-builder`, from main c1963d1. The prototype is in the tree, uncommitted (`board_server.py`,
-  `tests/test_board.py`: 21 passed). Waiting on girsa-ui-steward's look (four questions) and girsa-verifier's review
-  of the plan; then the build, committed, and girsa-verifier's check at its final commit.
+- Copy-on-select (notes/PLAN-COPY-SELECT.md), branch `builder-copy-select` in `~/work/mishmeret-builder`, from
+  59178bf. On it: 9c9fa8b (girsa-verifier's LOW 1 on 59178bf, the `#qa-N` link's test). The prototype is in the tree,
+  uncommitted (`board_server.py`, `tests/test_board.py`: suite 107 passed). Waiting on girsa-ui-steward's look (three
+  questions) and girsa-verifier's review of the plan; then the look's commit, the behaviour's, and the check at the
+  final one.
 
 ## Next, in order
 
-1. Copy-on-select on the Board (girsa-operator's REQUEST, item 3; the reviewer, 2026-11-05: "girsa board should
-   auto-copy highlighted text inthe c-b [clipboard]"): selected text copied with no keystroke; any sign that it
-   copied is a look, girsa-ui-steward's.
+1. None queued after copy-on-select: ask girsa-operator for the next Mishmeret work.
 
 ## Open
 
 - Not pinned by a test (A2): `land()`'s restart line and ledger copy with the field absent.
+- The 5 s refresh redraws the corners, so a focused pill loses its focus then (page-wide; girsa-ui-steward: leave it).
