@@ -2,24 +2,25 @@
 
 Rewritten in place when a piece lands and at the end of a session; the log is `notes/LOG.md`, by item.
 
+## Built, on main
+
+- c1963d1: A (`guard.foreign`), A2 (seven config fields optional) and B (Mishmeret's own `.claude/`, `notes/`, the
+  lane check), each verified by girsa-verifier (notes/PLAN-OWN-CLAUDE.md). The Board on 8451 runs from the main clone
+  (girsa-operator, on the reviewer's Girsa Board #160 A).
+
 ## Now
 
-- Branch `builder-own-claude` in `~/work/mishmeret-builder`, from main 94dfc09. On main: A, 96d073d (`guard.foreign`).
-  Built, not yet checked: A2 (b541069, a5faac2: seven config fields optional) and B (Mishmeret's own `.claude/`,
-  `notes/`, the lane check) - one batch to girsa-verifier at B's final commit (notes/PLAN-OWN-CLAUDE.md).
+- The open-messages drill-down (notes/PLAN-OPEN-MESSAGES.md), branch `builder-open-messages` in
+  `~/work/mishmeret-builder`, from main c1963d1. The prototype is in the tree, uncommitted (`board_server.py`,
+  `tests/test_board.py`: 21 passed). Waiting on girsa-ui-steward's look (four questions) and girsa-verifier's review
+  of the plan; then the build, committed, and girsa-verifier's check at its final commit.
 
 ## Next, in order
 
-1. girsa-verifier's check of A2 and B; one round on its findings; girsa-operator merges main and makes the pin of
-   a5faac2; the reviewer starts this role in `~/work/mishmeret` (the brief's start line).
-2. The Board's open-messages drill-down (girsa-operator's REQUEST, 2026-11-05): from a corner's "N open messages", or
-   the cornerless line's pill, each open message - its number, sender, time and text. Behaviour here
-   (`board_server.py`), the look girsa-ui-steward's, asked before the build.
-3. Copy-on-select on the Board (the same REQUEST): selected text copied to the clipboard with no keystroke; any sign
-   that it copied is a look, girsa-ui-steward's.
+1. Copy-on-select on the Board (girsa-operator's REQUEST, item 3; the reviewer, 2026-11-05: "girsa board should
+   auto-copy highlighted text inthe c-b [clipboard]"): selected text copied with no keystroke; any sign that it
+   copied is a look, girsa-ui-steward's.
 
 ## Open
 
 - Not pinned by a test (A2): `land()`'s restart line and ledger copy with the field absent.
-- The roster `.claude/roster.local.json` in the main clone is the operator's to make (a Girsa roster's shape); until
-  it exists the lane check says no name was checked.

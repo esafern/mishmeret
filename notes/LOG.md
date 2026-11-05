@@ -3,6 +3,17 @@
 Findings, decisions and open work, each the moment it is known; a time from `date`. One item per run of work, newest
 first (`M01.`, `M02.` ...); what git records (what each commit did) is not repeated here.
 
+M02. **[2026-11-05, the Board's open-messages drill-down (notes/PLAN-OPEN-MESSAGES.md)]**
+    * **[15:38]** The first session as mishmeret-builder, started in `~/work/mishmeret`. Received, live: girsa-operator's
+      NOTE that the Board on 8451 runs (Girsa's Board #160 A) and the next work is the two Board asks. The reviewer's
+      words for both are in Girsa's PROJECT-STATUS-OPEN.md (13:44, 14:03), its operator's first message to this role
+      item 2 and 3.
+    * FOUND, in the prototype's measure: a `<button>` drops the page's `font-feature-settings` (tabular figures; the
+      pill 0.33 px narrower) - inherited now, the pill the span's size to the 1/64 px. A placeholder path with hyphens
+      did not show the sideways scroll (the browser breaks at a hyphen): the test's path has none.
+    * To send at this commit, live: the look's QUESTION to girsa-ui-steward (the plan's four, with pictures); the plan's
+      HANDOFF to girsa-verifier.
+
 M01. **[2026-11-05, Mishmeret's own .claude/ (Board #156 B, #153 B; notes/PLAN-OWN-CLAUDE.md)]**
     * **[14:48]** Started as a session of the first project's builder role, in that project's main clone; took that
       role's own next item by mistake and committed it in that role's worktree (952cf591, there), then stopped and handed
