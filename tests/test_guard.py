@@ -1017,44 +1017,40 @@ def test_no_role_changes_a_foreign_repository_in_its_main_clone_or_any_worktree(
     """Board #153 B: a repository in `guard.foreign` (a Mishmeret session wrote into Girsa: d87aa497, through land.py)
     is refused to every role, the operator too, in its main clone AND every linked worktree - a file tool's write, a
     git command that changes a tree (merge --ff-only too), and land.py commit or land. A read passes; so does a copy with
-    its own .git, and the same commands in a worktree of a repository not named. Placeholder repositories."""
+    its own .git, and the same commands in a worktree of a repository not named. The placeholder config names none
+    (the field is optional: absent, FOREIGN is empty); the test names its own. Placeholder repositories in tmp_path."""
     import importlib.util
-    import shutil
     import subprocess
-    foreign = os.path.join(REPO, "foreign")                # the placeholder config's `guard.foreign`
-    other = str(tmp_path / "other")
+    foreign, other = str(tmp_path / "foreign"), str(tmp_path / "other")
     git = lambda cwd, *a: subprocess.run(["git", "-C", str(cwd), "-c", "user.name=placeholder", "-c",
                                           "user.email=placeholder@example.org", *a], check=True, capture_output=True)
-    try:
-        for repo in (foreign, other):
-            os.makedirs(repo)
-            git(repo, "init", "-q", "-b", "main")
-            git(repo, "commit", "-q", "--allow-empty", "-m", "placeholder")
-            git(repo, "worktree", "add", "-q", "-b", "feature", repo + "-wt")
-        subprocess.run(["cp", "-R", foreign, str(tmp_path / "copy")], check=True)
-        spec = importlib.util.spec_from_file_location("role_guard", os.path.join(PKG, "role_guard.py"))
-        rg = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(rg)
-        file_event = lambda role, path: {"tool_name": "Write", "agent_type": role,
-                                         "tool_input": {"file_path": path, "content": "x"}}
-        bash = lambda role, command, cwd: {"tool_name": "Bash", "agent_type": role, "cwd": cwd,
-                                           "tool_input": {"command": command}}
-        for role in ("ex-operator", "ex-builder", rg.NO_ROLE):
-            for tree in (foreign, foreign + "-wt"):
-                assert rg.check(file_event(role, os.path.join(tree, "new", "x.md")), [""]) == 2, (role, tree)
-                for command, cwd in (("git checkout -q -b x", tree), (f"git -C {tree} merge --ff-only main", REPO),
-                                     (f"cd {tree} && ./venv/bin/python tools/land.py commit {role} code -F m x.py",
-                                      REPO)):
-                    assert rg.check(bash(role, command, cwd), [""]) == 2, (role, command)
-                for command, cwd in (("git log -1", tree), (f"git -C {tree} status", REPO), ("git stash list", tree)):
-                    assert rg.check(bash(role, command, cwd), [""]) == 0, (role, command)
-            assert rg.check(file_event(role, str(tmp_path / "copy" / "x.md")), [""]) == 0, "a copy is not the repository"
-        assert rg.check(file_event("ex-builder", os.path.join(other + "-wt", "x.md")), [""]) == 0
-        assert rg.check(bash("ex-builder", "git checkout -q -b y", other + "-wt"), [""]) == 0
-        assert rg.foreign_tree(foreign + "-wt") == foreign and rg.foreign_tree(other) is None
-    finally:
-        shutil.rmtree(foreign, ignore_errors=True)
-        shutil.rmtree(foreign + "-wt", ignore_errors=True)
+    for repo in (foreign, other):
+        os.makedirs(repo)
+        git(repo, "init", "-q", "-b", "main")
+        git(repo, "commit", "-q", "--allow-empty", "-m", "placeholder")
+        git(repo, "worktree", "add", "-q", "-b", "feature", repo + "-wt")
+    subprocess.run(["cp", "-R", foreign, str(tmp_path / "copy")], check=True)
+    spec = importlib.util.spec_from_file_location("role_guard", os.path.join(PKG, "role_guard.py"))
+    rg = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(rg)
+    assert rg.FOREIGN == ()
+    rg.FOREIGN = (foreign,)
+    file_event = lambda role, path: {"tool_name": "Write", "agent_type": role,
+                                     "tool_input": {"file_path": path, "content": "x"}}
+    bash = lambda role, command, cwd: {"tool_name": "Bash", "agent_type": role, "cwd": cwd,
+                                       "tool_input": {"command": command}}
+    for role in ("ex-operator", "ex-builder", rg.NO_ROLE):
+        for tree in (foreign, foreign + "-wt"):
+            assert rg.check(file_event(role, os.path.join(tree, "new", "x.md")), [""]) == 2, (role, tree)
+            for command, cwd in (("git checkout -q -b x", tree), (f"git -C {tree} merge --ff-only main", REPO),
+                                 (f"cd {tree} && ./venv/bin/python tools/land.py commit {role} code -F m x.py", REPO)):
+                assert rg.check(bash(role, command, cwd), [""]) == 2, (role, command)
+            for command, cwd in (("git log -1", tree), (f"git -C {tree} status", REPO), ("git stash list", tree)):
+                assert rg.check(bash(role, command, cwd), [""]) == 0, (role, command)
+        assert rg.check(file_event(role, str(tmp_path / "copy" / "x.md")), [""]) == 0, "a copy is not the repository"
+    assert rg.check(file_event("ex-builder", os.path.join(other + "-wt", "x.md")), [""]) == 0
+    assert rg.check(bash("ex-builder", "git checkout -q -b y", other + "-wt"), [""]) == 0
+    assert rg.foreign_tree(foreign + "-wt") == foreign and rg.foreign_tree(other) is None
 
 
 def test_a_clean_rebase_leaves_its_stamp_so_a_rebase_by_hand_before_the_next_call_is_checked(tmp_path, monkeypatch):

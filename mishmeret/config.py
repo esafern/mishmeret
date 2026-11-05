@@ -61,9 +61,10 @@ LAND = {"planned": str, "verifier": str, "lane_check": str, "ledger": str, "serv
 SERVER = {"entry": str, "folders": list, "page": str}
 # WHAT ONLY SOME PROJECTS HAVE - a Python for the tmux roles, drafts, a list of corpus homes, a pre-commit hook, a live
 # ledger, a review server (girsa-architect, MISHMERET-OWN-CLAUDE-ARCHITECT.md in Girsa, 3: a required field only one
-# project can fill is that project's field in Mishmeret's code). Absent, its reader takes it as off; there is no default.
-OPTIONAL = {"python", "drafts", "guard.homes", "guard.precommit", "land.ledger", "land.server"}
-NIGHT ={"check_every": int, "you_idle": int, "role_idle": int, "landed_quiet": int, "poll": int,
+# project can fill is that project's field in Mishmeret's code), and repositories no role changes (girsa-verifier's
+# review of that plan: a project's config then gains no field at its pin bump). Absent, its reader takes it as off.
+OPTIONAL = {"python", "drafts", "guard.homes", "guard.precommit", "guard.foreign", "land.ledger", "land.server"}
+NIGHT = {"check_every": int, "you_idle": int, "role_idle": int, "landed_quiet": int, "poll": int,
          "context_limit": int, "gap": int}
 # the reports' tables, each key required and no other (as NIGHT); a value is checked by its kind, and `files` (a path:
 # [limit in bytes, where a whole block goes]) and `effort` ({role: [level, why]}) row by row

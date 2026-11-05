@@ -186,7 +186,7 @@ TREES = tuple(GUARD["trees"])
 # REPOSITORIES NO ROLE OF THIS PROJECT CHANGES, IN ANY TREE (Board #153 B: "the guard refuses every tree of Girsa,
 # worktrees included"): their main clone and every linked worktree - one git common dir - to every role, the operator
 # too. A copy (`cp -c -R`, its own .git) is another repository and is not refused; a read never is.
-FOREIGN = tuple(GUARD["foreign"])
+FOREIGN = tuple(GUARD.get("foreign", ()))     # absent (config.OPTIONAL): none
 
 
 def corpus_roots(path=None):
