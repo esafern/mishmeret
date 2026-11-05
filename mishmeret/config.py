@@ -47,13 +47,14 @@ FIELDS = {
     "effort": dict,             # effort_report: {role: [recommended effort, why]} - the roles whose agent files it reads
     "drafts": dict,             # draft_check_hook: which written files are drafts, the check run on each, its two notes,
                                 # its timeout in seconds (under the project's own hook timeout, so it fires first)
-    "guard": dict,              # role_guard, time_precommit: the trees only the operator changes, the remotes never
-                                # pushed to, the checks whose status decides a commit, the pre-commit hook's own path
+    "guard": dict,              # role_guard, time_precommit: the trees only the operator changes, the repositories no
+                                # role changes in any tree (`foreign`), the remotes never pushed to, the checks whose
+                                # status decides a commit, the pre-commit hook's own path
     "land": dict,               # land: the role whose code landing names a plan, the verifier a round goes back to, the
                                 # lane check it runs, the live ledger, what a review server loads, the gate's lists
     "budget": dict,             # board, statusline: the plan window's percent at which each session is told once
 }
-GUARD = {"homes": str, "fallback_roots": list, "trees": list, "retired_remotes": list, "checks": list,
+GUARD = {"homes": str, "fallback_roots": list, "trees": list, "foreign": list, "retired_remotes": list, "checks": list,
          "precommit": str}
 LAND = {"planned": str, "verifier": str, "lane_check": str, "ledger": str, "server": dict, "gate_sets": dict,
         "gate_env": dict, "hand_run": dict}

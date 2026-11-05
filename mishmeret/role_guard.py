@@ -183,6 +183,10 @@ FALLBACK_CORPUS_ROOTS = tuple(GUARD["fallback_roots"])
 # THE OTHER TREES WHOSE MAIN TREE IS THE OPERATOR'S (design-study/STEP-MISHMERET-MOVE-PLAN.md in Girsa, step 4): the
 # Mishmeret checkout - its worktrees anyone's, its pins (`<tree>/.pins/<sha>`) no one's (`pin_of`)
 TREES = tuple(GUARD["trees"])
+# REPOSITORIES NO ROLE OF THIS PROJECT CHANGES, IN ANY TREE (Board #153 B: "the guard refuses every tree of Girsa,
+# worktrees included"): their main clone and every linked worktree - one git common dir - to every role, the operator
+# too. A copy (`cp -c -R`, its own .git) is another repository and is not refused; a read never is.
+FOREIGN = tuple(GUARD["foreign"])
 
 
 def corpus_roots(path=None):
@@ -239,6 +243,21 @@ def pin_refusal(pin):
     return (f"refused by the role guard: {pin} is a pinned Mishmeret tree - every hook runs its code, so no role, the "
             "operator too, changes it: a change is a new Mishmeret commit, its own pin made from it, and the "
             "project's `mishmeret_commit` set to that sha")
+
+
+def foreign_tree(path):
+    """The entry of FOREIGN whose repository `path` is in - its main clone or any linked worktree - or None."""
+    dirs = _git_dirs(path)
+    for repo in FOREIGN if dirs else ():
+        theirs = _git_dirs(os.path.expanduser(repo))
+        if theirs and theirs[1] == dirs[1]:
+            return repo
+    return None
+
+
+def foreign_refusal(repo):
+    return (f"refused by the role guard: this is a tree of {repo}, a repository no role of this project changes "
+            "(its config's `guard.foreign`) - not its main clone, not any worktree of it; send its own roles a REQUEST")
 
 
 def is_main_tree(path, guarded=None):
@@ -307,9 +326,13 @@ def refusal(role, command, cwd, main_tree=is_main_tree, read=_read, depth=0, pro
         verb, rest = m.group(2), m.group(3).split()
         if verb in CHANGES_MAIN and not ((verb == "stash" and rest[:1] and rest[0] in LEAVES_IT["stash"])
                                          or (verb == "apply" and any(w in rest for w in LEAVES_IT["apply"]))):
-            pin = pin_of(_git_where(command, masked, m, cwd))       # a pin: refused to every role, merge --ff-only too
+            where = _git_where(command, masked, m, cwd)
+            pin = pin_of(where)                                     # a pin: refused to every role, merge --ff-only too
             if pin:
                 return pin_refusal(pin)
+            repo = foreign_tree(where)                              # so is any tree of a foreign repository
+            if repo:
+                return foreign_refusal(repo)
         if verb in THROUGH_LAND and "--abort" not in rest:
             where = _git_where(command, masked, m, cwd)
             in_main = main_tree(where)
@@ -351,6 +374,10 @@ def refusal(role, command, cwd, main_tree=is_main_tree, read=_read, depth=0, pro
         verb = m.group(1)
         if verb not in LAND_AS_ROLE:
             continue
+        # land.py runs git where this hook cannot see it: a Mishmeret session's commit reached Girsa this way (d87aa497)
+        repo = foreign_tree(_dir_before(command, masked, m.start(), cwd))
+        if repo:
+            return foreign_refusal(repo)
         words = command[m.start(2):m.end(2)].split()
         named = _expand(_unquote(words[0]), command[:m.start()]) if words else ""
         if named != role:
@@ -819,7 +846,7 @@ def time_refusal(tool, tool_input, cwd, read=_read):
 
 def edit_refusal(role, path, main_tree=is_main_tree):
     """None to let a file tool write `path` as `role`, or the reason to refuse it."""
-    if role == OPERATOR or not path:
+    if not path:
         return None
     here = os.path.dirname(os.path.abspath(os.path.expanduser(path)))
     while here and not os.path.isdir(here):
@@ -827,6 +854,11 @@ def edit_refusal(role, path, main_tree=is_main_tree):
         if parent == here:
             return None
         here = parent
+    repo = foreign_tree(here)                   # every role, the operator too
+    if repo:
+        return foreign_refusal(repo)
+    if role == OPERATOR:
+        return None
     if main_tree(here):
         no_role = (" (this session was started without a role: a one-off session works in a worktree)"
                    if role == NO_ROLE else "")
