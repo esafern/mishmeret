@@ -351,6 +351,7 @@ def test_a_pill_of_open_messages_lists_each_one(tmp_path, monkeypatch, size):
     bs.board.send("ex-operator", "ex-architect", said[0])
     bs.board.send("ex-verifier", "ex-architect", said[1])
     bs.board.send("ex-operator", "ex-demo-operator", "REQUEST placeholder three")      # a role with no corner
+    bs.board.qa("ex-architect", "placeholder question", "placeholder answer")
     monkeypatch.setattr(bs.LIVE, "get", lambda: {})
     server = bs.ThreadingHTTPServer(("127.0.0.1", 0), bs.Handler)
     threading.Thread(target=server.serve_forever, daemon=True).start()
@@ -369,6 +370,9 @@ def test_a_pill_of_open_messages_lists_each_one(tmp_path, monkeypatch, size):
             closed = page.evaluate(LIST)
             page.click("#cornerless button.stall")
             other = page.evaluate(LIST)
+            page.evaluate("""() => new Promise(r => { addEventListener("hashchange", () => setTimeout(r, 0), {once: true});
+                                                       location.hash = "#qa-1"; })""")
+            linked = page.evaluate(LIST)
             page.click("#toggle")
             back = page.evaluate(LIST)
             page.click("#cornerless button.stall")
@@ -394,6 +398,8 @@ def test_a_pill_of_open_messages_lists_each_one(tmp_path, monkeypatch, size):
     assert other["title"] == "Open messages to ex-demo-operator (1)" and \
         [c["text"] for c in other["cards"]] == ["REQUEST placeholder three"], other
     assert other["pressed"] == {"ex-architect": "false", "ex-demo-operator": "true"}, other
+    assert linked["title"] == "Your questions and the answers (1)" and not linked["cards"] and \
+        "true" not in linked["pressed"].values(), f"a link to a Q&A closes the list (girsa-verifier's LOW 1): {linked}"
     assert back["title"] == "Questions for you" and not back["cards"] and "true" not in back["pressed"].values(), back
     assert gone["title"] == "Open messages to ex-demo-operator (0)" and not gone["cards"] and \
         gone["empty"] == "No message to ex-demo-operator is open.", gone
