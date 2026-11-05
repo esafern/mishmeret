@@ -18,6 +18,12 @@ M03. **[2026-11-05, copy-on-select (notes/PLAN-COPY-SELECT.md)]**
       - both secure contexts; a comment at the call says so. The words changed; a refused write now tested (red with
       its path empty). Suite 107 passed. Sent, live: the guard's answer to girsa-ui-steward; a NOTE of the revised
       plan to girsa-verifier.
+    * **[16:10]** girsa-verifier (its next session), live: the plan ACCEPTED, LOW 1 to fix in the build - P3, one click
+      inside a word still highlighted copied it again over what a pane had copied since. FOUND: its idea (a
+      selectionchange between the press's two ends) fails a quick double-click - the event comes after its mouseup,
+      every run red. Built instead: the selection read at each end of the press, copied only when it moved; P3 in the
+      test, red without it; 5 runs of 5 green. Its probe (P1-P3, copied to scratch) on the build: P1 copied, P2
+      nothing, P3 nothing. The look alone in 24d0246 (its suite at it, a scratch clone: 106 passed); the behaviour next.
 
 M02. **[2026-11-05, the Board's open-messages drill-down (notes/PLAN-OPEN-MESSAGES.md)]**
     * **[15:38]** The first session as mishmeret-builder, started in `~/work/mishmeret`. Received, live: girsa-operator's

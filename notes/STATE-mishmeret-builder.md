@@ -12,10 +12,9 @@ Rewritten in place when a piece lands and at the end of a session; the log is `n
 ## Now
 
 - Copy-on-select (notes/PLAN-COPY-SELECT.md), branch `builder-copy-select` in `~/work/mishmeret-builder`, from
-  59178bf. On it: 9c9fa8b (girsa-verifier's LOW 1 on 59178bf, the `#qa-N` link's test). The prototype is in the tree,
-  uncommitted (`board_server.py`, `tests/test_board.py`: suite 107 passed), with girsa-ui-steward's answered look.
-  Waiting on girsa-verifier's review of the plan (its next session; it has the branch); then the look's commit (the
-  `#copied` CSS rule and element), the behaviour's (the mouse-up handler, the test), and its check at the final one.
+  59178bf. Built: 9c9fa8b (girsa-verifier's LOW 1 on 59178bf, the `#qa-N` link's test), 24d0246 (the sign's look),
+  and the behaviour at the branch's tip (the mouse-up listener, its LOW 1 on the plan, the test; suite 107 passed).
+  Waiting on girsa-verifier's check at the tip; then girsa-operator merges main.
 
 ## Next, in order
 

@@ -405,6 +405,69 @@ def test_a_pill_of_open_messages_lists_each_one(tmp_path, monkeypatch, size):
         gone["empty"] == "No message to ex-demo-operator is open.", gone
 
 
+SIGN = """() => { const c = document.getElementById("copied");
+    return {shown: !c.hidden && c.getBoundingClientRect().width > 0, words: c.textContent}; }"""
+
+
+def test_text_selected_on_the_board_is_copied_with_no_keystroke(tmp_path, monkeypatch):
+    """The reviewer, 2026-11-05: "girsa board should auto-copy highlighted text inthe c-b [clipboard]". Text selected
+    with the mouse (here a double-click on a word of a question) is on the clipboard as the button comes up, and
+    "Copied" shows beside the pointer, then goes; a write the browser refuses says "Not copied" (girsa-ui-steward's
+    words). A selection in an answer's box is not copied: selecting a draft to replace it would overwrite what was
+    brought to paste; nor is one a click lands in while it is still highlighted (girsa-verifier's LOW 1). The real page from a scratch Board, headless, its clipboard granted; skipped without Playwright."""
+    sync_api = pytest.importorskip("playwright.sync_api")
+    import importlib.util
+    import threading
+    monkeypatch.setenv("MISHMERET_BOARD_DIR", str(tmp_path / "board"))
+    monkeypatch.syspath_prepend(PKG)
+    spec = importlib.util.spec_from_file_location("board_server", os.path.join(PKG, "board_server.py"))
+    bs = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(bs)
+    bs.board.ask("ex-builder", "Placeholder decision about copying")
+    monkeypatch.setattr(bs.LIVE, "get", lambda: {})
+    server = bs.ThreadingHTTPServer(("127.0.0.1", 0), bs.Handler)
+    threading.Thread(target=server.serve_forever, daemon=True).start()
+    try:
+        with sync_api.sync_playwright() as p:
+            browser = p.chromium.launch()
+            ctx = browser.new_context(viewport={"width": 1229, "height": 673},
+                                      permissions=["clipboard-read", "clipboard-write"])
+            page = ctx.new_page()
+            page.goto(f"http://127.0.0.1:{server.server_address[1]}/")
+            page.locator(".card .title").wait_for()
+            clip = lambda: page.evaluate("navigator.clipboard.readText()")       # noqa: E731
+            page.evaluate("navigator.clipboard.writeText('brought to paste')")
+            page.dblclick(".card .title", position={"x": 20, "y": 10})      # on its first word
+            page.wait_for_function("!document.getElementById('copied').hidden", timeout=3000)   # once the write resolves
+            selected = page.evaluate("getSelection().toString()")
+            copied, sign = clip(), page.evaluate(SIGN)
+            page.wait_for_timeout(1500)
+            later = page.evaluate(SIGN)
+            page.evaluate("navigator.clipboard.writeText('copied later in a pane')")
+            page.click(".card .title", position={"x": 20, "y": 10})         # one click inside the word still highlighted
+            page.wait_for_timeout(300)
+            clicked = [clip(), page.evaluate(SIGN)["shown"]]
+            page.evaluate("navigator.clipboard.writeText('brought to paste')")
+            page.fill("textarea", "a placeholder draft")
+            page.dblclick("textarea")
+            page.wait_for_timeout(300)        # time for a write, were one made
+            in_box = [page.evaluate("(t => t.value.slice(t.selectionStart, t.selectionEnd))(document.querySelector('textarea'))"),
+                      clip(), page.evaluate(SIGN)]
+            page.evaluate("() => { navigator.clipboard.writeText = () => Promise.reject(new Error('refused')); }")   # a browser saying no
+            page.dblclick(".card .title", position={"x": 20, "y": 10})
+            page.wait_for_function("!document.getElementById('copied').hidden", timeout=3000)
+            refused = page.evaluate(SIGN)
+            browser.close()
+    finally:
+        server.shutdown()
+    assert selected.strip() in "Placeholder decision about copying" and selected.strip(), selected
+    assert copied == selected, f"the selection, not {copied!r}"
+    assert sign == {"shown": True, "words": "Copied"} and not later["shown"], (sign, later)
+    assert clicked == ["copied later in a pane", False], f"a click in the old selection copied it again: {clicked}"
+    assert in_box[0] and in_box[1] == "brought to paste" and not in_box[2]["shown"], f"the box's selection copied: {in_box}"
+    assert refused == {"shown": True, "words": "Not copied"}, f"a refused copy never reads as done: {refused}"
+
+
 def test_the_boards_corners_and_mockup_pages(tmp_path, monkeypatch):
     """The reviewer, 2026-10-10: "divide it up like these screens, so each agent has it's own corner to report status -
     what it is working on, what just finished and what is next - always in the same place, no scrolling. status should
