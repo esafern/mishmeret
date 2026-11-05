@@ -1,0 +1,6 @@
+# Which paths each role may commit (read by .claude/lane_check.py): `ROLE may|not PATTERN`, one row a line. A pattern is
+# fnmatch's (`*` crosses folders); a path is the role's when a `may` row matches it and no `not` row of the role does.
+# A role with no row may commit nothing. `.claude/` is the operator's alone: a role's settings are not its own, and the
+# builder starts in the main clone, so its own edit there would reach main only through this check.
+mishmeret-builder may *
+mishmeret-builder not .claude/*

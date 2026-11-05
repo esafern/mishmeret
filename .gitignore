@@ -1,3 +1,5 @@
 __pycache__/
 # the pinned commits every project hook runs (a worktree each; never edited, a change is a new pin)
 .pins/
+# this project's roster of names kept out of every commit (.claude/lane_check.py reads the main clone's)
+.claude/roster.local.json

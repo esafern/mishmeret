@@ -1,0 +1,38 @@
+{
+  "repository": "https://github.com/esafern/mishmeret.git",
+  "mishmeret_commit": "a5faac2213427b340124e23e18ba9fc0d52cef09",
+  "project": "Mishmeret",
+  "roles": [
+    {"name": "mishmeret-builder", "short": "builder", "colour": "", "page_light": "#3d8590", "page_dark": "#73aab2", "corner": true, "tmux": false},
+    {"name": "mishmeret-operator", "short": "operator", "colour": "", "page_light": "", "page_dark": "", "corner": false, "tmux": false},
+    {"name": "mishmeret-verifier", "short": "verifier", "colour": "", "page_light": "", "page_dark": "", "corner": false, "tmux": false}
+  ],
+  "page_order": ["builder"],
+  "operator": "mishmeret-operator",
+  "board_dir": "~/work/mishmeret-board",
+  "board_port": 8451,
+  "tmux_session": "mishmeret",
+  "tmux_conf": "~/.tmux-agents.conf",
+  "claude_projects": "~/.claude/projects",
+  "agent_files": ".claude/agents/{role}.md",
+  "launchd_prefix": "com.mishmeret",
+  "state_dir": ".night",
+  "night": {"check_every": 1800, "you_idle": 900, "role_idle": 900, "landed_quiet": 120, "poll": 60, "context_limit": 200000, "gap": 5},
+  "sizes": {"warn_percent": 80, "files": {
+    "notes/BRIEF-mishmeret-builder.md": [30000, "notes/LOG.md, under a dated heading"]
+    },
+    "status_file": "notes/LOG.md", "item_pattern": "^(M[0-9]{2})\\. ", "item_limit": 100000,
+    "item_home": "a new item, the old one left whole",
+    "state_files": "notes/STATE-mishmeret-*.md", "state_limit": 6000,
+    "state_home": "notes/LOG.md, the block's settled lines"},
+  "start_reads": {"briefs": "notes/BRIEF-mishmeret-*.md", "logs": ["notes/LOG.md"]},
+  "effort": {
+    "mishmeret-builder": ["high", "builds Mishmeret's code; every piece is checked by the verifier before it merges"]
+  },
+  "guard": {"fallback_roots": [], "trees": ["~/work/mishmeret"],
+    "foreign": ["~/work/sefer-digitization-pipeline", "~/work/hashorashim"],
+    "retired_remotes": [], "checks": ["lane_check.py", "pytest"]},
+  "land": {"planned": "mishmeret-builder", "verifier": "mishmeret-verifier", "lane_check": ".claude/lane_check.py",
+    "gate_sets": {"landing": ["tests/"]}, "gate_env": {}, "hand_run": {}},
+  "budget": {"warn_percent": 80}
+}
