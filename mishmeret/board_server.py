@@ -443,17 +443,18 @@ function goToQA() {
 addEventListener("hashchange", goToQA);
 // COPY ON SELECT (the reviewer, 2026-11-05: "girsa board should auto-copy highlighted text inthe c-b [clipboard]"): text
 // selected with the mouse is copied as the button comes up, and a word beside the pointer says so for a moment. Not in an
-// answer's box, nor on a button or a link: selecting a draft to replace it would overwrite what was brought to paste.
-// Only a selection this press made: a click inside one still highlighted would copy it again over what came since
-// (girsa-verifier's LOW 1 on the plan; the browser collapses it only after mouseup's listeners). Read as it stands at
-// each end of the press - selectionchange comes later than a quick double-click's mouseup.
+// answer's box (its target, or its focus where a browser targets what is under the pointer): selecting a draft to replace
+// it would overwrite what was brought to paste. Only a selection this press made: a click inside one still highlighted -
+// on an option, a link, the word itself - would copy it again over what came since (girsa-verifier's LOW 1 on the plan;
+// the browser collapses it only after mouseup's listeners). Read as it stands at each end of the press - selectionchange
+// comes later than a quick double-click's mouseup. The left button only: a right click selects a word on a Mac.
 // shortcut: a drag re-selecting exactly the old selection copies nothing (and says nothing) - a double-click does
 const selAt = () => { const s = getSelection(); return [s.anchorNode, s.anchorOffset, s.focusNode, s.focusOffset]; };
 let pressedAt = [];
 document.addEventListener("mousedown", () => { pressedAt = selAt(); });
 document.addEventListener("mouseup", e => {
   const text = getSelection().toString();
-  if (e.button || selAt().every((x, i) => x === pressedAt[i]) || !text.trim() || e.target.closest("button, a, textarea, input") || /^(TEXTAREA|INPUT)$/.test(document.activeElement.tagName)) return;
+  if (e.button || selAt().every((x, i) => x === pressedAt[i]) || !text.trim() || e.target.closest("textarea, input") || /^(TEXTAREA|INPUT)$/.test(document.activeElement.tagName)) return;
   const sign = words => { const c = document.getElementById("copied"); c.textContent = words; c.hidden = false;
     c.style.left = Math.min(e.clientX + 12, innerWidth - c.offsetWidth - 4) + "px"; c.style.top = Math.max(e.clientY - 20, 0) + "px";
     clearTimeout(c.timer); c.timer = setTimeout(() => { c.hidden = true; }, 1200); };

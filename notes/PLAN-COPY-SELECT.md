@@ -18,7 +18,9 @@ review.
   secure contexts, so the API is there). A double- or triple-click's word or line is a selection too.
 - NOT copied: a selection in an answer's box (a textarea, or the token table's date field), or a mouse-up on a button
   or a link - selecting a draft to replace it would overwrite what the reviewer brought to paste; a click on an
-  answer's option would copy again what is still selected.
+  answer's option would copy again what is still selected. REVISED in the build's LOW round (16:24): the button and
+  link rule dropped - the press check covers the click on an option, and the rule kept a drag ending over a link from
+  being copied (measured); a right click is not copied either (it selects a word on a Mac).
 - The sign: "Copied" beside the pointer, for 1.2 s, kept inside the window; when the browser refuses the write,
   "Not copied" there instead, so a refused copy never reads as done.
 - No guard for a page without `navigator.clipboard` (girsa-ui-steward's reading: an insecure context throws before

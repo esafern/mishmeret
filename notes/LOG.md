@@ -24,6 +24,15 @@ M03. **[2026-11-05, copy-on-select (notes/PLAN-COPY-SELECT.md)]**
       every run red. Built instead: the selection read at each end of the press, copied only when it moved; P3 in the
       test, red without it; 5 runs of 5 green. Its probe (P1-P3, copied to scratch) on the build: P1 copied, P2
       nothing, P3 nothing. The look alone in 24d0246 (its suite at it, a scratch clone: 106 passed); the behaviour next.
+    * **[16:24]** VERIFIED at 8f6771d (girsa-verifier), merged by girsa-operator (main 8f6771d, not pushed; Board 8451
+      restarted at it). Sent, live: the merge's REQUEST. Its LOW 1, the answer's box and the right button unpinned -
+      MY SLIP: I showed the box rule red before the press check existed, and did not run it again after; the press
+      check then returned first on the test's gesture (`fill()` leaves the selection on the box, so a drag in it moves
+      nothing). The round, branch `builder-copy-pins` from 8f6771d: the drag in the box starts with a word held (its
+      P6b), a right click (P5) - each red with its rule out (both box rules together; each alone is covered by the
+      other). And `button, a` dropped from the target rule: measured, a drag across a question ending over its link
+      selected the text and copied nothing; the click on an option it was for is the press check's (P7). The link
+      drag is in the test, red with the rule back. Its probes P1-P7 on the round: as meant. Suite 107 passed.
 
 M02. **[2026-11-05, the Board's open-messages drill-down (notes/PLAN-OPEN-MESSAGES.md)]**
     * **[15:38]** The first session as mishmeret-builder, started in `~/work/mishmeret`. Received, live: girsa-operator's

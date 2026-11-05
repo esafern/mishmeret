@@ -413,8 +413,10 @@ def test_text_selected_on_the_board_is_copied_with_no_keystroke(tmp_path, monkey
     """The reviewer, 2026-11-05: "girsa board should auto-copy highlighted text inthe c-b [clipboard]". Text selected
     with the mouse (here a double-click on a word of a question) is on the clipboard as the button comes up, and
     "Copied" shows beside the pointer, then goes; a write the browser refuses says "Not copied" (girsa-ui-steward's
-    words). A selection in an answer's box is not copied: selecting a draft to replace it would overwrite what was
-    brought to paste; nor is one a click lands in while it is still highlighted (girsa-verifier's LOW 1). The real page from a scratch Board, headless, its clipboard granted; skipped without Playwright."""
+    words). Not copied (girsa-verifier's two LOW 1s, each gesture its probe's): one a click lands in while it is still
+    highlighted (P3); a drag in an answer's box - selecting a draft to replace it would overwrite what was brought to
+    paste (P6b); a right click, which selects a word on a Mac (P5). A drag ending over a link is copied - the selection
+    is the reader's. The real page from a scratch Board, headless, its clipboard granted; skipped without Playwright."""
     sync_api = pytest.importorskip("playwright.sync_api")
     import importlib.util
     import threading
@@ -423,7 +425,7 @@ def test_text_selected_on_the_board_is_copied_with_no_keystroke(tmp_path, monkey
     spec = importlib.util.spec_from_file_location("board_server", os.path.join(PKG, "board_server.py"))
     bs = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(bs)
-    bs.board.ask("ex-builder", "Placeholder decision about copying")
+    bs.board.ask("ex-builder", "Placeholder decision about copying", body="Read the placeholder page https://example.org/x")
     monkeypatch.setattr(bs.LIVE, "get", lambda: {})
     server = bs.ThreadingHTTPServer(("127.0.0.1", 0), bs.Handler)
     threading.Thread(target=server.serve_forever, daemon=True).start()
@@ -447,12 +449,31 @@ def test_text_selected_on_the_board_is_copied_with_no_keystroke(tmp_path, monkey
             page.click(".card .title", position={"x": 20, "y": 10})         # one click inside the word still highlighted
             page.wait_for_timeout(300)
             clicked = [clip(), page.evaluate(SIGN)["shown"]]
-            page.evaluate("navigator.clipboard.writeText('brought to paste')")
+            def drag(start, end):             # (x, y) to (x, y), the button down between, then time for a write
+                page.mouse.move(*start)
+                page.mouse.down()
+                page.mouse.move(*end, steps=8)
+                page.mouse.up()
+                page.wait_for_timeout(300)
             page.fill("textarea", "a placeholder draft")
-            page.dblclick("textarea")
-            page.wait_for_timeout(300)        # time for a write, were one made
+            page.dblclick(".card .title", position={"x": 20, "y": 10})      # a word held as the drag starts: it moves
+            page.wait_for_function("!document.getElementById('copied').hidden", timeout=3000)
+            page.evaluate("() => { document.getElementById('copied').hidden = true; }")
+            page.evaluate("navigator.clipboard.writeText('brought to paste')")
+            b = page.locator("textarea").bounding_box()
+            drag((b["x"] + 4, b["y"] + 8), (b["x"] + 90, b["y"] + 8))
             in_box = [page.evaluate("(t => t.value.slice(t.selectionStart, t.selectionEnd))(document.querySelector('textarea'))"),
                       clip(), page.evaluate(SIGN)]
+            page.evaluate("navigator.clipboard.writeText('brought to paste')")
+            t = page.locator(".card .title").bounding_box()
+            page.mouse.click(t["x"] + 20, t["y"] + 10, button="right")
+            page.wait_for_timeout(300)
+            right = [page.evaluate("getSelection().toString()"), clip(), page.evaluate(SIGN)["shown"]]
+            page.evaluate("navigator.clipboard.writeText('brought to paste')")
+            body, a = page.locator(".card .body").bounding_box(), page.locator(".card .body a").bounding_box()
+            drag((body["x"] + 2, body["y"] + 8), (a["x"] + a["width"] / 2, a["y"] + a["height"] / 2))
+            on_link = [page.evaluate("getSelection().toString()"), clip(), page.evaluate(SIGN)["shown"], page.url]
+            page.evaluate("() => { document.getElementById('copied').hidden = true; }")
             page.evaluate("() => { navigator.clipboard.writeText = () => Promise.reject(new Error('refused')); }")   # a browser saying no
             page.dblclick(".card .title", position={"x": 20, "y": 10})
             page.wait_for_function("!document.getElementById('copied').hidden", timeout=3000)
@@ -465,6 +486,9 @@ def test_text_selected_on_the_board_is_copied_with_no_keystroke(tmp_path, monkey
     assert sign == {"shown": True, "words": "Copied"} and not later["shown"], (sign, later)
     assert clicked == ["copied later in a pane", False], f"a click in the old selection copied it again: {clicked}"
     assert in_box[0] and in_box[1] == "brought to paste" and not in_box[2]["shown"], f"the box's selection copied: {in_box}"
+    assert right[1:] == ["brought to paste", False], f"a right click copied {right[0]!r}: {right}"
+    assert on_link[0].startswith("Read the placeholder page") and on_link[1] == on_link[0] and on_link[2] and \
+        on_link[3].rstrip("/").endswith(str(server.server_address[1])), f"a drag ending on a link: {on_link}"
     assert refused == {"shown": True, "words": "Not copied"}, f"a refused copy never reads as done: {refused}"
 
 
