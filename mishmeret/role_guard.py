@@ -195,6 +195,8 @@ def corpus_roots(path=None):
     FALLBACK_CORPUS_ROOTS is added beside the well-formed roots when any home has no root, and is all there is when
     the file is missing, unreadable or not the list's shape - a broken entry never drops a good one (girsa-verifier's
     LOW on 71175b1d)."""
+    if not path and "homes" not in GUARD:       # the project keeps no list of homes (config.OPTIONAL)
+        return FALLBACK_CORPUS_ROOTS
     try:
         with open(path or config.expand(GUARD["homes"]), encoding="utf-8") as fh:
             homes = json.load(fh)["homes"]

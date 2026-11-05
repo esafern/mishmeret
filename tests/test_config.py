@@ -111,6 +111,35 @@ def test_a_field_missing_unknown_or_of_the_wrong_kind_is_refused_by_name(write, 
     assert said in str(e.value)
 
 
+def test_a_project_without_the_optional_fields_loads_and_each_reader_takes_them_as_off(write, tmp_path):
+    """config.OPTIONAL (girsa-architect, MISHMERET-OWN-CLAUDE-ARCHITECT.md in Girsa, 3): a project with no Python for
+    tmux roles, no drafts, no list of homes, no pre-commit hook, no ledger and no review server loads; each reader, run
+    on that config: no file is a draft, the corpus roots are the fallback alone, the server loads nothing and asks for
+    no restart, no ledger is copied, there is no hook to install, and the shell form says MM_PYTHON=''. A required one
+    absent is still refused (above)."""
+    cfg = sample()
+    for dotted in config.OPTIONAL:
+        parent, _, key = dotted.rpartition(".")
+        (cfg[parent] if parent else cfg).pop(key)
+    write(cfg)
+    loaded = config.load()
+    assert not {"python", "drafts"} & set(loaded) and not {"homes", "precommit"} & set(loaded["guard"])
+    (tmp_path / "draft_x.txt").write_text("BAD", encoding="utf-8")
+    probe = (
+        "import io, json, sys\n"
+        "import draft_check_hook as d, role_guard as rg, land, time_precommit as t\n"
+        f"print(d.run({{'tool_input': {{'file_path': {str(tmp_path / 'draft_x.txt')!r}}}}}))\n"
+        "print(rg.CORPUS_ROOTS, land.server_loads('.'), land.LEDGER, land.SERVER_CODE_FOLDERS)\n"
+        "try:\n    t.install()\nexcept SystemExit as e:\n    print(e)\n")
+    out = subprocess.run([sys.executable, "-c", probe], capture_output=True, text=True, env=os.environ, cwd=PKG)
+    assert out.returncode == 0, out.stderr
+    assert out.stdout.splitlines() == ["(0, '')", "('~/book',) set() None ()",
+                                       "the project's config names no guard.precommit - there is no hook to install"]
+    shell = subprocess.run([sys.executable, os.path.join(PKG, "config.py"), "--shell"], capture_output=True, text=True,
+                           env=os.environ)
+    assert "MM_PYTHON=''" in shell.stdout.splitlines(), shell.stderr
+
+
 def test_an_environment_variable_overrides_its_field_and_a_night_key(write, monkeypatch):
     write(sample())
     monkeypatch.setenv("MISHMERET_BOARD_DIR", "/elsewhere")

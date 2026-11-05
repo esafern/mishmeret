@@ -18,11 +18,12 @@ import sys
 
 import config  # noqa: E402  (the project's config: mishmeret/config.py)
 
-_DRAFTS = config.load()["drafts"]   # the project's: which files are drafts, its check, what a pass and a failure say
-CHECK = config.expand(_DRAFTS["check"])
-DRAFT = re.compile(_DRAFTS["pattern"])
-SKILL_NOTE = _DRAFTS["passed"]
-TIMEOUT = _DRAFTS["timeout"]
+_DRAFTS = config.load().get("drafts", {})   # the project's: which files are drafts, its check, what a pass and a failure
+                                            # say; absent (config.OPTIONAL), no file is one
+CHECK = config.expand(_DRAFTS["check"]) if _DRAFTS else None
+DRAFT = re.compile(_DRAFTS.get("pattern", r"(?!)"))     # (?!) matches nothing
+SKILL_NOTE = _DRAFTS.get("passed")
+TIMEOUT = _DRAFTS.get("timeout")
 
 
 def run(event, check=CHECK, timeout=TIMEOUT):

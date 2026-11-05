@@ -59,7 +59,11 @@ GUARD = {"homes": str, "fallback_roots": list, "trees": list, "foreign": list, "
 LAND = {"planned": str, "verifier": str, "lane_check": str, "ledger": str, "server": dict, "gate_sets": dict,
         "gate_env": dict, "hand_run": dict}
 SERVER = {"entry": str, "folders": list, "page": str}
-NIGHT = {"check_every": int, "you_idle": int, "role_idle": int, "landed_quiet": int, "poll": int,
+# WHAT ONLY SOME PROJECTS HAVE - a Python for the tmux roles, drafts, a list of corpus homes, a pre-commit hook, a live
+# ledger, a review server (girsa-architect, MISHMERET-OWN-CLAUDE-ARCHITECT.md in Girsa, 3: a required field only one
+# project can fill is that project's field in Mishmeret's code). Absent, its reader takes it as off; there is no default.
+OPTIONAL = {"python", "drafts", "guard.homes", "guard.precommit", "land.ledger", "land.server"}
+NIGHT ={"check_every": int, "you_idle": int, "role_idle": int, "landed_quiet": int, "poll": int,
          "context_limit": int, "gap": int}
 # the reports' tables, each key required and no other (as NIGHT); a value is checked by its kind, and `files` (a path:
 # [limit in bytes, where a whole block goes]) and `effort` ({role: [level, why]}) row by row
@@ -105,8 +109,10 @@ def _typed(name, want, value, where, from_env=False):
     return value
 
 
-def _exact(have, want, where):
-    missing, unknown = sorted(set(want) - set(have)), sorted(set(have) - set(want))
+def _exact(have, want, where, prefix=""):
+    """`have`'s keys are `want`'s, but an OPTIONAL one (named `prefix` + key) may be absent."""
+    missing = sorted(k for k in set(want) - set(have) if prefix + k not in OPTIONAL)
+    unknown = sorted(set(have) - set(want))
     if missing or unknown:
         raise ConfigError(f"{where}: " + "; ".join(
             ([f"missing {', '.join(missing)}"] if missing else []) + ([f"unknown {', '.join(unknown)}"] if unknown else [])))
@@ -132,6 +138,8 @@ def load(p=None):
     cfg = {}
     for name, want in FIELDS.items():
         env = os.environ.get("MISHMERET_" + name.upper()) if want in (str, int) else None
+        if name not in raw and env is None:     # an OPTIONAL field the project has not (_exact let only those through)
+            continue
         cfg[name] = _typed(name, want, raw[name] if env is None else env, p, from_env=env is not None)
     _exact(cfg["night"], NIGHT, p + ": night")
     night = {}
@@ -156,13 +164,15 @@ def load(p=None):
     if cfg["operator"] not in {r["name"] for r in cfg["roles"]}:
         raise ConfigError(f"{p}: operator {cfg['operator']!r} is not one of the roles")
     for field, keys in (("sizes", SIZES), ("start_reads", START_READS), ("drafts", DRAFTS), ("guard", GUARD),
-                        ("land", LAND), ("budget", BUDGET)):
-        _exact(cfg[field], keys, f"{p}: {field}")
+                        ("land", LAND), ("budget", BUDGET), ("land.server", SERVER)):
+        parent, _, key = field.rpartition(".")
+        table = (cfg[parent] if parent else cfg).get(key)
+        if table is None:                       # an OPTIONAL table absent
+            continue
+        _exact(table, keys, f"{p}: {field}", prefix=field + ".")
         for k, t in keys.items():
-            _typed(f"{field}.{k}", t, cfg[field][k], p)
-    _exact(cfg["land"]["server"], SERVER, f"{p}: land.server")
-    for k, t in SERVER.items():
-        _typed(f"land.server.{k}", t, cfg["land"]["server"][k], p)
+            if k in table:
+                _typed(f"{field}.{k}", t, table[k], p)
     for k in ("planned", "verifier"):
         if cfg["land"][k] not in {r["name"] for r in cfg["roles"]}:
             raise ConfigError(f"{p}: land.{k} {cfg['land'][k]!r} is not one of the roles")
@@ -216,7 +226,7 @@ def shell():
     cfg = load()
     tmux = [r for r in cfg["roles"] if r["tmux"]]
     by_short = {r["short"]: r for r in tmux}
-    pairs = [("MM_ROOT", root())] + [(var, how(cfg[field])) for field, var, how in SHELL]
+    pairs = [("MM_ROOT", root())] + [(var, how(cfg[field]) if field in cfg else "") for field, var, how in SHELL]
     pairs.append(("MM_ROLES", " ".join(r["name"] for r in tmux)))
     pairs.append(("MM_LAYOUT", " ".join(by_short[s]["name"] for s in cfg["page_order"] if s in by_short)))
     pairs.append(("MM_COLOURS", " ".join(f"{r['name']}={r['colour']}" for r in tmux)))

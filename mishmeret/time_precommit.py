@@ -21,10 +21,11 @@ import config
 # git's hook runs the PROJECT's path to this check (`guard.precommit`, its shim), so a tree whose branch predates the
 # check has nothing to run; the text is the one `--install` wrote before the move, byte for byte, for Girsa's config
 _CFG = config.load()
-HOOK = f"""#!/bin/sh
-# {_CFG["project"]}'s time check ({_CFG["guard"]["precommit"]}; Board #33). A tree whose branch predates it has no script: let
+PRECOMMIT = _CFG["guard"].get("precommit")      # absent (config.OPTIONAL): the project has no hook to install
+HOOK = PRECOMMIT and f"""#!/bin/sh
+# {_CFG["project"]}'s time check ({PRECOMMIT}; Board #33). A tree whose branch predates it has no script: let
 # the commit run.
-s="$(git rev-parse --show-toplevel)/{_CFG["guard"]["precommit"]}"
+s="$(git rev-parse --show-toplevel)/{PRECOMMIT}"
 [ -f "$s" ] || exit 0
 exec python3 "$s"
 """
@@ -53,7 +54,9 @@ def refusal(lines, now=None):
 
 
 def install(cwd=None):
-    common = subprocess.run(["git", "rev-parse", "--git-common-dir"], cwd=cwd, capture_output=True, text=True,
+    if not HOOK:
+        raise SystemExit("the project's config names no guard.precommit - there is no hook to install")
+    common =subprocess.run(["git", "rev-parse", "--git-common-dir"], cwd=cwd, capture_output=True, text=True,
                             check=True).stdout.strip()
     hooks = os.path.join(cwd or os.getcwd(), common, "hooks") if not os.path.isabs(common) else os.path.join(common, "hooks")
     os.makedirs(hooks, exist_ok=True)

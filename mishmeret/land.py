@@ -49,9 +49,9 @@ OPERATOR = _CFG["operator"]
 BUILDER = _LAND["planned"]
 VERIFIER = _LAND["verifier"]
 LANE_CHECK = _LAND["lane_check"]
-LEDGER = _LAND["ledger"]
-SERVER = _LAND["server"]
-SERVER_CODE_FOLDERS = tuple(SERVER["folders"])
+LEDGER = _LAND.get("ledger")        # absent (config.OPTIONAL): no live file is copied into the frozen gate
+SERVER = _LAND.get("server")        # absent: a repository with no review server - nothing it loads, nothing to restart
+SERVER_CODE_FOLDERS = tuple(SERVER["folders"]) if SERVER else ()
 
 # THE GATE'S LISTS, their one home (in Girsa: START_HERE, LANES.md, two scripts and a test header each wrote the five
 # out; no test pinned them) - the project's `land.gate_sets`, each set's environment (`gate_env`), and the test files no
@@ -348,7 +348,7 @@ def _landing(role, kind, where, branch, accept=(), plan=None, because=None):
     print("".join(f"    {line}\n" for line in said(where.top, "log", "--oneline", f"{tip}..{head}").split("\n")), end="")
     changed = set(filter(None, said(where.top, "diff", "--name-only", tip, head).split("\n")))
     loads = server_loads(where.top)
-    restart = sorted(p for p in changed if p in loads or p.startswith(SERVER["page"]))
+    restart = sorted(p for p in changed if p in loads or (SERVER and p.startswith(SERVER["page"])))
     print(f"  the servers load: {'restart - ' + ', '.join(restart) if restart else 'none of it changed'}")
     if kind == "code":
         _frozen_gate(where)
@@ -474,8 +474,8 @@ def _frozen_gate(where):
             shutil.copytree(where.main_tree, tree, symlinks=True)                        # untried on Linux (0II)
         # the copy carries the main clone's INDEX, so a reset to HEAD, not `checkout -- .`; then the live rulings in
         said(tree, "reset", "-q", "--hard", "HEAD")
-        live = os.path.join(where.main_tree, LEDGER)
-        if os.path.exists(live):
+        live = LEDGER and os.path.join(where.main_tree, LEDGER)
+        if live and os.path.exists(live):
             shutil.copyfile(live, os.path.join(tree, LEDGER))
             with open(live, "rb") as a, open(os.path.join(tree, LEDGER), "rb") as b:
                 if a.read() != b.read():
@@ -583,7 +583,7 @@ def server_loads(repo):
     AN IMPORT IS LOOKED FOR IN EVERY CODE FOLDER, not pipeline/ alone: the server and the exporter put citations/ on
     sys.path for the notes' references, and its module went unseen until 959e1e23's landing said "none of it changed"
     (2026-10-27). A name in two folders counts both - a restart too many costs less than one missed."""
-    if not os.path.isfile(os.path.join(repo, SERVER["entry"])):
+    if not SERVER or not os.path.isfile(os.path.join(repo, SERVER["entry"])):
         return set()                                    # a repository with no review server
     local = {}
     for folder in SERVER_CODE_FOLDERS:
