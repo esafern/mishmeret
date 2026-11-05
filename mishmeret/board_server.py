@@ -61,6 +61,11 @@ h1{font-size:14px;font-weight:600;margin:0;white-space:nowrap}
 #cornerless>div{display:flex;align-items:center;gap:10px;min-width:0}#cornerless .rname{color:var(--muted)}
 .stall{flex:0 1 auto;min-width:0;max-width:45%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11.5px;font-weight:600;
  color:var(--st-waiting-agent);border:1px solid var(--st-waiting-agent);border-radius:4px;padding:0 6px}
+/* THE MESSAGES' PILL AS A BUTTON (its list in the questions' place): the span's look to the pixel - a button drops the
+   page's tabular figures - a thin ring for the keyboard's focus; a long path in a message broken anywhere (girsa-ui-steward) */
+button.stall{font-family:inherit;line-height:inherit;font-feature-settings:inherit;background:none;cursor:pointer}
+button.stall:focus-visible{outline:1px solid currentColor;outline-offset:2px}
+.msg .ans{overflow-wrap:anywhere}
 .landed-sum{white-space:pre-wrap;overflow:auto;min-height:0;font-size:12.5px}
 .landing .sum{white-space:pre-wrap;margin:4px 0 0}
 .tele{display:flex;gap:10px;flex:1 1 0;min-width:0;font-size:11.5px;color:var(--muted)}.tele span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
