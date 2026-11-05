@@ -15,9 +15,9 @@ Rewritten in place when a piece lands and at the end of a session; the log is `n
 ## Now
 
 - The start scripts with no project named (notes/PLAN-START-SCRIPTS.md; girsa-operator's REQUEST), branch
-  `builder-start-scripts` in `~/work/mishmeret-builder`, from main 31ac716. The prototype is in the tree, uncommitted
-  (`agents-lib.sh`, `agents-morning.sh`, `tests/test_sessions.py`, `README.md`: suite 109 passed). Waiting on
-  girsa-architect's answer (refuse or mark) and girsa-verifier's review of the plan; then the build, its check.
+  `builder-start-scripts` in `~/work/mishmeret-builder`, from main 31ac716. Plan 937ce94 accepted (girsa-verifier,
+  with girsa-architect's addition); built at the branch's tip (suite 110 passed). Waiting on girsa-verifier's check
+  at the tip; then girsa-operator merges, and the stopgap `env -u` can go after the roles' next restart.
 
 ## Next, in order
 

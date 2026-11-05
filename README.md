@@ -57,7 +57,9 @@ loads, and the gate's lists (`land`).
 `MISHMERET_<FIELD>` overrides a field, `MISHMERET_NIGHT_<KEY>` one of the night run's; `MISHMERET_TRANSCRIPTS` names
 the transcripts folder itself, and `MISHMERET_NIGHT_DRY_RUN=1` makes the night run say what it would type. A command
 (never a hook) may run another tree with `MISHMERET_TREE`. A project's shim sets `MISHMERET_AS` to the path it runs
-`board.py` by, for the commands the Board prints.
+`board.py` by, for the commands the Board prints. The start scripts (`agents.sh`, `agents-morning.sh`) run only with
+a project named - through the project's own, whose shim sets `MISHMERET_CONFIG` and marks it as the shim's, or with
+`MISHMERET_CONFIG` set by hand; with neither, they stop and say so.
 
 ## What the project's sessions must say
 

@@ -7,10 +7,15 @@
 # script one of them starts (agents.sh, from the night run's Go) works in the same clone through MISHMERET_CONFIG.
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-MM_CFG=$(python3 "$HERE/config.py" --shell) || { echo "$(basename "$0"): the project's Mishmeret config cannot be read" >&2; exit 1; }
+# NO PROJECT NAMED, NO RUN (two runs of 2026-11-05, each this checkout's script run directly): one, in Mishmeret's own
+# folder, was refused without saying where to run it from; the other, in the project's folder, ran this checkout - not
+# the commit the project pins - and exported the config it read to every role with no shim's mark, so the project's
+# shim in a role's worktree kept the main clone's config. A start script runs through the project's own copy (its shim
+# names the config and the pinned commit, and marks what it sets) or with MISHMERET_CONFIG set by hand.
+[ -n "${MISHMERET_CONFIG:-}" ] || { echo "$(basename "$0"): no project named - run the project's own $(basename "$0") from its folder (bash $(basename "$0") there): it names the project's config and the Mishmeret commit the project pins. Or set MISHMERET_CONFIG to the project's .claude/mishmeret.json." >&2; exit 1; }
+MM_CFG=$(python3 "$HERE/config.py" --shell) || { echo "$(basename "$0"): the Mishmeret config $MISHMERET_CONFIG cannot be read" >&2; exit 1; }
 eval "$MM_CFG"
 DIR="$MM_ROOT"
-export MISHMERET_CONFIG="${MISHMERET_CONFIG:-$DIR/.claude/mishmeret.json}"
 PY="$MM_PYTHON"
 ROLES="$MM_ROLES"
 PROJECTS="$MM_PROJECTS"

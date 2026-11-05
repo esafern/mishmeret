@@ -44,6 +44,10 @@ if [ "$MODE" = "--resume" ]; then
 fi
 session_of() { printf '%s\n' "$SESSIONS" | awk -F'\t' -v r="$1" '$1 == r { print $2; exit }'; }
 
+# A ROLE STARTS WITH NO PROJECT CONFIG INHERITED (girsa-architect's answer 2 on notes/PLAN-START-SCRIPTS.md): its
+# config is its own tree's, set by its own shim; a pane's shell holds the tmux server's environment, which is nobody's
+# hand - an unmarked config there was kept by the shim in every role's worktree (the first project's 2026-11-05)
+CLEAN="env -u MISHMERET_CONFIG -u MISHMERET_CONFIG_BY_SHIM"
 start_role() {   # pane-id role colour; fails when the role is left alone (its last session is running elsewhere)
   tmux set-option -p -t "$1" @role "$2"
   tmux set-option -p -t "$1" @colour "$3"
@@ -55,13 +59,13 @@ start_role() {   # pane-id role colour; fails when the role is left alone (its l
   if [ "$MODE" = "--resume" ]; then
     case "$sid" in
       ""|none) ;;                                       # no earlier session: started fresh, below
-      *) tmux send-keys -t "$1" "cd '$DIR' && claude --resume $sid --agent $2 --name $2 --effort $(effort_of "$2") 'agents.sh --resume: this session stopped without landing (its tmux pane closed) and is resumed here with its context. A command that was running when it stopped did not finish - check the state of what you were doing before you go on.'" Enter
+      *) tmux send-keys -t "$1" "cd '$DIR' && $CLEAN claude --resume $sid --agent $2 --name $2 --effort $(effort_of "$2") 'agents.sh --resume: this session stopped without landing (its tmux pane closed) and is resumed here with its context. A command that was running when it stopped did not finish - check the state of what you were doing before you go on.'" Enter
          return ;;
     esac
   fi
   # NO OPENING PROMPT HERE: the agent file's `initialPrompt` sends the brief's line itself, so typing it too sent it twice
   # (the reviewer, 2026-10-25: "each command line includes the start prompt as a parameter which is duplicative")
-  tmux send-keys -t "$1" "cd '$DIR' && claude --agent $2 --name $2 --effort $(effort_of "$2")" Enter
+  tmux send-keys -t "$1" "cd '$DIR' && $CLEAN claude --agent $2 --name $2 --effort $(effort_of "$2")" Enter
 }
 
 if tmux has-session -t "$SESSION" 2>/dev/null; then

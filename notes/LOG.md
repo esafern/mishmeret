@@ -12,6 +12,11 @@ M04. **[2026-11-05, the start scripts with no project named (notes/PLAN-START-SC
       reproduction (agents.sh holds `tmux kill-session`; a stub on PATH is not seen): rerun with `env -u TMUX
       TMUX_TMPDIR=<own folder>`, BSD env taking each `-u` before any assignment.
     * To send at this commit, live: the design question to girsa-architect; the plan's HANDOFF to girsa-verifier.
+    * **[16:40]** girsa-architect's ANSWER, live (its record Girsa 45416b48): R; and every role launched with the
+      config dropped. Its correction, girsa-verifier's too: the "marking ... or a clear message" sentence is
+      girsa-operator's, in #157's body - the reviewer answered B, no note; MY SLIP, the plan quoted it as the
+      reviewer's from the operator's REQUEST without reading the Board. girsa-verifier, live: ACCEPTED with the
+      addition. Built: `start_role`'s two launches; the test of a fresh start, red on today's line. Suite 110 passed.
 
 M03. **[2026-11-05, copy-on-select (notes/PLAN-COPY-SELECT.md)]**
     * **[15:55]** The drill-down VERIFIED (girsa-verifier, one LOW at the page's next touch) and merged by girsa-operator

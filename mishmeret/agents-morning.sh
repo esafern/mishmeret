@@ -415,7 +415,7 @@ READY_END
       # in iTerm2, the reviewer's terminal (2026-10-10: "friday it started up the sessions in a terminal window instead of
       # iterm2")
       osascript -e 'tell application "iTerm"' -e 'activate' -e 'set w to (create window with default profile)' \
-        -e "tell current session of w to write text \"MISHMERET_CONFIG='$MISHMERET_CONFIG' bash '$DIR/agents.sh'\"" -e 'end tell' >/dev/null ;;   # never --restart: it would end the roles kept running; MISHMERET_CONFIG: a new window does not inherit this run's
+        -e "tell current session of w to write text \"MISHMERET_CONFIG='$MISHMERET_CONFIG' MISHMERET_CONFIG_BY_SHIM='${MISHMERET_CONFIG_BY_SHIM:-}' bash '$DIR/agents.sh'\"" -e 'end tell' >/dev/null ;;   # never --restart: it would end the roles kept running; MISHMERET_CONFIG: a new window does not inherit this run's - nor the shim's mark on it, without which the project's shim takes it as set by hand and every role inherits it unmarked
     # "Not today" OR NO ANSWER: never started unattended (the reviewer, 2026-10-27: "no to restarting roles at night -
     # they will then start working w/o superv. [without supervision] and burn thru tokens")
     *) say "not started (${ans:-no answer}) - start them with: bash agents.sh" ;;

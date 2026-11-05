@@ -292,24 +292,78 @@ def test_the_night_run_can_be_skipped_without_turning_it_off(tmp_path):
     assert run("--resume").returncode == 0 and not list(night.glob("skip-*")), "--resume removes every dated hold"
 
 
+@pytest.mark.parametrize("script", ["agents.sh", "agents-morning.sh"])
+def test_a_start_script_with_no_project_named_says_where_to_run_it(tmp_path, script):
+    """Two runs of 2026-11-05, both Mishmeret's scripts run directly, not through the project's own: (1) in Mishmeret's
+    folder, refused with "the project's Mishmeret config cannot be read" - not saying where to run it from; (2) from the
+    project's folder, where it read the project's config, exported it to every role it started with no mark that
+    Mishmeret had set it - so the project's shim in a role's worktree kept the main clone's config - and ran Mishmeret's
+    checkout, not the commit the project pins. With no config named (MISHMERET_CONFIG unset: no shim, no person set it),
+    a start script now stops before anything, saying to run the project's own script from its folder. Placeholder
+    projects in git repositories, a stub tmux recording what it would pass to the roles' panes."""
+    record = tmp_path / "tmux-env.txt"
+    stub = tmp_path / "bin"
+    stub.mkdir()
+    (stub / "tmux").write_text(f"#!/bin/sh\nenv | grep '^MISHMERET_CONFIG' >> '{record}'\nexit 0\n", encoding="utf-8")
+    (stub / "tmux").chmod(0o755)
+    env = {k: v for k, v in os.environ.items() if k not in ("MISHMERET_CONFIG", "MISHMERET_CONFIG_BY_SHIM", "CLAUDE_PROJECT_DIR")}
+    env["PATH"] = f"{stub}{os.pathsep}{env['PATH']}"
+    from conftest import write_project
+    project, bare = tmp_path / "project", tmp_path / "no-config"
+    for repo in (project, bare):
+        repo.mkdir()
+        subprocess.run(["git", "init", "-q", str(repo)], check=True)
+    write_project(project)
+    for where in (project, bare):           # (2), and (1): a repository with no project config, as Mishmeret's was
+        out = subprocess.run(["bash", os.path.join(PKG, script)], cwd=where, env=env, capture_output=True, text=True,
+                             stdin=subprocess.DEVNULL, timeout=60)
+        assert out.returncode == 1 and f"run the project's own {script} from its folder" in out.stderr, \
+            (where.name, out.returncode, out.stderr)
+        assert not record.exists(), f"tmux reached from {where.name}: {record.read_text()}"
+    # a config named by hand (a test's placeholder project, a person who means it) still runs
+    named = subprocess.run(["bash", os.path.join(PKG, "agents.sh")], cwd=bare, env=dict(env, MISHMERET_CONFIG=str(project / ".claude" / "mishmeret.json")),
+                           capture_output=True, text=True, stdin=subprocess.DEVNULL, timeout=60)
+    assert named.returncode == 0 and record.read_text().startswith("MISHMERET_CONFIG="), (named.stderr, record.read_text())
+
+
+def test_a_role_starts_with_no_project_config_inherited(tmp_path):
+    """girsa-architect's answer 2 on notes/PLAN-START-SCRIPTS.md: a pane's shell holds the tmux server's environment -
+    a config there, unmarked, was kept by the shim in every role's worktree (2026-11-05). agents.sh types each role's
+    start with both variables dropped, so its own shim sets its own. A fresh start behind a stub tmux (no session
+    running) recording what is typed into each pane; the config named by hand, as R leaves it."""
+    typed = tmp_path / "typed.txt"
+    stub = tmp_path / "bin"
+    stub.mkdir()
+    (stub / "tmux").write_text("#!/bin/sh\ncase \"$1\" in has-session) exit 1 ;; new-session|split-window) echo %1 ;;"
+                               f" send-keys) echo \"$*\" >> '{typed}' ;; esac\nexit 0\n", encoding="utf-8")
+    (stub / "tmux").chmod(0o755)
+    env = dict(os.environ, PATH=f"{stub}{os.pathsep}{os.environ['PATH']}", TERM="dumb")
+    out = subprocess.run(["bash", os.path.join(PKG, "agents.sh")], env=env, capture_output=True, text=True,
+                         stdin=subprocess.DEVNULL, timeout=60)
+    starts = [line for line in typed.read_text().splitlines() if "claude --agent" in line]
+    assert out.returncode == 0 and len(starts) == 5, (out.returncode, out.stderr, starts)
+    assert all("&& env -u MISHMERET_CONFIG -u MISHMERET_CONFIG_BY_SHIM claude --agent ex-" in s for s in starts), starts
+    assert "$CLEAN claude --resume $sid" in open(os.path.join(PKG, "agents.sh"), encoding="utf-8").read(), "the resume too"
+
+
 def test_the_agents_scripts_share_one_clone_one_role_list_and_one_pane_lookup():
     """The duplication audit's E26 (the reviewer, Board #82 A, 2026-10-26: the scripts in the operator's lane): agents.sh
     and agents-morning.sh each kept the role list, the clone, the session-to-pane lookup and the transcript lookup, and
     with the clone set the night run read one clone while its Go started the roles, through agents.sh, in another. Both
-    source agents-lib.sh; it alone holds them, reads the project's config and exports MISHMERET_CONFIG, and the Go's new
-    window is given it."""
+    source agents-lib.sh; it alone holds them and reads the project's config - named by the project's shim or by hand,
+    never guessed from the current folder - and the Go's new window is given it, with the shim's mark on it."""
     read = lambda name: open(os.path.join(PKG, name), encoding="utf-8").read()
     lib, start, night = read("agents-lib.sh"), read("agents.sh"), read("agents-morning.sh")
     source = '. "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/agents-lib.sh"'
     assert source in start and source in night
     assert 'MM_CFG=$(python3 "$HERE/config.py" --shell)' in lib and 'DIR="$MM_ROOT"' in lib
-    assert 'export MISHMERET_CONFIG="${MISHMERET_CONFIG:-$DIR/.claude/mishmeret.json}"' in lib
+    assert '[ -n "${MISHMERET_CONFIG:-}" ] ||' in lib and "MISHMERET_CONFIG:-$DIR" not in lib, "no config guessed, none set"
     for copy in ("ROLES=", "\nDIR=\"", "claude agents --json", '.jsonl 2>/dev/null', 'list-panes -s -t "$SESSION" -F \'#{pane_pid} #{pane_id}\'',
                  "PROJECTS=", "config.py --shell"):
         assert copy in lib, copy
         assert copy not in start and copy not in night, f"a second copy of {copy!r}"
-    assert "write text \\\"MISHMERET_CONFIG='$MISHMERET_CONFIG' bash '$DIR/agents.sh'\\\"" in night, \
-        "the Go starts the roles in the same clone"
+    assert "write text \\\"MISHMERET_CONFIG='$MISHMERET_CONFIG' MISHMERET_CONFIG_BY_SHIM='${MISHMERET_CONFIG_BY_SHIM:-}' bash '$DIR/agents.sh'\\\"" \
+        in night, "the Go starts the roles in the same clone, the shim's mark kept"
 
 
 def test_the_morning_run_counts_a_role_idle_once_its_turn_has_ended(tmp_path):
