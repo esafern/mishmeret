@@ -3,6 +3,16 @@
 Findings, decisions and open work, each the moment it is known; a time from `date`. One item per run of work, newest
 first (`M01.`, `M02.` ...); what git records (what each commit did) is not repeated here.
 
+M04. **[2026-11-05, the start scripts with no project named (notes/PLAN-START-SCRIPTS.md)]**
+    * **[16:34]** 31ac716 VERIFIED (girsa-verifier: P1-P8 as meant, three mutations red) and merged (main 31ac716).
+      girsa-operator's REQUEST, live: the two start-script defects of the first project's 2026-11-05 (10:40, 11:22).
+    * FOUND, in planning: since piece B the 10:40 run no longer refuses - Mishmeret's own config is read, and the run
+      goes on silently on a project with no tmux role; the night run's Go types the config into a new window without
+      the shim's mark, so the leak of 11:22 comes back on every Go, through the shim. The role guard refused my first
+      reproduction (agents.sh holds `tmux kill-session`; a stub on PATH is not seen): rerun with `env -u TMUX
+      TMUX_TMPDIR=<own folder>`, BSD env taking each `-u` before any assignment.
+    * To send at this commit, live: the design question to girsa-architect; the plan's HANDOFF to girsa-verifier.
+
 M03. **[2026-11-05, copy-on-select (notes/PLAN-COPY-SELECT.md)]**
     * **[15:55]** The drill-down VERIFIED (girsa-verifier, one LOW at the page's next touch) and merged by girsa-operator
       (main 59178bf, not pushed). Sent, live: the merge's REQUEST to girsa-operator. The LOW pinned first, 9c9fa8b.

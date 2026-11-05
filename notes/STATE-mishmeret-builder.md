@@ -9,16 +9,19 @@ Rewritten in place when a piece lands and at the end of a session; the log is `n
 - 59178bf: the open-messages drill-down (notes/PLAN-OPEN-MESSAGES.md), verified.
 - 8f6771d: copy-on-select (notes/PLAN-COPY-SELECT.md; the look 24d0246), and the drill-down's LOW test 9c9fa8b,
   verified; merged by girsa-operator, not pushed; Board 8451 restarted at it. Girsa's pin bump is girsa-builder's.
+- 31ac716: girsa-verifier's LOW 1 on 8f6771d (the answer's box and the left button pinned; `button, a` dropped),
+  verified, merged.
 
 ## Now
 
-- girsa-verifier's LOW 1 on 8f6771d, one round: branch `builder-copy-pins` in `~/work/mishmeret-builder`, from
-  8f6771d, its tip the round's one commit (the test pins the answer's box and the left button; `button, a` dropped
-  from the target rule, measured). Waiting on girsa-verifier's check at the tip; then girsa-operator merges.
+- The start scripts with no project named (notes/PLAN-START-SCRIPTS.md; girsa-operator's REQUEST), branch
+  `builder-start-scripts` in `~/work/mishmeret-builder`, from main 31ac716. The prototype is in the tree, uncommitted
+  (`agents-lib.sh`, `agents-morning.sh`, `tests/test_sessions.py`, `README.md`: suite 109 passed). Waiting on
+  girsa-architect's answer (refuse or mark) and girsa-verifier's review of the plan; then the build, its check.
 
 ## Next, in order
 
-1. None queued: ask girsa-operator for the next Mishmeret work.
+1. None queued after it: ask girsa-operator for the next Mishmeret work.
 
 ## Open
 
