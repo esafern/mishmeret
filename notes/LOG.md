@@ -13,6 +13,19 @@ M02. **[2026-11-05, the Board's open-messages drill-down (notes/PLAN-OPEN-MESSAG
       did not show the sideways scroll (the browser breaks at a hyphen): the test's path has none.
     * To send at this commit, live: the look's QUESTION to girsa-ui-steward (the plan's four, with pictures); the plan's
       HANDOFF to girsa-verifier.
+    * **[15:42]** girsa-ui-steward's ANSWER, live: build as prototyped - the questions' place (one pattern; the page
+      measured exactly the window's height on 8450, the title in view below every pill), the pointer cursor only, the
+      card and the empty words as they are; 2a a `:focus-visible` outline (1px currentColor, 2px off), 2b `aria-pressed`
+      on the open role's pill. Built, with two of mine that follow: the pill a toggle (pressed again, the list closes),
+      and the focus given back to the new pill after the redraw (it fell to the body on Enter). Each shown red with its
+      rule out (focus: none; outline: the browser's blue ring). Suite 106 passed. Sent, live: a NOTE to it of the two.
+      NOT CHANGED: the 5 s refresh redraws the corners, so a pill focused then loses it - true of the corners today.
+    * **[15:45]** girsa-verifier, live: the plan ACCEPTED (its REVIEW.md in Girsa, at 9a1c80fb); its 2 failed were
+      its copy taken mid-red-check (the outline rule out). Its note, the look and the behaviour in two commits: the
+      three CSS rules alone in 4e1ac02 (they match nothing until the pill is a button; main's whole suite at it, in a
+      scratch clone: 104 passed), the behaviour in the next. girsa-ui-steward, live: the toggle and the focus kept
+      stand, the 5 s redraw's focus loss left alone (page-wide). The closed page re-measured on the final code: as
+      main's. Not taken (its note 2): one view variable for the seven flags - not this piece's.
 
 M01. **[2026-11-05, Mishmeret's own .claude/ (Board #156 B, #153 B; notes/PLAN-OWN-CLAUDE.md)]**
     * **[14:48]** Started as a session of the first project's builder role, in that project's main clone; took that

@@ -248,7 +248,7 @@ def test_a_message_between_roles_is_kept_until_its_receiver_marks_it_done(tmp_pa
     bd.send("ex-operator", "ex-demo-operator", "REQUEST placeholder two")
     assert {r: [m["text"] for m in ms] for r, ms in bs.board_view()["no_corner"].items()} == \
         {"ex-demo-operator": ["REQUEST placeholder two"]}, "only the role with no corner, and only while one is open"
-    assert "\">${ms.length} open message${ms.length > 1 ? \"s\" : \"\"}</span>" in bs.PAGE
+    assert "\">${ms.length} open message${ms.length > 1 ? \"s\" : \"\"}</button>" in bs.PAGE
     assert 'title="${esc(ms.map(' in bs.PAGE, "a role's text escaped in the title (the browser test reads it)"
     assert "openPill(r.unacted || [])" in bs.PAGE and "${openPill(ms)}</div>" in bs.PAGE, "one pill, two places"
 
@@ -316,6 +316,87 @@ def test_a_corners_name_and_state_stay_whole_beside_two_pills(tmp_path, monkeypa
     assert strip["text"] == "1 open message" and strip["title"].startswith("message #2 from ex-operator") and \
         strip["title"].endswith(": REQUEST placeholder"), strip
     assert after["height"] == 0 and after["header"] == strip["header"], f"done, the line goes; the header unchanged: {after}"
+
+
+LIST = """() => { const q = document.getElementById("qlist");
+    return {title: document.getElementById("qtitle").textContent, back: document.getElementById("toggle").textContent,
+            wide: [q.scrollWidth, q.clientWidth],
+            cards: [...q.querySelectorAll(".msg")].map(c => ({head: c.querySelector(".head").textContent,
+                    text: c.querySelector(".ans").textContent, cut: c.scrollWidth > c.clientWidth})),
+            empty: (q.querySelector(".empty") || {}).textContent || "",
+            pressed: Object.fromEntries([...document.querySelectorAll("button[data-msgs]")].map(b => [b.dataset.msgs, b.getAttribute("aria-pressed")])),
+            focus: [document.activeElement.dataset.msgs || "", getComputedStyle(document.activeElement).outline,
+                    getComputedStyle(document.activeElement).outlineOffset]}; }"""
+
+
+@pytest.mark.parametrize("size", [(1229, 673), (1864, 1033)])
+def test_a_pill_of_open_messages_lists_each_one(tmp_path, monkeypatch, size):
+    """The reviewer, 2026-11-05: "agent boards show open mess [messages] w/o [without] drill-down" - the count, and no
+    way on the page to read them. A click on the pill (or Enter, it is a button) lists that role's open messages in the
+    questions' place, oldest first: each its number, sender, time and text, the text whole - a long path wraps, the
+    list never scrolls sideways; Back returns. The cornerless line's pill does the same; a message marked done leaves
+    the list at the next refresh. girsa-ui-steward's look (2026-11-05): the pill a toggle, aria-pressed while its list
+    is open, and its keyboard focus a 1px outline 2px off - kept on the pill through the redraw. The real page from a
+    scratch Board, headless; skipped without Playwright."""
+    sync_api = pytest.importorskip("playwright.sync_api")
+    import importlib.util
+    import threading
+    monkeypatch.setenv("MISHMERET_BOARD_DIR", str(tmp_path / "board"))
+    monkeypatch.syspath_prepend(PKG)
+    spec = importlib.util.spec_from_file_location("board_server", os.path.join(PKG, "board_server.py"))
+    bs = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(bs)
+    said = ['REQUEST "placeholder" <b>x</b>',
+            "ANSWER placeholder, on two lines:\nthe pictures in /private/tmp/" + "placeholder_folder_" * 16 + "strip.png"]     # no hyphen to break at, wider than the page
+    bs.board.send("ex-operator", "ex-architect", said[0])
+    bs.board.send("ex-verifier", "ex-architect", said[1])
+    bs.board.send("ex-operator", "ex-demo-operator", "REQUEST placeholder three")      # a role with no corner
+    monkeypatch.setattr(bs.LIVE, "get", lambda: {})
+    server = bs.ThreadingHTTPServer(("127.0.0.1", 0), bs.Handler)
+    threading.Thread(target=server.serve_forever, daemon=True).start()
+    try:
+        with sync_api.sync_playwright() as p:
+            browser = p.chromium.launch()
+            page = browser.new_page(viewport={"width": size[0], "height": size[1]})
+            page.goto(f"http://127.0.0.1:{server.server_address[1]}/")
+            pill = page.locator(".corner", has=page.locator(".rname", has_text="ex-architect")).locator("button.stall")
+            pill.wait_for()
+            first = page.evaluate(LIST)
+            pill.focus()
+            page.keyboard.press("Enter")
+            listed = page.evaluate(LIST)
+            page.keyboard.press("Enter")
+            closed = page.evaluate(LIST)
+            page.click("#cornerless button.stall")
+            other = page.evaluate(LIST)
+            page.click("#toggle")
+            back = page.evaluate(LIST)
+            page.click("#cornerless button.stall")
+            bs.board.done(3, "ex-demo-operator")
+            page.evaluate("refresh(true)")
+            gone = page.evaluate(LIST)
+            browser.close()
+    finally:
+        server.shutdown()
+    assert first["title"] == "Questions for you" and not first["cards"], first
+    assert listed["title"] == "Open messages to ex-architect (2)" and listed["back"] == "Back", listed
+    assert [c["text"] for c in listed["cards"]] == said, "each text whole, escaped, oldest first"
+    heads = [c["head"] for c in listed["cards"]]
+    assert heads[0].startswith("ex-operatormessage #1") and heads[1].startswith("ex-verifiermessage #2"), heads
+    assert all(len(h.split("#")[1]) > 6 for h in heads), f"a time after the number: {heads}"
+    assert not any(c["cut"] for c in listed["cards"]) and listed["wide"][0] <= listed["wide"][1], listed
+    assert first["pressed"] == {"ex-architect": "false", "ex-demo-operator": "false"}, first
+    assert listed["pressed"] == {"ex-architect": "true", "ex-demo-operator": "false"}, listed
+    assert listed["focus"][0] == "ex-architect" and " solid 1px" in listed["focus"][1] and \
+        listed["focus"][2] == "2px", f"the focus on the pill, outlined: {listed['focus']}"
+    assert closed["title"] == "Questions for you" and closed["pressed"]["ex-architect"] == "false" and \
+        closed["focus"][0] == "ex-architect", f"Enter again closes the list: {closed}"
+    assert other["title"] == "Open messages to ex-demo-operator (1)" and \
+        [c["text"] for c in other["cards"]] == ["REQUEST placeholder three"], other
+    assert other["pressed"] == {"ex-architect": "false", "ex-demo-operator": "true"}, other
+    assert back["title"] == "Questions for you" and not back["cards"] and "true" not in back["pressed"].values(), back
+    assert gone["title"] == "Open messages to ex-demo-operator (0)" and not gone["cards"] and \
+        gone["empty"] == "No message to ex-demo-operator is open.", gone
 
 
 def test_the_boards_corners_and_mockup_pages(tmp_path, monkeypatch):

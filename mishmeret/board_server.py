@@ -154,7 +154,7 @@ const linkify = s => esc(s).replace(/https?:\/\/[^\s<]+/g, u => `<a href="${u}" 
 const when = ts => { try { return new Date(ts).toLocaleString(); } catch (e) { return ts; } };
 const ago = ts => { if (!ts) return "no report yet"; const m = Math.round((Date.now() - new Date(ts)) / 60000);
   return m < 1 ? "reported just now" : m < 60 ? `reported ${m} min ago` : m < 1440 ? `reported ${Math.floor(m / 60)} h ${m % 60} min ago` : "reported " + when(ts); };
-let last = "", showDone = false, showQA = false, showDeferred = false, showTokens = false, showLandings = false, showVisitors = false, visitors = null, tokens = null, tokenDay = "", data = {items: [], roles: {}, qa: []};
+let last = "", showDone = false, showQA = false, showDeferred = false, showTokens = false, showLandings = false, showVisitors = false, showMsgs = false, visitors = null, tokens = null, tokenDay = "", data = {items: [], roles: {}, qa: []};
 const changing = new Set();   // answered items the reviewer is changing (their options open again)
 document.getElementById("key").innerHTML = STATES.map(([k, w]) => `<span style="--c:var(--st-${k})">${w}</span>`).join("");
 // WHAT THE SESSION ITSELF REPORTS (Q&A #56 ideas 1, 2 and 5): a prompt waiting for you in its pane, its context and
@@ -173,8 +173,11 @@ function tele(s) {
   return ask || parts.length ? `<div class="tele">${ask}<span title="${esc(parts.join(" · "))}">${esc(parts.join(" · "))}</span></div>` : "";
 }
 // THE MESSAGES TO A ROLE NOT YET ACTED ON (Board #150 B), their texts on hover - in its corner, or, for a role with no
-// corner, on a line of its own under the corners, its name first (message #14)
-const openPill = ms => ms.length ? `<span class="stall" title="${esc(ms.map(m => `message #${m.msg} from ${m.role}, ${when(m.ts)}: ${m.text}`).join("\n\n"))}">${ms.length} open message${ms.length > 1 ? "s" : ""}</span>` : "";
+// corner, on a line of its own under the corners, its name first (message #14). A click lists them in the questions'
+// place (the reviewer, 2026-11-05: "agent boards show open mess [messages] w/o [without] drill-down")
+const openPill = ms => ms.length ? `<button class="stall" data-msgs="${esc(ms[0].to)}" aria-pressed="${showMsgs === ms[0].to}" title="${esc(ms.map(m => `message #${m.msg} from ${m.role}, ${when(m.ts)}: ${m.text}`).join("\n\n"))}">${ms.length} open message${ms.length > 1 ? "s" : ""}</button>` : "";
+const msgCard = m => `<div class="qa msg" style="--role:${ROLE_VAR(m.role)}"><div class="head"><span class="role">${esc(m.role)}</span><span>message #${m.msg}</span><span>${esc(when(m.ts))}</span></div>
+  <div class="ans" dir="auto">${linkify(m.text)}</div></div>`;
 function drawNoCorner() {
   document.getElementById("cornerless").innerHTML = Object.entries(data.no_corner || {})
     .map(([role, ms]) => `<div><span class="rname">${esc(role)}</span>${openPill(ms)}</div>`).join("");
@@ -277,6 +280,15 @@ function draw() {
   document.getElementById("visittoggle").hidden = showVisitors;
   const lands = (data.landings || []).slice().reverse(), lt = document.getElementById("landtoggle");
   lt.hidden = showLandings || !lands.length; lt.textContent = `Landings (${lands.length})`;
+  // ONE ROLE'S OPEN MESSAGES, oldest first, from its pill; a message marked done leaves the list at the next refresh
+  if (showMsgs) {
+    const ms = (data.roles[showMsgs] || {}).unacted || [];
+    document.getElementById("qtitle").textContent = `Open messages to ${showMsgs} (${ms.length})`;
+    document.getElementById("toggle").textContent = "Back";
+    document.getElementById("deftoggle").hidden = true; document.getElementById("qatoggle").hidden = false;
+    document.getElementById("qlist").innerHTML = ms.length ? ms.map(msgCard).join("") : `<p class="empty">No message to ${esc(showMsgs)} is open.</p>`;
+    return;
+  }
   // LANDINGS, newest first: every session's landing summary, kept after its corner moves on (the reviewer, 2026-10-25)
   if (showLandings) {
     document.getElementById("qtitle").textContent = `Landings (${lands.length})`;
@@ -397,12 +409,20 @@ async function send(id, answer) {
 document.addEventListener("click", e => {
   const m = e.target.closest("button[data-mock]");
   if (m) { window.open("/mockups/" + m.dataset.mock, "girsa-mockups", "popup,width=1400,height=850"); return; }
-  if (e.target.id === "toggle") { if (showQA || showDeferred || showTokens || showLandings || showVisitors) showQA = showDeferred = showTokens = showLandings = showVisitors = false; else showDone = !showDone; draw(); return; }
-  if (e.target.id === "landtoggle") { showLandings = true; showDone = showQA = showDeferred = showTokens = showVisitors = false; draw(); return; }
-  if (e.target.id === "tokentoggle") { showTokens = true; showDone = showQA = showDeferred = showLandings = showVisitors = false; return loadTokens(); }
-  if (e.target.id === "visittoggle") { showVisitors = true; showDone = showQA = showDeferred = showTokens = showLandings = false; return loadVisitors(); }
-  if (e.target.id === "qatoggle") { showQA = true; showDone = showDeferred = showTokens = showLandings = showVisitors = false; draw(); return; }
-  if (e.target.id === "deftoggle") { showDeferred = true; showDone = showQA = false; draw(); return; }
+  if (e.target.id === "toggle") { if (showMsgs || showQA || showDeferred || showTokens || showLandings || showVisitors) showMsgs = showQA = showDeferred = showTokens = showLandings = showVisitors = false; else showDone = !showDone; draw(); return; }
+  const mp = e.target.closest("button[data-msgs]");
+  if (mp) {   // a toggle (aria-pressed); the redraw replaces the pill, so the new one takes the focus back
+    showMsgs = showMsgs === mp.dataset.msgs ? false : mp.dataset.msgs;
+    showDone = showQA = showDeferred = showTokens = showLandings = showVisitors = false; draw();
+    const again = [...document.querySelectorAll("button[data-msgs]")].find(b => b.dataset.msgs === mp.dataset.msgs);
+    if (again) again.focus();
+    return;
+  }
+  if (e.target.id === "landtoggle") { showLandings = true; showMsgs = showDone = showQA = showDeferred = showTokens = showVisitors = false; draw(); return; }
+  if (e.target.id === "tokentoggle") { showTokens = true; showMsgs = showDone = showQA = showDeferred = showLandings = showVisitors = false; return loadTokens(); }
+  if (e.target.id === "visittoggle") { showVisitors = true; showMsgs = showDone = showQA = showDeferred = showTokens = showLandings = false; return loadVisitors(); }
+  if (e.target.id === "qatoggle") { showQA = true; showMsgs = showDone = showDeferred = showTokens = showLandings = showVisitors = false; draw(); return; }
+  if (e.target.id === "deftoggle") { showDeferred = true; showMsgs = showDone = showQA = false; draw(); return; }
   const df = e.target.closest("button[data-defer], button[data-undefer]");
   if (df) return setDeferred(+(df.dataset.defer || df.dataset.undefer), !!df.dataset.defer);
   const ch = e.target.closest("button[data-change]"); if (ch) { changing.add(+ch.dataset.change); draw(); return; }
@@ -413,7 +433,7 @@ document.addEventListener("click", e => {
 // A LINK TO ONE Q&A (http://127.0.0.1:8450/#qa-N, the link a role gives in its pane) opens Your questions at it
 function goToQA() {
   if (!/^#qa-\d+$/.test(location.hash)) return;
-  showQA = true; showDone = showDeferred = false; draw();
+  showQA = true; showMsgs = showDone = showDeferred = false; draw();
   const el = document.getElementById(location.hash.slice(1)); if (el) el.scrollIntoView({block: "start"});
 }
 addEventListener("hashchange", goToQA);
