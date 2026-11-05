@@ -11,6 +11,13 @@ M03. **[2026-11-05, copy-on-select (notes/PLAN-COPY-SELECT.md)]**
       mouse-up: a test reading it at once reads the one before - the test waits for it.
     * To send at this commit, live: the look's QUESTION to girsa-ui-steward (three, with pictures); the plan's HANDOFF
       to girsa-verifier.
+    * **[15:59]** girsa-verifier, live: received at its session's landing, not started - in its state's Next for its
+      next session. girsa-ui-steward's ANSWER, live: beside the pointer, the look as prototyped, "Not copied" alone;
+      and a bug read from the diff (no `navigator.clipboard` off a secure context). NOT TAKEN, the guard: measured on
+      the live Board, the page is served to 127.0.0.1 and localhost alone (others 403, the LAN address no connection)
+      - both secure contexts; a comment at the call says so. The words changed; a refused write now tested (red with
+      its path empty). Suite 107 passed. Sent, live: the guard's answer to girsa-ui-steward; a NOTE of the revised
+      plan to girsa-verifier.
 
 M02. **[2026-11-05, the Board's open-messages drill-down (notes/PLAN-OPEN-MESSAGES.md)]**
     * **[15:38]** The first session as mishmeret-builder, started in `~/work/mishmeret`. Received, live: girsa-operator's
