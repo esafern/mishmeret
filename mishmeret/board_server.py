@@ -66,6 +66,9 @@ h1{font-size:14px;font-weight:600;margin:0;white-space:nowrap}
 button.stall{font-family:inherit;line-height:inherit;font-feature-settings:inherit;background:none;cursor:pointer}
 button.stall:focus-visible{outline:1px solid currentColor;outline-offset:2px}
 .msg .ans{overflow-wrap:anywhere}
+/* COPY ON SELECT'S SIGN: a muted word beside the pointer for a moment, over the page's ground - no toast, no colour
+   (girsa-ui-steward) */
+#copied{position:fixed;z-index:1;font-size:11.5px;color:var(--muted);background:var(--bg);padding:0 4px;pointer-events:none}
 .landed-sum{white-space:pre-wrap;overflow:auto;min-height:0;font-size:12.5px}
 .landing .sum{white-space:pre-wrap;margin:4px 0 0}
 .tele{display:flex;gap:10px;flex:1 1 0;min-width:0;font-size:11.5px;color:var(--muted)}.tele span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -143,6 +146,7 @@ button.stall:focus-visible{outline:1px solid currentColor;outline-offset:2px}
 <section id="cornerless"></section>
 <section id="q"><div class="qhead"><h2 id="qtitle">Questions for you</h2><button id="toggle"></button><button id="deftoggle"></button><button id="qatoggle"></button><button id="tokentoggle">Tokens by role</button><button id="visittoggle">Visitors</button><button id="landtoggle"></button></div>
 <div id="qlist"></div></section>
+<div id="copied" hidden></div>
 <script>
 "use strict";
 const ROLES = ["ui-steward", "architect", "operator", "verifier", "builder"];
