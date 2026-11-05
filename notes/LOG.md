@@ -17,6 +17,9 @@ M04. **[2026-11-05, the start scripts with no project named (notes/PLAN-START-SC
       girsa-operator's, in #157's body - the reviewer answered B, no note; MY SLIP, the plan quoted it as the
       reviewer's from the operator's REQUEST without reading the Board. girsa-verifier, live: ACCEPTED with the
       addition. Built: `start_role`'s two launches; the test of a fresh start, red on today's line. Suite 110 passed.
+    * **[16:46]** 8738b21 VERIFIED (girsa-verifier: no findings; stop_out, go_unmarked, clean_fresh, clean_resume each
+      red over the suite; the night job's plist read again, unchanged) and merged (main 8738b21, not pushed). Sent,
+      live: the merge's REQUEST. girsa-operator: no more Mishmeret work agreed or queued. The session ends here.
 
 M03. **[2026-11-05, copy-on-select (notes/PLAN-COPY-SELECT.md)]**
     * **[15:55]** The drill-down VERIFIED (girsa-verifier, one LOW at the page's next touch) and merged by girsa-operator
