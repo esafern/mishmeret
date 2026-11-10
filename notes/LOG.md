@@ -3,6 +3,21 @@
 Findings, decisions and open work, each the moment it is known; a time from `date`. One item per run of work, newest
 first (`M01.`, `M02.` ...); what git records (what each commit did) is not repeated here.
 
+M06. **[2026-11-10, an escaped quote turned the role guard off (notes/PLAN-GUARD-MASK.md)]**
+    * **[13:46]** FOUND building M05's `agents.sh --next`; girsa-verifier's REQUEST, live: HIGH, and wider than a
+      script - `mask` closed a quote at the first quote character, escaped or not, so a push, a forced push and a
+      main-tree commit were each let through after `echo "a \" b";`. Fixed on `builder-guard-mask`, from main, kept
+      off M05's branch and out of the state file and the log until M05 was merged. Sent, live: its HANDOFF.
+    * girsa-verifier's round, live: the fix holds (its own measure - the guard before and after asked about 16,514
+      distinct Bash commands of six days in the first project: 23 answers differ, each a guarded action after an
+      escaped-quote string, every one allowed to the role that ran it; no false refusal added); MEDIUM 1, a refusal
+      the fix LOST - `echo $$'a\'; git push origin main`, my rule taking any `'` after a `$` for `$'...'`; LOW 1, the
+      escaped `$` held by no test. Answered: the dollars before the quote counted, an odd run opening it; four forms,
+      each run in bash itself. Sent, live: the ANSWER.
+    * Rebased over main 7b9c6e0 with no conflict: f33aad3, 529af0a, b8dac60 (were ede5952, 0cff45c, 4f17926). The
+      suite on the rebased branch: 139 passed. Until it is merged and the first project's pin moves, the fault stands
+      in every role's guard there.
+
 M05. **[2026-11-10, finishing a session, by day and by night (notes/PLAN-FINISH.md)]**
     * **[10:57]** Sent at the start, live: the QUESTION to girsa-operator (the next Mishmeret work). Its ANSWER, live:
       the first project's Board #183 (read there: answered A, the reviewer's note "A but finish instead of close. go")
@@ -40,7 +55,8 @@ M05. **[2026-11-10, finishing a session, by day and by night (notes/PLAN-FINISH.
       words in the prompt left alone; an empty prompt cleared, exited and started again; a second finish a minute
       later cleared and exited, not started; the longer sentence cleared and exited, not started. Each showed one
       notification on the reviewer's screen where the script says so. NOT RUN LIVE: the night and morning runs.
-    * **[13:28]** Sent, live, at 51499da: the HANDOFF to girsa-verifier, a NOTE to girsa-operator (the first project's
+    * **[13:35]** (first written as 13:28, a time not read from `date` - MY SLIP; 13:35 is the clock's at that
+      commit) Sent, live, at 51499da: the HANDOFF to girsa-verifier, a NOTE to girsa-operator (the first project's
       side at its pin bump) and one to girsa-architect (the fields optional, not required as it had agreed).
       girsa-verifier's REQUEST, live: the guard's fault is HIGH and wider than a script - any string with an escaped
       quote hides the rest of the command; fixed as its own piece on `builder-guard-mask` from main (ede5952, 0cff45c;
@@ -48,6 +64,10 @@ M05. **[2026-11-10, finishing a session, by day and by night (notes/PLAN-FINISH.
       of seventeen mutations red; the prompt reader run read-only over the five live panes); ONE MEDIUM, a test - the
       prompt's second read, before /exit, was held by none: the leg "words typed after /clear" added, red with that
       read out. Its note, Linux: said in the plan and the state file.
+    * **[13:46]** VERIFIED at 7b9c6e0 (girsa-verifier: no file under mishmeret/ differs from 51499da; 138 passed; its
+      green mutation now red) and merged by girsa-operator on my REQUEST (main 7b9c6e0, not pushed). Owed by
+      girsa-verifier at the first project's pin bump: the hook under its shim, the two config keys, the
+      older-worktree landing.
 
 M04. **[2026-11-05, the start scripts with no project named (notes/PLAN-START-SCRIPTS.md)]**
     * **[16:34]** 31ac716 VERIFIED (girsa-verifier: P1-P8 as meant, three mutations red) and merged (main 31ac716).

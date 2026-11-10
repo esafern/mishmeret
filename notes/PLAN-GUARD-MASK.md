@@ -58,8 +58,9 @@ REQUEST names the fix and its tests, so the plan and the build are one commit, f
 ## Files
 
 - `mishmeret/role_guard.py`, `tests/test_guard.py`, `notes/PLAN-GUARD-MASK.md`
-- NOT here: the state file and the log. Both are changed on `builder-finish` (51499da, in check); this piece's lines
-  go into them at the first rebase after either is merged, so the two branches do not collide in notes.
+- The state file and the log: kept off this branch while `builder-finish` changed them; added after the rebase over
+  main 7b9c6e0 (the finish piece merged), which met no conflict. The commits are then f33aad3, 529af0a and b8dac60
+  (ede5952, 0cff45c and 4f17926 before it) and the notes commit after them.
 
 ## Not checked
 
