@@ -1,6 +1,6 @@
 {
   "repository": "https://github.com/esafern/mishmeret.git",
-  "mishmeret_commit": "a5faac2213427b340124e23e18ba9fc0d52cef09",
+  "mishmeret_commit": "dd3bcdb5e2c3eba3d93002179a51a2d929a6a3bb",
   "project": "Mishmeret",
   "roles": [
     {"name": "mishmeret-builder", "short": "builder", "colour": "", "page_light": "#3d8590", "page_dark": "#73aab2", "corner": true, "tmux": false},
