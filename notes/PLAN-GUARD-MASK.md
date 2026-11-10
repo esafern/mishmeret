@@ -42,7 +42,7 @@ REQUEST names the fix and its tests, so the plan and the build are one commit, f
 - The other way, six commands whose refused words stand inside a string or a comment: none refused.
 - The tmux check through the same mask: a script with an escaped quote above its `kill-session` is refused.
 - The mask keeps its length and its newlines on each text.
-- Red with each rule out, five: the escape rule (the test's first form); `$'...'` as its own kind; no escape in
+- Red with each rule out, four: the escape rule (the test's first form); `$'...'` as its own kind; no escape in
   `'...'`; the escaped newline kept (not red at first - its text added, then red). The suite on this branch: 111.
 
 ## Files
