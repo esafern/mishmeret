@@ -23,7 +23,11 @@ REQUEST names the fix and its tests, so the plan and the build are one commit, f
 - Inside `"..."` and inside `$'...'` a backslash and the character after it are words, masked as the rest of the
   string is (a newline after a backslash stays a newline, as every newline does). Inside `'...'` a backslash is
   itself: the quote closes at the next `'`, as the shell closes it.
-- `$'` opens a kind of its own - a `'` straight after an unescaped `$` outside quotes.
+- `$'` opens a kind of its own - a `'` straight after a LONE `$` outside quotes. Revised on girsa-verifier's round
+  on 0cff45c (its MEDIUM 1: `echo $$'a\'; git push origin main`, refused before the fix, was let through by it -
+  `$$` is the shell's own id and the quote after it a plain one; its LOW 1: an escaped `$` opening nothing was held
+  by no test): the dollars straight before the quote are counted, an escaped one not, and an odd run ends in a lone
+  `$`. Each of the four forms run in bash itself: the string closes where the mask now closes it.
 - Nothing else in `mask` changes: comments, heredocs, a backslash outside quotes.
 - What it costs: a command that got through only because an escaped quote above it hid it is now read. That is the
   fix. The other half of the fault goes too: words inside such a string were sometimes read as commands.
@@ -38,12 +42,18 @@ REQUEST names the fix and its tests, so the plan and the build are one commit, f
 ## Tests (`test_an_escaped_quote_inside_a_string_does_not_turn_the_guard_off`)
 
 - Three refusals (a push, a forced push for the operator, a commit in the main tree), each alone and after each of
-  seven strings - joined by `;`, by a newline, by `&&`, and in a script: 84 refused.
+  eleven strings (seven, and the round's four: `$$'a\'`, `\$'a\'`, `$$$'it\'s'`, `\$$'it\'s'`) - joined by `;`, by a
+  newline, by `&&`, and in a script: 132 refused.
 - The other way, six commands whose refused words stand inside a string or a comment: none refused.
 - The tmux check through the same mask: a script with an escaped quote above its `kill-session` is refused.
 - The mask keeps its length and its newlines on each text.
 - Red with each rule out, four: the escape rule (the test's first form); `$'...'` as its own kind; no escape in
-  `'...'`; the escaped newline kept (not red at first - its text added, then red). The suite on this branch: 111.
+  `'...'`; the escaped newline kept (not red at first - its text added, then red). After the round, seven, each red:
+  those four; any dollar before the quote opening `$'...'` (0cff45c's rule); an escaped dollar counted; and a dollar
+  after a dollar never opening it (the simpler rule, wrong for `$$$'...'`). The suite on this branch: 111.
+- girsa-verifier's own, on 0cff45c: the guard before and after the fix asked about 16,514 distinct Bash commands of
+  six days in the first project - 23 answers differ, each a guarded action after an escaped-quote string the old
+  mask hid, every one allowed to the role that ran it; no false refusal added.
 
 ## Files
 

@@ -137,8 +137,15 @@ def mask(text):
                 i += 1
             continue
         elif c in "'\"":
-            # $'...' is a kind of its own: a backslash escapes in it, as it never does in '...'
-            quote = "$'" if c == "'" and i and text[i - 1] == "$" and i - 1 != escaped else c
+            # $'...' is a kind of its own: a backslash escapes in it, as it never does in '...'. THE `$` THAT OPENS IT
+            # IS A LONE ONE (girsa-verifier's MEDIUM on 0cff45c): `$$` is the shell's own id and the quote after it a
+            # plain '...' - read as $'...', `echo $$'a\'; git push origin main` lost its refusal; and an escaped `$`
+            # opens nothing. So the dollars straight before the quote are counted, an escaped one not: an odd run
+            # ends in a lone `$`.
+            j = i
+            while j and text[j - 1] == "$" and j - 1 != escaped:
+                j -= 1
+            quote = "$'" if c == "'" and (i - j) % 2 else c
         elif c == "\\" and i + 1 < n:
             out[i + 1] = " "
             escaped = i + 1

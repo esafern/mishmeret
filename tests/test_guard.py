@@ -152,7 +152,12 @@ def test_an_escaped_quote_inside_a_string_does_not_turn_the_guard_off():
                'echo "it\'s \\" fine"',     # an apostrophe beside it
                'echo "a\\\\"',              # an escaped backslash, then the real closing quote
                "echo 'a\\'",                # '...' has no escape: it closes at the quote after the backslash
-               'echo "$(echo ")")"')
+               'echo "$(echo ")")"',
+               # girsa-verifier's round on 0cff45c: the `$` that opens $'...' is a lone one, and not an escaped one
+               "echo $$'a\\'",              # `$$`, then a plain '...' (its MEDIUM 1: refused before the fix, lost by it)
+               "echo \\$'a\\'",             # an escaped `$`, then a plain '...' (its LOW 1: held by no test)
+               "echo $$$'it\\'s'",          # `$$`, then $'...'
+               "echo \\$$'it\\'s'")         # an escaped `$`, then $'...'
     for cmd, role, said in (("git push origin main", "ex-builder", "operator's"),
                             ("git push --force origin main", "ex-operator", "never pushes"),
                             ("git commit -m x", "ex-builder", "main tree")):
