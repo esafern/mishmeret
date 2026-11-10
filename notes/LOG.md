@@ -31,6 +31,14 @@ M06. **[2026-11-10, an escaped quote turned the role guard off (notes/PLAN-GUARD
       project's prefix in its text, and the server puts the config's prefix in its place when it serves the page -
       nothing is hard-coded for one project there. The README's "Every field is required" is out of date: nine
       fields are optional (`config.py`'s `OPTIONAL`) - not corrected, no piece given for it.
+    * **[17:41]** Sent, live: the notes' merge REQUEST with the times' correction, to girsa-operator. Its ANSWER,
+      live: main = 74bee72; the older worktree taken as finished with, its removal put to the reviewer; the first
+      project's Board restarted on the pin (pid 84583, 17:35:40 by `ps`, read here too). Read from its page at 17:41:
+      "Finished" in the legend and the list's heading, no "Landed". Sent, live: the NOTE to girsa-ui-steward (the
+      words are live; a corner's "Finished HH:MM" with a real finished session not seen by me).
+    * FOUND by girsa-operator, not traced, for the next session: that server's first GET `/api/board` after its
+      start took 110 s (1,232,472 bytes), the second 0.39 s; reads with a 10-20 s limit got no byte meanwhile though
+      the log printed 200 for each. In the state file's Next. Sent at this commit, live: its merge REQUEST.
 
 M05. **[2026-11-10, finishing a session, by day and by night (notes/PLAN-FINISH.md)]**
     * **[10:57]** Sent at the start, live: the QUESTION to girsa-operator (the next Mishmeret work). Its ANSWER, live:

@@ -2,7 +2,7 @@
 
 Rewritten in place when a piece lands and at the end of a session; the log is `notes/LOG.md`, by item.
 
-## Built, on main (dd3bcdb, not pushed; each verified by girsa-verifier, merged by girsa-operator)
+## Built, on main (code as of dd3bcdb, notes after it; not pushed; each verified by girsa-verifier, merged by girsa-operator)
 
 - c1963d1: A (`guard.foreign`), A2 (seven config fields optional) and B (Mishmeret's own `.claude/`, `notes/`, the
   lane check) (notes/PLAN-OWN-CLAUDE.md). The Board on 8451 runs from the main clone.
@@ -21,15 +21,18 @@ Rewritten in place when a piece lands and at the end of a session; the log is `n
   the pin, the finish hook's shim and Stop hook). Its step 2 - `night.finish_command`, `night.finish_exit_command`
   in its config - waits until every worktree there is at or past e955b2cf; its command files calling `board.py
   finished` are its builder's. girsa-verifier owes three checks there (the hook under the shim, the two fields, an
-  older worktree's landing).
+  older worktree's landing). The first project's Board was restarted on the pin: its page says "Finished"
+  (girsa-ui-steward told, live, 17:41).
 - To resume: `git -C ~/work/mishmeret log --oneline -3`; `git -C ~/work/mishmeret-builder status -sb`; ask
   girsa-operator, live, for the next work.
 
 ## Next, in order
 
-1. girsa-ui-steward asked to be told when the page's "Finished" reaches the first project's live Board (port 8450).
-   On 2026-11-10 that server was still the process started 2026-11-05 and its page said "Landed": the words arrive
-   with its restart (girsa-operator's). Look (`curl` the page, count "Finished"), then tell it.
+1. A FINDING to trace, girsa-operator's, live, 2026-11-10 (the first project's status item 0NN, 17:40 there): the
+   first project's Board server, restarted on the pin dd3bcdb, took 110 s for its first GET `/api/board` (1,232,472
+   bytes, curl's own time), the second 0.39 s; three reads of its own with a 10-20 s limit got no byte meanwhile
+   though the server's log printed 200 for each - the page would stand empty that long. Not traced, not reproduced
+   here: measure it on a placeholder project first (what the first answer builds; whether a request waits on it).
 2. Not given as work (girsa-operator, 2026-11-10): a Board state for a session busy only with its own background task
    (`board_server.py`'s busy-to-idle rule, `board.py`'s `shown_state`) - size it; build on the reviewer's word.
 
