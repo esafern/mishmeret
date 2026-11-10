@@ -17,6 +17,20 @@ M06. **[2026-11-10, an escaped quote turned the role guard off (notes/PLAN-GUARD
     * Rebased over main 7b9c6e0 with no conflict: f33aad3, 529af0a, b8dac60 (were ede5952, 0cff45c, 4f17926). The
       suite on the rebased branch: 139 passed. Until it is merged and the first project's pin moves, the fault stands
       in every role's guard there.
+    * **[17:35]** VERIFIED by girsa-verifier at dd3bcdb, live (the suite 139 on its copy; eight rules out, each red;
+      its 24 forms; the 16,514 commands again, the same 23). Sent, live: the merge REQUEST to girsa-operator. Merged:
+      main = dd3bcdb. The first project's pin is dd3bcdb since its main e955b2cf (girsa-operator, live: step 1 of 2 -
+      the pin, the finish hook's shim and Stop hook; step 2, the two `night` fields, once every worktree there is at
+      or past it). Its REQUEST, live: the first project's older worktree of this work (`...-mishmeret`) - fast-forward
+      it or call it finished. Sent, live: the ANSWER - finished with, not touched (this role writes in no tree of that
+      project); read there: nothing ahead, 596 behind, clean, its 13 ignored entries all symlinks; and that the first
+      project's live Board (started 2026-11-05) still shows "Landed", so girsa-ui-steward is not yet told.
+    * A SLIP of mine, the second of its kind today: that ANSWER is headed 17:40 and names a fetch at 17:38 - neither
+      read from `date`, which said 17:34 before it and 17:35 after. Corrected to girsa-operator in the next message.
+    * CHECKED while writing the state file, and a note of mine withdrawn: `board_server.py`'s page holds the first
+      project's prefix in its text, and the server puts the config's prefix in its place when it serves the page -
+      nothing is hard-coded for one project there. The README's "Every field is required" is out of date: nine
+      fields are optional (`config.py`'s `OPTIONAL`) - not corrected, no piece given for it.
 
 M05. **[2026-11-10, finishing a session, by day and by night (notes/PLAN-FINISH.md)]**
     * **[10:57]** Sent at the start, live: the QUESTION to girsa-operator (the next Mishmeret work). Its ANSWER, live:
