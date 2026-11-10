@@ -131,6 +131,53 @@ def test_the_role_guard_keeps_push_and_main_tree_commits_to_the_operator():
     assert no("ex-operator", "git checkout hashorashim-nli-rebuild-and-review") is None
 
 
+def test_an_escaped_quote_inside_a_string_does_not_turn_the_guard_off():
+    """girsa-verifier, 2026-11-10, HIGH (first seen by mishmeret-builder the same day: one line of agents.sh with a
+    quote escaped inside a quote, and the guard no longer saw the script's `tmux kill-session`): role_guard.mask closed
+    a quote at the first quote character, escaped or not, so the string's real closing quote OPENED one and the rest
+    of the command - or of a script - was masked. `echo "a \\" b"; git push origin main` was let through, for every
+    role; the same in $'...'. Now a backslash and the character after it are words inside "..." and $'...', and a
+    backslash is itself inside '...'. Each refusal here: alone, then after each string in the same command, on the
+    next line, and in a script; and the other way - what such a string holds is still words. Placeholder paths."""
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("role_guard", os.path.join(PKG, "role_guard.py"))
+    rg = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(rg)
+    main = lambda p: os.path.normpath(p).startswith("/work/book") and "/work/book-" not in os.path.normpath(p)
+    scripts = {}
+    no = lambda role, cmd, cwd="/work/book": rg.refusal(role, cmd, cwd, main_tree=main, read=scripts.get)
+    strings = ('echo "a \\" b"',            # one escaped quote
+               'echo "a \\"b\\" c"',        # two: the count never mattered
+               "echo $'it\\'s'",            # the same fault in $'...'
+               'echo "it\'s \\" fine"',     # an apostrophe beside it
+               'echo "a\\\\"',              # an escaped backslash, then the real closing quote
+               "echo 'a\\'",                # '...' has no escape: it closes at the quote after the backslash
+               'echo "$(echo ")")"')
+    for cmd, role, said in (("git push origin main", "ex-builder", "operator's"),
+                            ("git push --force origin main", "ex-operator", "never pushes"),
+                            ("git commit -m x", "ex-builder", "main tree")):
+        assert said in no(role, cmd), cmd
+        for s in strings:
+            scripts["/work/book/x.sh"] = f"{s}\n{cmd}\n"
+            for hidden in (f"{s}; {cmd}", f"{s}\n{cmd}", f"{s} && {cmd}", "bash x.sh"):
+                why = no(role, hidden)
+                assert why and said in why, (s, hidden)
+    # a quoted argument that is a command, with escaped quotes of its own
+    assert "operator's" in no("ex-builder", 'bash -c "echo \\"x\\"; git push origin main"')
+    # THE OTHER WAY: what a string with an escaped quote holds is words, and so is a comment after it
+    for words in ('echo "git push origin main \\" still words"', "echo $'git push origin main \\' still words'",
+                  'echo "a \\" b" # git push origin main', 'grep -n "say \\"git commit -m x\\"" notes.md',
+                  'echo "a \\" b"; echo \'git push origin main\'', 'git log --grep "a \\"quoted\\" word" --oneline'):
+        assert no("ex-builder", words) is None, words
+    # the tmux check reads a script through the same mask: an escaped quote above its kill-session hid it
+    script = 'tell() { osascript -e "display notification \\"$1\\" with title \\"ex\\""; }\ntmux kill-session -t ex\n'
+    why = rg.tmux_refusal("bash roles.sh", "/work/elsewhere", lambda p: script if p.endswith("roles.sh") else None)
+    assert why and "LIVE tmux server" in why
+    # the mask keeps every position: a span found in it reads the same span of the original
+    for text in strings + (script, "a \\", '"open \\', 'echo "a line continued \\\nin its string"\ngit status'):
+        assert len(rg.mask(text)) == len(text) and rg.mask(text).count("\n") == text.count("\n"), text
+
+
 def test_the_role_guard_lets_a_role_land_through_land_py_only_as_itself():
     """The reviewer, 2026-10-26, Board #86 A (girsa-verifier's MEDIUM 1 on the landing script's plan): tools/land.py runs
     git add, commit and merge as Python subprocesses the guard never sees, and takes the role as its second word. So

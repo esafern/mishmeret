@@ -117,7 +117,17 @@ def mask(text):
     while i < n:
         c = text[i]
         if quote:
-            if c == quote:
+            # AN ESCAPED CHARACTER IS NOT THE CLOSING QUOTE (girsa-verifier, 2026-11-10, HIGH): the quote closed at the
+            # first quote character, escaped or not, so the string's real closing quote OPENED one, and the rest of the
+            # command - or of a script - was masked: `echo "a \" b"; git push origin main` was let through. In "..."
+            # and in $'...' a backslash and the character after it are words; in '...' a backslash is itself.
+            if c == "\\" and quote != "'" and i + 1 < n:
+                out[i] = " "
+                if text[i + 1] != "\n":
+                    out[i + 1] = " "
+                i += 2
+                continue
+            if c == quote[-1]:
                 quote = None
             elif c != "\n":
                 out[i] = " "
@@ -127,7 +137,8 @@ def mask(text):
                 i += 1
             continue
         elif c in "'\"":
-            quote = c
+            # $'...' is a kind of its own: a backslash escapes in it, as it never does in '...'
+            quote = "$'" if c == "'" and i and text[i - 1] == "$" and i - 1 != escaped else c
         elif c == "\\" and i + 1 < n:
             out[i + 1] = " "
             escaped = i + 1
