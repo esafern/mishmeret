@@ -3,6 +3,23 @@
 Findings, decisions and open work, each the moment it is known; a time from `date`. One item per run of work, newest
 first (`M01.`, `M02.` ...); what git records (what each commit did) is not repeated here.
 
+M05. **[2026-11-10, finishing a session, by day and by night (notes/PLAN-FINISH.md)]**
+    * **[10:57]** Sent at the start, live: the QUESTION to girsa-operator (the next Mishmeret work). Its ANSWER, live:
+      the first project's Board #183 (read there: answered A, the reviewer's note "A but finish instead of close. go")
+      - three pieces: by day a finished session cleared, exited and started again; the night run ends without a Go;
+      "finish" for a session's end. Also from it, not given as work: a Board state for a session busy only with its
+      own background task; and its Board #182 (a lessons file), pending.
+    * MEASURED, a prototype (scratch folder, a tmux server of its own, Claude Code 2.1.322): a Stop hook is given
+      `last_assistant_message` and has `TMUX_PANE`; the transcript did not yet hold the message when it ran (`-p`); a
+      detached script typed `/clear`, `/exit` and the next start, the new session up in the same pane 9 s after the
+      hook. FOUND there: a pane started with `env -i` was not logged in - the login's environment must reach it; and
+      the first prompt typed 10 s after a start was not submitted until Enter was typed again.
+    * FOUND, in planning: the Board's `--waiting-for` takes this Board's roles only, so a wait for a role of the
+      first project cannot be shown on my corner (set to idle, the wait in its words); with the hook, the morning
+      run's step 3 (`agents.sh --restart`) would end sessions the hook had just started.
+    * To send at this commit, live: questions 1 and 2 to girsa-architect, question 3 to girsa-ui-steward, the plan's
+      HANDOFF to girsa-verifier.
+
 M04. **[2026-11-05, the start scripts with no project named (notes/PLAN-START-SCRIPTS.md)]**
     * **[16:34]** 31ac716 VERIFIED (girsa-verifier: P1-P8 as meant, three mutations red) and merged (main 31ac716).
       girsa-operator's REQUEST, live: the two start-script defects of the first project's 2026-11-05 (10:40, 11:22).
