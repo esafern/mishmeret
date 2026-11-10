@@ -3,6 +3,40 @@
 Findings, decisions and open work, each the moment it is known; a time from `date`. One item per run of work, newest
 first (`M01.`, `M02.` ...); what git records (what each commit did) is not repeated here.
 
+M07. **[2026-11-10, a review of all of Mishmeret's code and the first project's side of it (the reviewer's request)]**
+    * **[20:49]** Read at main 120c3b5: every file of `mishmeret/` but the Board page's script, Mishmeret's own
+      `.claude/`, the first project's shim, config, settings and finish commands. The suite: 139 passed. Nothing
+      changed; no piece is given for any finding below - each is the reviewer's to give. FOUND, each with its measure:
+    * 1. THE GUARD DOES NOT SEE git AFTER A SHELL KEYWORD OR BEHIND ITS OWN OPTIONS (`refusal` asked on text, a
+      non-operator role, every tree counted the main tree): let through - a push or a commit after `then`, `do`, `{`
+      or `!` on the same line; `git --no-pager push`, `git --git-dir=.git push`; git written with a backslash before
+      it or in quotes. Refused: alone, after `||`, in `( )`, on its own line after `then`. `BOUNDARY`, `PREFIX`, `GIT`.
+    * 2. THE ROLE IS A SUBAGENT'S TYPE INSIDE A SUBAGENT (Claude Code's hooks page: "For subagents, the subagent's
+      type takes precedence over the session's `--agent` value"): a subagent of the operator's type, started by a
+      role that has the Agent tool (two of the first project's have), is judged as the operator. Not run. `role_of`.
+    * 3. MISHMERET'S OWN PIN IS a5faac2: its own sessions' guard still has M06's fault (the pinned guard asked: the
+      push after `echo "a \" b";` let through). The operator's file; sent to girsa-operator at this commit, live.
+    * 4. The operator's push: `+main`, `-uf`, `:main` and `--delete` are not refused (`--force` is).
+    * 5. THE 110 s FIRST ANSWER, TRACED (the state file's item of that name): a first `board_view` of the first
+      project's record took 5.0 s alone, 21.2 s for each of 4 asked at once, 68.5 s for each of 12 (a fresh process
+      each time; the second answer 0.02 s). Each request does the whole work itself - nothing holds the others
+      until one has filled `FACTS` and the parse cache - and the page asks every 5 s whether or not the last answer
+      came. One lock around the build; the page not asking while it waits.
+    * 6. `land.py` ended by a signal (a tool's time limit) runs no `finally`: the Board's hold and the staged names
+      stay. Reasoned, not run.
+    * 7. The night run with no `night.finish_exit_command` ends at once and says so in launchd's file alone - the
+      first project's run of 18:00 today did (its `launchd.err`); the check stands before the skip check.
+    * 8. The night run's notification is one AppleScript string: a `"` in a notice's text breaks it. `agents.sh`'s
+      `tell` passes its words as arguments - one helper for both.
+    * 9. `board.py answer` writes an answer with no mark of who gave it; the page shows it as the reviewer's.
+    * 10. The README's "Every field is required" (nine are optional).
+    * Smaller: `board.py landed` has no caller left in the first project's tracked files; a role whose agent file
+      names no effort is started with a bare `--effort`; `/api/board` sends the whole record (1.2 MB there) every
+      5 s; `agents.sh --next` runs `role_sessions.py` and drops its answer; `server.log` and the sessions' folder only
+      grow; the lane check reads an added line that begins `++ ` as a file's header and does not scan it; the first
+      project's finish.md still says "Landed".
+    * NOT CHECKED: the page's script for text put in unescaped; the reports; the tests' own strength; Linux.
+
 M06. **[2026-11-10, an escaped quote turned the role guard off (notes/PLAN-GUARD-MASK.md)]**
     * **[13:46]** FOUND building M05's `agents.sh --next`; girsa-verifier's REQUEST, live: HIGH, and wider than a
       script - `mask` closed a quote at the first quote character, escaped or not, so a push, a forced push and a

@@ -28,17 +28,18 @@ Rewritten in place when a piece lands and at the end of a session; the log is `n
 
 ## Next, in order
 
-1. A FINDING to trace, girsa-operator's, live, 2026-11-10 (the first project's status item 0NN, 17:40 there): the
-   first project's Board server, restarted on the pin dd3bcdb, took 110 s for its first GET `/api/board` (1,232,472
-   bytes, curl's own time), the second 0.39 s; three reads of its own with a 10-20 s limit got no byte meanwhile
-   though the server's log printed 200 for each - the page would stand empty that long. Not traced, not reproduced
-   here: measure it on a placeholder project first (what the first answer builds; whether a request waits on it).
+1. THE REVIEW'S FINDINGS (the log's M07, 2026-11-10, given to the reviewer; none is given as work yet): the guard
+   not seeing git after `then`, `do`, `{`, `!` or behind `--no-pager` (1); a subagent's type judged as the role (2);
+   Mishmeret's own pin still a5faac2, the operator's (3); the operator's `+main` push (4); the Board's slow first
+   answer, traced - girsa-operator's 110 s: each request builds the whole answer itself, 5.0 s alone, 68.5 s for
+   12 at once (5); `land.py` ended by a signal keeps the hold (6); and four smaller. Each is a piece of its own, with
+   its plan, on the reviewer's word.
 2. Not given as work (girsa-operator, 2026-11-10): a Board state for a session busy only with its own background task
    (`board_server.py`'s busy-to-idle rule, `board.py`'s `shown_state`) - size it; build on the reviewer's word.
 
 ## Open
 
-- `board.py landed`, the old name, is still taken: it goes once the first project's command files call `finished`.
+- `board.py landed`, the old name, is still taken: the first project's tracked files no longer call it (M07).
 - Not run live: the night run and the morning run as changed (behind stubs only); the hook under the first project's
   shim. Mishmeret's own config names neither finish command and its settings no Stop hook - it has no role in tmux.
 - Not run on Linux: `agents.sh --next` (osascript, BSD `find -mmin`, tmux) - the sessions' scripts are macOS-only.
