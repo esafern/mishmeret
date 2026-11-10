@@ -40,6 +40,14 @@ M05. **[2026-11-10, finishing a session, by day and by night (notes/PLAN-FINISH.
       words in the prompt left alone; an empty prompt cleared, exited and started again; a second finish a minute
       later cleared and exited, not started; the longer sentence cleared and exited, not started. Each showed one
       notification on the reviewer's screen where the script says so. NOT RUN LIVE: the night and morning runs.
+    * **[13:28]** Sent, live, at 51499da: the HANDOFF to girsa-verifier, a NOTE to girsa-operator (the first project's
+      side at its pin bump) and one to girsa-architect (the fields optional, not required as it had agreed).
+      girsa-verifier's REQUEST, live: the guard's fault is HIGH and wider than a script - any string with an escaped
+      quote hides the rest of the command; fixed as its own piece on `builder-guard-mask` from main (ede5952, 0cff45c;
+      notes/PLAN-GUARD-MASK.md), handed to it. Its ANSWER on 51499da, live: the code holds (137 on its copy, sixteen
+      of seventeen mutations red; the prompt reader run read-only over the five live panes); ONE MEDIUM, a test - the
+      prompt's second read, before /exit, was held by none: the leg "words typed after /clear" added, red with that
+      read out. Its note, Linux: said in the plan and the state file.
 
 M04. **[2026-11-05, the start scripts with no project named (notes/PLAN-START-SCRIPTS.md)]**
     * **[16:34]** 31ac716 VERIFIED (girsa-verifier: P1-P8 as meant, three mutations red) and merged (main 31ac716).

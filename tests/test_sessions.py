@@ -668,7 +668,8 @@ def test_the_stop_hook_hands_a_finished_roles_pane_to_agents_sh_next(monkeypatch
 
 @pytest.mark.parametrize("case", ["again", "exit", "another's pane", "night run going", "the run asked it",
                                   "a lock left behind", "never at its shell", "a run begun meanwhile",
-                                  "words in the prompt", "no prompt found", "finished twice"])
+                                  "words in the prompt", "no prompt found", "finished twice",
+                                  "words typed after /clear"])
 def test_agents_sh_next_clears_exits_and_starts_the_role_again_in_its_own_pane(tmp_path, case):
     """`agents.sh --next ROLE PANE [exit]`, the Stop hook's (the reviewer, 2026-11-10; the rules' home here is
     girsa-architect's answer): /clear, /exit, and - the pane back at its shell - the role's fresh start, its config
@@ -679,7 +680,9 @@ def test_agents_sh_next_clears_exits_and_starts_the_role_again_in_its_own_pane(t
     girsa-verifier's two MEDIUMs on the plan: nothing is typed over words standing in the pane's prompt (the prompt's
     line is the last with "❯" and a no-break space - a message already sent has a plain space - and dim text there is
     Claude Code's own suggestion; measured on 2.1.322), nor when no prompt is found; and a role this script started
-    less than ten minutes ago is cleared and exited but not started a second time. Behind stub tmux, sleep and
+    less than ten minutes ago is cleared and exited but not started a second time. The prompt is read TWICE
+    (girsa-verifier's MEDIUM on 51499da: the second read, before /exit, was held by no test): words typed in the
+    `night.gap` seconds after /clear are not typed over either - /exit is not typed. Behind stub tmux, sleep and
     osascript; the lock's live process is this test's."""
     from conftest import write_project
     cfg = write_project(tmp_path)
@@ -704,10 +707,14 @@ def test_agents_sh_next_clears_exits_and_starts_the_role_again_in_its_own_pane(t
     sent_before = r"\033[38;5;246m\342\235\257 words sent an hour ago\033[39m\n"
     prompt = {"words in the prompt": sent_before + r"\033[39m\342\235\257\302\240my half typed\n",
               "no prompt found": sent_before}.get(case, sent_before + r"\033[39m\342\235\257\302\240\033[2mTry something\033[0m\n")
+    capture = f"printf '{prompt}'"
+    if case == "words typed after /clear":      # the pane's second look: the prompt empty until /clear was typed
+        capture = (f"if grep -qs ' /clear ' '{typed}'; then printf '" + sent_before +
+                   r"\033[39m\342\235\257\302\240typed meanwhile\n" + f"'; else {capture}; fi")
     stubs = {"tmux": "case \"$1\" in\n"
                      f" show-options) case \"$*\" in *@role*) echo '{owner}' ;; *) echo '#0891b2' ;; esac ;;\n"
                      f" display-message) echo '{running}' ;;\n"
-                     f" capture-pane) printf '{prompt}' ;;\n"
+                     f" capture-pane) {capture} ;;\n"
                      f" send-keys) echo \"$*\" >> '{typed}'; case \"$*\" in *' /exit '*) {begun} ;; esac ;;\n"
                      "esac",
              "sleep": "exit 0", "osascript": f"echo \"$*\" >> '{shown}'", "claude": "echo '[]'"}
@@ -733,6 +740,9 @@ def test_agents_sh_next_clears_exits_and_starts_the_role_again_in_its_own_pane(t
         assert sent == [], sent
         assert ("words are standing in its prompt - /clear not typed over them" if case == "words in the prompt"
                 else "its prompt could not be read - /clear not typed") in said, said
+    elif case == "words typed after /clear":
+        assert [s.split("send-keys ")[1] for s in sent] == closes[:1], sent
+        assert "words are standing in its prompt - /exit not typed over them" in said, said
     elif case == "finished twice":
         assert [s.split("send-keys ")[1] for s in sent] == closes, sent
         assert "finished again within ten minutes of being started here" in said and "not started a second time" in said, said

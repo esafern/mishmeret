@@ -102,11 +102,13 @@ the context limit was pinned by no test, and red once its assertion was added)
 - `role_usage.closing` and `said_closing`: twelve messages, five transcripts, the command's exit status.
 - The hook: ten cases (both sentences; not said; a step undone; inside a line; no message; not in tmux; a role with
   no pane; no role; a name that is no role).
-- `agents.sh --next`: eleven cases (again; exit; another's pane; a run going; the run asked it; a lock left behind;
-  never at its shell; a run begun meanwhile; words in the prompt; no prompt found; finished twice).
+- `agents.sh --next`: twelve cases (again; exit; another's pane; a run going; the run asked it; a lock left behind;
+  never at its shell; a run begun meanwhile; words in the prompt; no prompt found; finished twice; and, girsa-verifier's
+  MEDIUM on 51499da, words typed after /clear - the prompt's second read, held by no test until then: red with it out).
 - The Board: `finished` and `landed` both post; the corner's word. The page at 1229x673 and 1864x1033, every role
   finished: each corner's line whole on one line, the footer's buttons on one row, the list's title and rows.
-- The whole suite: 137 passed.
+- The whole suite: 137 passed at 51499da (girsa-verifier's copy too, sixteen of its seventeen mutations red); 138
+  with the leg added.
 
 ## Files
 
@@ -129,4 +131,8 @@ the context limit was pinned by no test, and red once its assertion was added)
 - A Board state for "its own background task is running" (found 2026-11-10; the reviewer has not given it as work).
 - A session outside tmux (it finishes as now, by hand). A project whose settings do not name the hook: the morning
   run names it; nothing closes its panes by day.
-- The role guard's reader of a script loses every line after a quote escaped inside a quote (found building).
+- The role guard's reader of a script loses every line after a quote escaped inside a quote (found building): its
+  own piece, notes/PLAN-GUARD-MASK.md on `builder-guard-mask`.
+- NOT RUN ON LINUX (girsa-verifier's note): `agents.sh --next` rests on `osascript`, BSD `find -mmin` and tmux, the
+  night run on `stat -f` too. The sessions' scripts are macOS-only (README); the hook and `role_usage.closing` are
+  plain Python, run here on macOS alone.

@@ -13,11 +13,15 @@ Rewritten in place when a piece lands and at the end of a session; the log is `n
 ## Now
 
 - Finishing a session, by day and by night (notes/PLAN-FINISH.md, revised; the first project's Board #183 A and the
-  reviewer's "add finish-and-exit"; the log's M05): BUILT, one commit on `builder-finish` in `~/work/mishmeret-builder`
-  (the commit after 1bab022; its id is in `git log` there and in my HANDOFF). The suite: 137 passed.
-- Waiting, live: girsa-verifier's check at that commit (its findings fixed in one round), then girsa-operator's
-  merge. To resume: `git -C ~/work/mishmeret-builder log --oneline -3`; if no VERIFIED is in this session's
-  messages, send the HANDOFF again with the commit's id.
+  reviewer's "add finish-and-exit"; the log's M05): BUILT on `builder-finish` in `~/work/mishmeret-builder` -
+  51499da, checked by girsa-verifier (the code holds; one MEDIUM, a missing test leg), and the commit after it, that
+  leg. The suite: 138 passed.
+- The role guard's escaped-quote fault (girsa-verifier: HIGH): FIXED on `builder-guard-mask`, from main - ede5952 and
+  0cff45c (notes/PLAN-GUARD-MASK.md). That branch does not touch this file or the log.
+- Waiting, live: girsa-verifier's word on the leg's commit and its check of 0cff45c; then girsa-operator's merges,
+  whichever is verified first, the other rebased after it (notes only should collide). To resume: `git -C
+  ~/work/mishmeret-builder log --oneline -3 builder-finish builder-guard-mask`; if no VERIFIED is in this session's
+  messages, send each HANDOFF again with its commit's id.
 
 ## Next, in order
 
@@ -31,10 +35,11 @@ Rewritten in place when a piece lands and at the end of a session; the log is `n
 ## Open
 
 - `board.py landed`, the old name, is still taken: it goes once the first project's command files call `finished`.
-- The role guard's reader of a script loses every line after a quote escaped inside a quote (`\"` in a double-quoted
-  string): a script holding one before its `tmux kill-session` would not be refused. Found 2026-11-10; not fixed.
+- Until `builder-guard-mask` is merged and the first project's pin moves to it, every role's guard is turned off for
+  the rest of a command by a string holding an escaped quote.
 - Not run live: the night run and the morning run as changed (behind stubs only); the hook under the first project's
   shim. Mishmeret's own config names neither finish command and its settings no Stop hook - it has no role in tmux.
+- Not run on Linux: `agents.sh --next` (osascript, BSD `find -mmin`, tmux) - the sessions' scripts are macOS-only.
 - A required config key cannot be added or renamed: Mishmeret pins itself (the log's M05).
 - Not pinned by a test (A2): `land()`'s restart line and ledger copy with the field absent.
 - The 5 s refresh redraws the corners, so a focused pill loses its focus then (page-wide; girsa-ui-steward: leave it).
