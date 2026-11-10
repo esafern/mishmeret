@@ -75,7 +75,7 @@ def test_the_night_run_does_not_land_a_role_waiting_for_another_roles_work(tmp_p
     assert bd.main(["waiting-for", "ex-verifier"]) == 0 and capsys.readouterr().out == ""
     # the night run asks it before /land, and lets a kept, left or closed role's wait go
     script = open(os.path.join(PKG, "agents-morning.sh"), encoding="utf-8").read()
-    ask, land = script.index('board.py" waiting-for "$r"'), script.index('type_in "$pane" "/land"')
+    ask, land = script.index('board.py" waiting-for "$r"'), script.index('type_in "$pane" "$FINISH_EXIT"')
     assert ask < land
     check = script[ask:land]
     for marker in ('"$NIGHT/$w.kept"', '"$NIGHT/$w.left"', '"$NIGHT/$w.closed"', "still running - not idle"):
@@ -92,7 +92,9 @@ def test_the_night_run_lands_a_role_under_the_limit_and_keeps_it_uncleared():
     assert "CONTEXT_LIMIT=$MM_NIGHT_CONTEXT_LIMIT" in script
     under = script[script.index('if [ "${ctx:-0}" -lt "$CONTEXT_LIMIT" ]'):]
     under = under[:under.index("\n      fi\n")]
-    assert 'type_in "$pane" "/land"' in under and '"$NIGHT/$r.land-only"' in under and "/clear" not in under
+    assert 'type_in "$pane" "$FINISH_EXIT"' in under and '"$NIGHT/$r.land-only"' in under and "/clear" not in under
+    # under the limit and over it, what is typed is the config's night.finish_exit_command - no name in the script
+    assert script.count('type_in "$pane" "$FINISH_EXIT"') == 2 and '"/land"' not in script and '"/finish' not in script
     clears = [i for i in range(len(script)) if script.startswith('type_in "$pane" "/clear"', i)]
     assert len(clears) == 2, "a new place that clears must keep a land-only role too"
     for at in clears:                                                       # the check stands just before each
@@ -111,7 +113,11 @@ def test_the_night_run_does_not_take_a_land_answered_by_a_notice_for_a_landing(t
     after it, is no answer to it (LOW 2: on 10-31 three roles' newest assistant record was 10-30's notice) - that role,
     as a real landing, is asked to report back. A whole night run,
     not a dry one, behind stub claude, tmux, sleep, caffeinate and osascript: one role idle, its /land sent 20 minutes
-    ago, its pane this test's parent process."""
+    ago, its pane this test's parent process.
+    SINCE 2026-11-10 (the reviewer, the first project's Board #183): what the run types and names is the config's
+    night.finish_exit_command (the placeholder's /done-and-out), never a name written in the script; and THE RUN ENDS
+    WHEN THE ROLES ARE CLOSED ("in the even [evening] after I'm idle I want the night run to exit and not restart") -
+    four roles closed here, and no alert is shown, no Go waited for, no agents.sh started."""
     import datetime
     import time
     from conftest import write_project
@@ -142,10 +148,10 @@ def test_the_night_run_does_not_take_a_land_answered_by_a_notice_for_a_landing(t
     os.utime(transcript, (written, written))
     status = "waiting" if kind == "notice while waiting" else "idle"
     rows = json.dumps([{"name": "ex-builder", "status": status, "sessionId": "s-1", "pid": os.getpid()}])
-    typed = tmp_path / "typed.txt"
+    typed, shown = tmp_path / "typed.txt", tmp_path / "shown.txt"
     stubs = {"claude": f"if [ \"$1\" = agents ]; then echo '{rows}'; fi",
              "tmux": f"case \"$1\" in list-panes) echo '{os.getppid()} %1' ;; send-keys) echo \"$*\" >> '{typed}' ;; esac",
-             "sleep": "exit 0", "caffeinate": "exit 0", "osascript": "exit 0"}
+             "sleep": "exit 0", "caffeinate": "exit 0", "osascript": f"echo \"$*\" >> '{shown}'"}
     (tmp_path / "bin").mkdir()
     for name, body in stubs.items():
         (tmp_path / "bin" / name).write_text(f"#!/bin/sh\n{body}\n", encoding="utf-8")
@@ -156,15 +162,22 @@ def test_the_night_run_does_not_take_a_land_answered_by_a_notice_for_a_landing(t
     log = (night / "log.txt").read_text(encoding="utf-8")
     assert out.returncode == 0, out.stdout + out.stderr + log
     sent = typed.read_text(encoding="utf-8") if typed.exists() else ""
-    named = "ex-builder: /land was answered by a notice, not a landing - You've hit your weekly limit - left open for you"
-    asked = "ex-builder: landed without saying it is ready to clear - asked to report back"
+    named = ("ex-builder: /done-and-out was answered by a notice, not a finish - You've hit your weekly limit - left "
+             "open for you")
+    asked = "ex-builder: finished without saying it is ready to clear - asked to report back"
     expected = {"notice": named, "notice while waiting": named, "old notice": asked,
-                "no record": "ex-builder: its transcript has not changed since /land was typed - /land did not reach it",
-                "landed": asked}[kind]
+                "no record": "ex-builder: its transcript has not changed since /done-and-out was typed - it did not "
+                             "reach the session", "landed": asked}[kind]
     assert expected in log, log
     assert "stopped to ask you something" not in log and (named in log) == kind.startswith("notice"), log
-    assert ("Has this session finished every step of /land?" in sent) == (expected == asked), sent
+    assert ("Has this session finished every step of /done-and-out?" in sent) == (expected == asked), sent
+    assert "/land" not in sent + log, "no command's name is written in the script"
     assert (night / "ex-builder.left").exists()
+    # the night's end: four roles closed - the count, and the run is over
+    said = shown.read_text(encoding="utf-8") if shown.exists() else ""
+    assert "4 closed and not started again - start them, each in its pane, with: bash agents.sh" in log, log
+    assert "display alert" not in said and "iTerm" not in said and "agents.sh" not in said + sent, said
+    assert not (night / ".running").exists(), "the lock, with the run's process id in it, goes with the run"
 
 
 @pytest.mark.parametrize("percent", [100, 60])
@@ -206,11 +219,11 @@ def test_the_night_run_sends_no_land_while_a_plan_window_is_at_its_limit(tmp_pat
     log = (night / "log.txt").read_text(encoding="utf-8")
     assert out.returncode == 0, out.stdout + out.stderr + log
     sent = typed.read_text(encoding="utf-8") if typed.exists() else ""
-    limited = "ex-builder: not landed - limit, the 7-day window, resets " in log
+    limited = "ex-builder: not finished - limit, the 7-day window, resets " in log
     assert limited == (percent == 100), log
-    assert ("/land" in sent) == (percent < 100), sent
+    assert ("/done-and-out" in sent) == (percent < 100), sent      # the config's night.finish_exit_command
     if limited:
-        assert "1 not landed for the plan's limit" in log, log
+        assert "1 not finished for the plan's limit" in log, log
 
 
 @pytest.mark.parametrize("kind", ["cleared", "worked"])
@@ -256,8 +269,8 @@ def test_the_night_run_sends_exit_not_land_to_a_pane_holding_only_a_clear(tmp_pa
     log = (night / "log.txt").read_text(encoding="utf-8")
     assert out.returncode == 0, out.stdout + out.stderr + log
     sent = typed.read_text(encoding="utf-8") if typed.exists() else ""
-    assert ("/land" in sent) == (kind == "worked") and ("/exit" in sent) == (kind == "cleared"), sent
-    assert ("ex-builder: its pane holds only a /clear - nothing to land; /exit" in log) == (kind == "cleared"), log
+    assert ("/done-and-out" in sent) == (kind == "worked") and ("/exit" in sent) == (kind == "cleared"), sent
+    assert ("ex-builder: its pane holds only a /clear - nothing to finish; /exit" in log) == (kind == "cleared"), log
     if kind == "cleared":
         assert "ex-builder: not running - closed by this run (cleared, then /exit)" in log, log
 
@@ -351,7 +364,8 @@ def test_the_agents_scripts_share_one_clone_one_role_list_and_one_pane_lookup():
     and agents-morning.sh each kept the role list, the clone, the session-to-pane lookup and the transcript lookup, and
     with the clone set the night run read one clone while its Go started the roles, through agents.sh, in another. Both
     source agents-lib.sh; it alone holds them and reads the project's config - named by the project's shim or by hand,
-    never guessed from the current folder - and the Go's new window is given it, with the shim's mark on it."""
+    never guessed from the current folder. The Go itself went on 2026-11-10 (the night run starts nothing), and with
+    it the new window that had to be given the config and the shim's mark."""
     read = lambda name: open(os.path.join(PKG, name), encoding="utf-8").read()
     lib, start, night = read("agents-lib.sh"), read("agents.sh"), read("agents-morning.sh")
     source = '. "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/agents-lib.sh"'
@@ -362,8 +376,12 @@ def test_the_agents_scripts_share_one_clone_one_role_list_and_one_pane_lookup():
                  "PROJECTS=", "config.py --shell"):
         assert copy in lib, copy
         assert copy not in start and copy not in night, f"a second copy of {copy!r}"
-    assert "write text \\\"MISHMERET_CONFIG='$MISHMERET_CONFIG' MISHMERET_CONFIG_BY_SHIM='${MISHMERET_CONFIG_BY_SHIM:-}' bash '$DIR/agents.sh'\\\"" \
-        in night, "the Go starts the roles in the same clone, the shim's mark kept"
+    for gone in ("create window", "Go starts", 'buttons {\\"Not today\\"', 'agents.sh" --restart'):
+        assert gone not in night, f"the night run and the morning run start nothing: {gone!r}"
+    # ONE HOME FOR THE CLOSING SENTENCE'S RULE (girsa-architect, 2026-11-10): role_usage.py's, asked by the night run
+    # here and by the Stop hook - no second copy of the transcript reader in the shell
+    assert '"$PY" "$HERE/role_usage.py" closing "$f"' in night and "READY_END" not in night
+    assert "role_usage.closing(" in read("finish_hook.py")
 
 
 def test_the_morning_run_counts_a_role_idle_once_its_turn_has_ended(tmp_path):
@@ -440,8 +458,60 @@ def test_the_morning_run_starts_the_roles_when_none_is_running(tmp_path):
     out = subprocess.run(["bash", os.path.join(PKG, "agents-morning.sh")], env=env, input="yes\n",
                          capture_output=True, text=True, encoding="utf-8", timeout=60)
     assert out.returncode == 1, out.stdout + out.stderr
-    assert "they stopped during the landing" in out.stdout and "bash agents.sh --resume" in out.stdout, out.stdout
+    assert "they stopped during step 2" in out.stdout and "bash agents.sh --resume" in out.stdout, out.stdout
     assert "starting them" not in out.stdout and "placeholder agents.sh ran" not in out.stdout, out.stdout
+
+
+def test_the_morning_run_types_the_projects_finish_command_and_names_each_role_starting_nothing(tmp_path):
+    """The reviewer, 2026-11-10 (the first project's Board #183): a finished session is cleared, exited and started
+    again by the Stop hook - so the morning run's old step 3, `agents.sh --restart`, would end the sessions the hook
+    had just started. It now types the config's night.finish_command (the placeholder's /done-for-now), and step 3
+    only names each role BY ITS SESSION, not by its process (girsa-architect: a role the hook did not reach is
+    running and idle - in the session it had). A stub `claude` (five idle; after `update`, one gone, two in a new
+    session, two in the session they had), a stub tmux whose one pane - found for ex-verifier alone - shows the
+    closing sentence, and a placeholder agents.sh that must not run."""
+    from conftest import write_project
+    (tmp_path / "bin").mkdir()
+    cfg = write_project(tmp_path)
+    (tmp_path / "agents.sh").write_text('echo "placeholder agents.sh ran with: [$*]"\n', encoding="utf-8")
+    row = lambda name, sid, pid=1: {"name": name, "status": "idle", "sessionId": sid, "pid": pid}
+    before = json.dumps([row("ex-operator", "o1"), row("ex-builder", "b1"), row("ex-verifier", "v1", os.getpid()),
+                         row("ex-ui-steward", "u1"), row("ex-architect", "a1")])
+    after = json.dumps([row("ex-builder", "b2"), row("ex-verifier", "v1", os.getpid()), row("ex-ui-steward", "u2"),
+                        row("ex-architect", "a1")])
+    typed = tmp_path / "typed.txt"
+    stubs = {"claude": f"if [ \"$1\" = update ]; then touch '{tmp_path / 'updated'}'; exit 0; fi\n"
+                       f"if [ -e '{tmp_path / 'updated'}' ]; then echo '{after}'; else echo '{before}'; fi",
+             "tmux": f"case \"$1\" in list-panes) echo '{os.getppid()} %1' ;; send-keys) echo \"$*\" >> '{typed}' ;;\n"
+                     " capture-pane) printf 'Done.\\n  The session is ready to clear.\\n' ;; esac",
+             "sleep": "exit 0"}
+    for name, body in stubs.items():
+        (tmp_path / "bin" / name).write_text(f"#!/bin/sh\n{body}\n", encoding="utf-8")
+        (tmp_path / "bin" / name).chmod(0o755)
+    env = dict(os.environ, MISHMERET_CONFIG=cfg, PATH=f"{tmp_path / 'bin'}{os.pathsep}{os.environ['PATH']}")
+    out = subprocess.run(["bash", os.path.join(PKG, "agents-morning.sh")], env=env, input="yes\n",
+                         capture_output=True, text=True, encoding="utf-8", timeout=60)
+    assert out.returncode == 0, out.stdout + out.stderr
+    sent = typed.read_text(encoding="utf-8")
+    assert "/done-for-now" in sent and "/land" not in sent + out.stdout and "/done-and-out" not in sent, sent
+    said = out.stdout[out.stdout.index("Step 3 - each role now:"):]
+    assert "ex-operator: not running - bash agents.sh starts it in its pane" in said, said
+    for started in ("ex-builder", "ex-ui-steward"):
+        assert f"{started}: finished, and started again in a new session" in said, said
+    assert "ex-verifier: said it is ready to clear and is still in the session it had" in said and \
+        "the Stop hook (finish_hook.py)" in said, said
+    assert "ex-architect: still in the session it had - it did not finish; look at its pane" in said, said
+    assert "placeholder agents.sh ran" not in out.stdout, "the morning run starts nothing"
+    # a project whose config names no finish command: said, and nothing typed
+    from conftest import project_config
+    bare = tmp_path / "bare"
+    night = {k: v for k, v in project_config(bare)["night"].items() if not k.startswith("finish")}
+    typed.unlink()
+    for args, key in (([], "night.finish_command"), (["--night"], "night.finish_exit_command")):
+        out = subprocess.run(["bash", os.path.join(PKG, "agents-morning.sh"), *args], input="yes\n", capture_output=True,
+                             env=dict(env, MISHMERET_CONFIG=write_project(bare, night=night)), text=True, timeout=60)
+        assert out.returncode == 1 and f"the project's config names no {key}" in out.stderr, (args, out.stderr)
+    assert not typed.exists(), typed.read_text()
 
 
 def test_the_keepalive_check_says_a_crash_and_pings_a_due_role_once(tmp_path):
@@ -519,3 +589,166 @@ def test_one_reader_of_a_transcripts_last_call_passes_over_a_notices_zeros(tmp_p
     spec.loader.exec_module(kd)
     monkeypatch.setenv("MISHMERET_TRANSCRIPTS", str(tmp_path))     # last_call asks role_usage.project_dir() when called
     assert kd.last_call("s-1") == (at, 40005)                                        # the keep-alive's
+
+
+SHORT, LONG = "The session is ready to clear.", "The session is ready to clear and exit."
+
+
+def test_the_closing_sentences_rule_has_one_home_and_reads_a_message_and_a_transcript(tmp_path):
+    """The reviewer, 2026-11-10 (the first project's Board #183, and "add finish-and-exit and have the night run use
+    that"): two closing sentences - after the short one the session is cleared, exited and started again ("again"),
+    after the longer cleared and exited and nothing started ("exit"). role_usage.closing is the rule, whole and as the
+    last line (girsa-verifier, 2026-10-11: "I am not ready to clear yet" matched a loose one): the Stop hook asks it
+    of a message, the night run of a transcript (said_closing, `role_usage.py closing PATH`, the shell reader moved)."""
+    import role_usage
+    for text, want in ((SHORT, "again"), (LONG, "exit"), ("Done:\n- a\n\n**" + SHORT + "**\n\n", "again"),
+                       ("All steps done.\n`" + LONG + "`", "exit"),
+                       ("I am not ready to clear yet.", None), (SHORT + " Then I rest.", None),
+                       (SHORT + "\nOne more thing: x is left.", None), ("The rule: end with \"" + SHORT + "\"", None),
+                       ("Not finished: the state file is left.", None), (LONG.replace(" and exit", " and exit now"), None),
+                       ("", None), (None, None)):
+        assert role_usage.closing(text) == want, text
+    said = lambda text: {"type": "assistant", "message": {"content": [{"type": "text", "text": text}]}}
+    prompt = {"type": "user", "message": {"content": "one more thing"}}
+    tool = {"type": "user", "message": {"content": [{"type": "tool_result", "content": "ok"}]}}
+    side = dict(said("a subagent's words"), isSidechain=True)
+    path = tmp_path / "s.jsonl"
+    for records, want in (([said("x"), said("Done.\n" + LONG)], "exit"), ([said(SHORT), tool, side], "again"),
+                          ([said(SHORT), prompt], None), ([said(SHORT), said("More work done.")], None), ([], None)):
+        path.write_text("".join(json.dumps(r) + "\n" for r in records), encoding="utf-8")
+        assert role_usage.said_closing(str(path)) == want, records
+        out = subprocess.run([sys.executable, os.path.join(PKG, "role_usage.py"), "closing", str(path)],
+                             capture_output=True, text=True)
+        assert (out.returncode, out.stdout.strip()) == ((0, want) if want else (1, "")), (records, out.stderr)
+    # the pane's form of the same rule, for text tmux captured: either sentence on a line of its own
+    morning = open(os.path.join(PKG, "agents-morning.sh"), encoding="utf-8").read()
+    assert r"The session is ready to clear( and exit)?\.[*_`]*[[:space:]]*$'" in morning
+
+
+@pytest.mark.parametrize("case, message, role, pane, started", [
+    ("the short sentence", "Done.\n" + SHORT, "ex-builder", "%3", ["ex-builder", "%3"]),
+    ("the longer sentence", "Done.\n**" + LONG + "**", "ex-builder", "%3", ["ex-builder", "%3", "exit"]),
+    ("not said", "I am not ready to clear yet.", "ex-builder", "%3", None),
+    ("a step undone", "Not finished: the state file is left.", "ex-builder", "%3", None),
+    ("inside a line", "Its rule: " + SHORT, "ex-builder", "%3", None),
+    ("no message", None, "ex-builder", "%3", None),
+    ("not in tmux", SHORT, "ex-builder", None, None),
+    ("a role with no pane", SHORT, "ex-demo-operator", "%3", None),
+    ("no role's session", SHORT, None, "%3", None),
+    ("a name that is no role", SHORT, "someone", "%3", None)])
+def test_the_stop_hook_hands_a_finished_roles_pane_to_agents_sh_next(monkeypatch, case, message, role, pane, started):
+    """The reviewer, 2026-11-10: "during the day I want to clear a session after landing, then exit and start a new
+    one." finish_hook.py, on Stop: the turn's last message (the hook's own `last_assistant_message` - the transcript
+    does not hold it yet, measured) ending with a closing sentence, in the session of a role with a pane, running in
+    one - `agents.sh --next ROLE PANE`, with `exit` after the longer sentence, started detached. Anything else:
+    nothing started, nothing printed. The start is recorded here, never run."""
+    import importlib.util
+    import io
+    spec = importlib.util.spec_from_file_location("finish_hook", os.path.join(PKG, "finish_hook.py"))
+    hook = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(hook)
+    calls = []
+    monkeypatch.setattr(hook.subprocess, "Popen", lambda args, **kw: calls.append((args, kw)))
+    for name, value in (("CLAUDE_CODE_AGENT", role), ("TMUX_PANE", pane)):
+        monkeypatch.setenv(name, value) if value else monkeypatch.delenv(name, raising=False)
+    data = {"hook_event_name": "Stop", "session_id": "s-1"}
+    if message is not None:
+        data["last_assistant_message"] = message
+    monkeypatch.setattr(sys, "stdin", io.StringIO(json.dumps(data)))
+    assert hook.main() is None
+    if started is None:
+        assert calls == [], case
+    else:
+        (args, kw), = calls
+        assert args == ["bash", os.path.join(PKG, "agents.sh"), "--next"] + started, case
+        assert kw["start_new_session"] is True, "detached: it outlives the session it exits"
+    monkeypatch.setattr(sys, "stdin", io.StringIO("not json"))
+    assert hook.main() is None and len(calls) == (started is not None)
+
+
+@pytest.mark.parametrize("case", ["again", "exit", "another's pane", "night run going", "the run asked it",
+                                  "a lock left behind", "never at its shell", "a run begun meanwhile",
+                                  "words in the prompt", "no prompt found", "finished twice"])
+def test_agents_sh_next_clears_exits_and_starts_the_role_again_in_its_own_pane(tmp_path, case):
+    """`agents.sh --next ROLE PANE [exit]`, the Stop hook's (the reviewer, 2026-11-10; the rules' home here is
+    girsa-architect's answer): /clear, /exit, and - the pane back at its shell - the role's fresh start, its config
+    dropped as every start's; with `exit` (the longer sentence) nothing started. Only in the pane agents.sh gave that
+    role. With a night run going it types nothing - that run closes the session and starts nothing - and says so to
+    you unless the run had asked the role; a lock whose run is gone is no lock; a run begun while it typed: cleared
+    and exited, not started. A pane not back at its shell a minute after /exit is not typed a start.
+    girsa-verifier's two MEDIUMs on the plan: nothing is typed over words standing in the pane's prompt (the prompt's
+    line is the last with "❯" and a no-break space - a message already sent has a plain space - and dim text there is
+    Claude Code's own suggestion; measured on 2.1.322), nor when no prompt is found; and a role this script started
+    less than ten minutes ago is cleared and exited but not started a second time. Behind stub tmux, sleep and
+    osascript; the lock's live process is this test's."""
+    from conftest import write_project
+    cfg = write_project(tmp_path)
+    state = tmp_path / "scratch" / "state"
+    lock = state / "night" / "2030-01-01" / ".running"
+    typed, shown = tmp_path / "typed.txt", tmp_path / "shown.txt"
+    gone = subprocess.Popen(["true"])
+    gone.wait()
+    if case in ("night run going", "the run asked it", "a lock left behind"):
+        lock.mkdir(parents=True)
+        (lock / "pid").write_text(f"{gone.pid if case == 'a lock left behind' else os.getpid()}\n", encoding="utf-8")
+    if case == "the run asked it":
+        (lock.parent / "ex-builder.land-sent").touch()
+    begun = f"mkdir -p '{lock}'; echo {os.getpid()} > '{lock}/pid'" if case == "a run begun meanwhile" else ":"
+    owner = "ex-verifier" if case == "another's pane" else "ex-builder"
+    running = "node" if case == "never at its shell" else "zsh"
+    if case == "finished twice":
+        state.mkdir(parents=True)
+        (state / "ex-builder.next-started").touch()
+    # the pane as tmux captures it (octal: "❯" is \342\235\257, the no-break space \302\240, \033 the escape): a
+    # message sent earlier, then the prompt - empty but for a dim suggestion, or holding typed words; or no prompt
+    sent_before = r"\033[38;5;246m\342\235\257 words sent an hour ago\033[39m\n"
+    prompt = {"words in the prompt": sent_before + r"\033[39m\342\235\257\302\240my half typed\n",
+              "no prompt found": sent_before}.get(case, sent_before + r"\033[39m\342\235\257\302\240\033[2mTry something\033[0m\n")
+    stubs = {"tmux": "case \"$1\" in\n"
+                     f" show-options) case \"$*\" in *@role*) echo '{owner}' ;; *) echo '#0891b2' ;; esac ;;\n"
+                     f" display-message) echo '{running}' ;;\n"
+                     f" capture-pane) printf '{prompt}' ;;\n"
+                     f" send-keys) echo \"$*\" >> '{typed}'; case \"$*\" in *' /exit '*) {begun} ;; esac ;;\n"
+                     "esac",
+             "sleep": "exit 0", "osascript": f"echo \"$*\" >> '{shown}'", "claude": "echo '[]'"}
+    (tmp_path / "bin").mkdir()
+    for name, body in stubs.items():
+        (tmp_path / "bin" / name).write_text(f"#!/bin/sh\n{body}\n", encoding="utf-8")
+        (tmp_path / "bin" / name).chmod(0o755)
+    env = dict(os.environ, MISHMERET_CONFIG=cfg, PATH=f"{tmp_path / 'bin'}{os.pathsep}{os.environ['PATH']}")
+    out = subprocess.run(["bash", os.path.join(PKG, "agents.sh"), "--next", "ex-builder", "%3"] + ["exit"] * (case == "exit"),
+                         env=env, stdin=subprocess.DEVNULL, capture_output=True, text=True, timeout=60)
+    assert out.returncode == 0, out.stdout + out.stderr
+    sent = typed.read_text(encoding="utf-8").splitlines() if typed.exists() else []
+    said = shown.read_text(encoding="utf-8") if shown.exists() else ""
+    log = (state / "next.log").read_text(encoding="utf-8")
+    closes = ["-t %3 /clear Enter", "-t %3 /exit Enter"]
+    if case in ("again", "a lock left behind"):
+        assert [s.split("send-keys ")[1] for s in sent[:2]] == closes and len(sent) == 3, sent
+        assert "-t %3 cd '" in sent[2] and "&& env -u MISHMERET_CONFIG -u MISHMERET_CONFIG_BY_SHIM claude --agent " \
+            "ex-builder --name ex-builder" in sent[2] and "--resume" not in sent[2], sent[2]
+        assert "ex-builder: cleared, exited and started again in %3" in log and said == "", (log, said)
+        assert (state / "ex-builder.next-started").exists(), "its start marked, for the bound"
+    elif case in ("words in the prompt", "no prompt found"):
+        assert sent == [], sent
+        assert ("words are standing in its prompt - /clear not typed over them" if case == "words in the prompt"
+                else "its prompt could not be read - /clear not typed") in said, said
+    elif case == "finished twice":
+        assert [s.split("send-keys ")[1] for s in sent] == closes, sent
+        assert "finished again within ten minutes of being started here" in said and "not started a second time" in said, said
+    elif case == "exit":
+        assert [s.split("send-keys ")[1] for s in sent] == closes, sent
+        assert "ex-builder: cleared and exited - not started again" in log and said == "", (log, said)
+    elif case == "another's pane":
+        assert sent == [] and "ex-builder: pane %3 was not given to it by agents.sh - nothing typed" in log, (sent, log)
+    elif case == "night run going":
+        assert sent == [], sent
+        assert f"finished while a night run is going ({lock})" in said and "ex-builder" in said, said
+    elif case == "the run asked it":
+        assert sent == [] and said == "" and f"the night run ({lock}) asked it to finish" in log, (sent, said, log)
+    elif case == "never at its shell":
+        assert [s.split("send-keys ")[1] for s in sent] == closes, sent
+        assert "its pane is not back at its shell a minute after /exit - not started again" in said, said
+    else:
+        assert [s.split("send-keys ")[1] for s in sent] == closes, sent
+        assert f"a night run began meanwhile ({lock}) - not started again" in said, said

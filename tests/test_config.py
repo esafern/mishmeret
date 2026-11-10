@@ -28,7 +28,7 @@ def sample():
         "board_port": 9450, "tmux_session": "ex", "tmux_conf": "~/.tmux-ex.conf", "claude_projects": "~/.claude/projects",
         "agent_files": ".claude/agents/{role}.md", "python": "venv/bin/python", "launchd_prefix": "org.example", "state_dir": "scratch/state",
         "night": {"check_every": 1, "you_idle": 2, "role_idle": 3, "landed_quiet": 4, "poll": 5, "context_limit": 6,
-                  "gap": 7},
+                  "gap": 7, "finish_command": "/done-for-now", "finish_exit_command": "/done-and-out"},
         "sizes": {"warn_percent": 80, "files": {"RULES.md": [1000, "RULES-HISTORY.md"]}, "status_file": "STATUS.md",
                   "item_pattern": r"^(X[0-9]{2})\. ", "item_limit": 3000, "item_home": "a new item",
                   "state_files": "STATE-*.md", "state_limit": 600, "state_home": "the log"},
@@ -79,6 +79,8 @@ def test_the_sample_loads_and_its_root_is_the_config_files_project(write, tmp_pa
     (lambda c: c.pop("board_port"), "missing board_port"),
     (lambda c: c.update(extra=1), "unknown extra"),
     (lambda c: c["night"].pop("gap"), "night: missing gap"),
+    (lambda c: c["night"].update(finish_command=5), "night.finish_command must be str"),
+    (lambda c: c["night"].update(finished_quiet=120), "night: unknown finished_quiet"),
     (lambda c: c["roles"][0].pop("tmux"), "roles[0]: missing tmux"),
     (lambda c: c.update(board_port="x"), "board_port must be int"),
     (lambda c: c.update(board_port=True), "board_port must be int"),
@@ -138,6 +140,15 @@ def test_a_project_without_the_optional_fields_loads_and_each_reader_takes_them_
     shell = subprocess.run([sys.executable, os.path.join(PKG, "config.py"), "--shell"], capture_output=True, text=True,
                            env=os.environ)
     assert "MM_PYTHON=''" in shell.stdout.splitlines(), shell.stderr
+    # the two commands that end a session (2026-11-10): a project with no role in tmux names neither, and the shell
+    # form then carries neither - the night and morning runs stop on that (tests/test_sessions.py); with them, both
+    assert not {"finish_command", "finish_exit_command"} & set(loaded["night"]) and loaded["night"]["gap"] == 7
+    assert "MM_NIGHT_FINISH" not in shell.stdout and "MM_NIGHT_GAP=7" in shell.stdout.splitlines(), shell.stdout
+    write(sample())
+    shell = subprocess.run([sys.executable, os.path.join(PKG, "config.py"), "--shell"], capture_output=True, text=True,
+                           env=os.environ)
+    assert {"MM_NIGHT_FINISH_COMMAND=/done-for-now", "MM_NIGHT_FINISH_EXIT_COMMAND=/done-and-out"} <= \
+        set(shell.stdout.splitlines()), shell.stdout
 
 
 def test_an_environment_variable_overrides_its_field_and_a_night_key(write, monkeypatch):

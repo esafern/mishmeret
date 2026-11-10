@@ -19,6 +19,27 @@ M05. **[2026-11-10, finishing a session, by day and by night (notes/PLAN-FINISH.
       run's step 3 (`agents.sh --restart`) would end sessions the hook had just started.
     * To send at this commit, live: questions 1 and 2 to girsa-architect, question 3 to girsa-ui-steward, the plan's
       HANDOFF to girsa-verifier.
+    * **[13:07]** Sent, live, at 1bab022: those three. ANSWERED, live: girsa-ui-steward (the four words, case kept,
+      the widths at 1229x673); girsa-architect (1 A with its home `agents.sh --next`, the lock looked for twice, a
+      stale lock not to silence the day; 2 step 3 removed, the run naming a role by its session; one home for the
+      sentence's rule); girsa-verifier (READY; MEDIUM 1 words standing in the prompt, MEDIUM 2 no bound on a role
+      started and finishing again; three notes). girsa-operator's ADDITION, live: the reviewer's "add
+      finish-and-exit and have the night run use that" - the longer sentence, never started. Sent to it, a NOTE:
+      the pinned night run does NOT read the longer sentence (both its readers match the short one whole), so its
+      `/land` pointer must lead to finish.md until the pin moves.
+    * STOPPED at the plan's usage limit, the build half done; the state file's commit then FAILED: I had given
+      Mishmeret's own config the new night keys, and the pinned `land.py` refused it. FOUND from that: Mishmeret pins
+      itself, so a required config key added or renamed cannot be committed at all (the pinned reader refuses the new
+      config, the new reader the old, `tests/test_own_project.py`) - the two commands are optional and
+      `landed_quiet` keeps its name; Mishmeret's own `.claude/` is untouched.
+    * FOUND, building: the role guard's reader of a script loses every line after a quote escaped inside a quote -
+      `agents.sh` with one such line was no longer refused against the live tmux server (its own test caught it);
+      the notification's words now go as arguments. Not fixed in the guard: its own piece. And one night path, the
+      command typed to a role over the context limit, was pinned by no test before or after - an assertion added.
+    * MEASURED, the built code end to end (a placeholder project and role, a tmux server of its own, 13:00-13:02):
+      words in the prompt left alone; an empty prompt cleared, exited and started again; a second finish a minute
+      later cleared and exited, not started; the longer sentence cleared and exited, not started. Each showed one
+      notification on the reviewer's screen where the script says so. NOT RUN LIVE: the night and morning runs.
 
 M04. **[2026-11-05, the start scripts with no project named (notes/PLAN-START-SCRIPTS.md)]**
     * **[16:34]** 31ac716 VERIFIED (girsa-verifier: P1-P8 as meant, three mutations red) and merged (main 31ac716).

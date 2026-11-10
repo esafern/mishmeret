@@ -34,9 +34,11 @@ stays private and no role's tree carries it): an item, its answer, a withdrawal,
     python3 board.py withdraw ID --why "..."        # an item no longer needed
     python3 board.py defer ID                       # put off for later (the page also brings it back)
     python3 board.py answer ID --answer "..."       # the page's own route, for a relay or a test
-    python3 board.py landed --role ROLE (--summary "..." | --summary-file F) [--session ID]
-                                       # a session's landing: bullet points of what it accomplished - its corner says
-                                       # Landed until the role's next session; the page's Landings keep every one
+    python3 board.py finished --role ROLE (--summary "..." | --summary-file F) [--session ID]
+                                       # a session's finish: bullet points of what it accomplished - its corner says
+                                       # Finished until the role's next session; the page's Finished sessions keep
+                                       # every one. `landed` is its old name, still taken (a session finishes, a
+                                       # change lands: the reviewer, 2026-11-10)
     python3 board.py qa --role ROLE --question "..." (--answer "..." | --answer-file F) [--link URL]...
                                        # a question the reviewer asked in a role's pane, and the role's answer, kept
     python3 board.py qa-more N --role ROLE [--question "..."] (--answer "..." | --answer-file F)
@@ -437,16 +439,18 @@ def qa(role, question, answer_text, links=()):
 
 
 def landed(role, summary, session=None, at=None):
-    """A session's landing, with its summary - bullet points of what it accomplished (the reviewer, 2026-10-25: "when a
+    """A session's finish, with its summary - `board.py finished`; "landed" was the word until 2026-11-10 and stays
+    this function's name, the record's `"type"` (append-only: its old rows are read as they are) and the names behind
+    the page. Bullet points of what it accomplished (the reviewer, 2026-10-25: "when a
     session lands, it produces a summary of the session's work. when the nightly job clears the session that info is not
     seen. it should be placed on the board, so the session says landed not not running - and that summary is on the board
     till the next session starts - and then kept in a history"; "more than just the one line recap - bullet points of
     accomplishments"). The role's corner shows it until a session other than `session` runs as that role; every landing
-    stays in the record, listed on the page under Landings. `at`: when it landed, where that was before it was posted
+    stays in the record, listed on the page under Finished sessions. `at`: when it finished, where that was before it was posted
     (an ISO time from a record); a session posted again keeps only its last posting."""
     _check_role(role)
     if not summary.strip():
-        raise ValueError("a landing needs its summary")
+        raise ValueError("a finished session needs its summary")
     if at is not None:   # one time without its offset broke every board_view() for good (the audit's item 3)
         when = _when(at)
         if when is None or when.tzinfo is None:
@@ -600,7 +604,7 @@ def waiting_on(role, events=None):
 # THE PLAN'S BUDGET (Q&A #56 A; the reviewer, 2026-10-25: "a and c - good. go"): every session's status line receives
 # the plan's usage windows (`rate_limits`, Claude Code's status line input) and records them here; the page shows them,
 # and at BUDGET_WARN percent of a window (the config's budget.warn_percent) every role is told once, by a hook - to keep
-# its work landable and keep working, never to land for the budget alone: a landing buys nothing against a limit, which
+# its work landable and keep working, never to finish for the budget alone: a finish buys nothing against a limit, which
 # stops the account, not the session.
 BUDGET_WARN = config.load()["budget"]["warn_percent"]
 WINDOWS = (("five_hour", "5-hour"), ("seven_day", "7-day"))
@@ -636,8 +640,8 @@ def usage():
 
 
 def at_limit():
-    """The windows at their limit now, as "the 7-day window, resets Sun 15:00", or None. The night run sends no /land
-    then: a session at the limit answers it with a notice and lands nothing (2026-10-30, the audit's item 1)."""
+    """The windows at their limit now, as "the 7-day window, resets Sun 15:00", or None. The night run types no finish
+    command then: a session at the limit answers it with a notice and finishes nothing (2026-10-30, the audit's item 1)."""
     rec = usage() or {}
     full = [f"the {label} window, resets {datetime.fromtimestamp(rec[k]['resets_at']).strftime('%a %H:%M')}"
             for k, label in WINDOWS if k in rec and rec[k]["used_percentage"] >= 100]
@@ -671,7 +675,7 @@ def budget_notice(session_id):
     said = "; ".join(f"the {label} window is at {w['used_percentage']:.0f}%, resetting "
                      f"{datetime.fromtimestamp(w['resets_at']).strftime('%a %H:%M')}" for k, label, w in due)
     return (f"THE PLAN'S BUDGET: {said}. Say so to the reviewer in your next reply. Commit what is finished, keep your "
-            f"state file current, keep working; land when the piece is done or the reviewer says so, never for the "
+            f"state file current, keep working; finish the session when the piece is done or the reviewer says so, never for the "
             f"budget alone (the Board shows the meter).")
 
 
@@ -770,12 +774,12 @@ def main(argv=None):
     an.add_argument("id", type=int)
     an.add_argument("--answer", required=True)
     an.add_argument("--note", default="")
-    ld = sub.add_parser("landed")
+    ld = sub.add_parser("finished", aliases=["landed"])   # `landed`: until the first project's command calls the new name
     ld.add_argument("--role", required=True)
     ld.add_argument("--summary")
     ld.add_argument("--summary-file")
-    ld.add_argument("--session", help="the landing session's id (default: the running session named --role)")
-    ld.add_argument("--at", help="when it landed, if before now (an ISO time read from a record)")
+    ld.add_argument("--session", help="the finishing session's id (default: the running session named --role)")
+    ld.add_argument("--at", help="when it finished, if before now (an ISO time read from a record)")
     q = sub.add_parser("qa")
     q.add_argument("--role", required=True)
     q.add_argument("--question", required=True)
@@ -858,13 +862,13 @@ def main(argv=None):
             for it in sorted(items().values(), key=lambda x: x["id"]):
                 if (not args.role or it["role"] == args.role) and (not args.open or not (it["answer"] or it["withdrawn"])):
                     print(describe(it))
-        elif args.cmd == "landed":
+        elif args.cmd in ("finished", "landed"):
             if bool(args.summary) == bool(args.summary_file):
                 raise ValueError("give the summary as --summary or --summary-file")
             text = args.summary or open(args.summary_file, encoding="utf-8").read()
             landed(args.role, text, args.session or session_of_role(args.role), args.at)
-            print(f"{args.role}'s landing is on the Board ({_url()}): its corner says Landed until its "
-                  f"next session starts; the page's Landings keep it")
+            print(f"{args.role}'s finished session is on the Board ({_url()}): its corner says Finished until its "
+                  f"next session starts; the page's Finished sessions keep it")
         elif args.cmd == "status":
             if args.still:
                 still(args.role)

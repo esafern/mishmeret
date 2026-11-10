@@ -63,9 +63,17 @@ SERVER = {"entry": str, "folders": list, "page": str}
 # ledger, a review server (girsa-architect, MISHMERET-OWN-CLAUDE-ARCHITECT.md in Girsa, 3: a required field only one
 # project can fill is that project's field in Mishmeret's code), and repositories no role changes (girsa-verifier's
 # review of that plan: a project's config then gains no field at its pin bump). Absent, its reader takes it as off.
-OPTIONAL = {"python", "drafts", "guard.homes", "guard.precommit", "guard.foreign", "land.ledger", "land.server"}
+OPTIONAL = {"python", "drafts", "guard.homes", "guard.precommit", "guard.foreign", "land.ledger", "land.server",
+            "night.finish_command", "night.finish_exit_command"}
+# THE PROJECT'S OWN TWO COMMANDS THAT END A SESSION, never a name written in a script (the reviewer, 2026-11-10: a
+# session finishes, "land" is a change reaching main; "add finish-and-exit and have the night run use that"):
+# `finish_command`, after which the role is started again in its pane - the morning run types it; and
+# `finish_exit_command`, after which nothing is started - the night run types it. OPTIONAL: a project with no role in
+# tmux has neither run and no such command (Mishmeret's own); the run that finds its command absent stops and says so.
+# `landed_quiet` keeps its name: Mishmeret pins itself, so a required key renamed here could not be committed - the
+# pinned reader refuses the new config, this one the old.
 NIGHT = {"check_every": int, "you_idle": int, "role_idle": int, "landed_quiet": int, "poll": int,
-         "context_limit": int, "gap": int}
+         "context_limit": int, "gap": int, "finish_command": str, "finish_exit_command": str}
 # the reports' tables, each key required and no other (as NIGHT); a value is checked by its kind, and `files` (a path:
 # [limit in bytes, where a whole block goes]) and `effort` ({role: [level, why]}) row by row
 SIZES = {"warn_percent": int, "files": dict, "status_file": str, "item_pattern": str, "item_limit": int,
@@ -142,10 +150,12 @@ def load(p=None):
         if name not in raw and env is None:     # an OPTIONAL field the project has not (_exact let only those through)
             continue
         cfg[name] = _typed(name, want, raw[name] if env is None else env, p, from_env=env is not None)
-    _exact(cfg["night"], NIGHT, p + ": night")
+    _exact(cfg["night"], NIGHT, p + ": night", "night.")
     night = {}
     for k, t in NIGHT.items():
         env = os.environ.get(f"MISHMERET_NIGHT_{k.upper()}")
+        if k not in cfg["night"] and env is None:     # an OPTIONAL command the project has not
+            continue
         night[k] = _typed("night." + k, t, cfg["night"][k] if env is None else env, p, from_env=env is not None)
     cfg["night"] = night
     for i, r in enumerate(cfg["roles"]):

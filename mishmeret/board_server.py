@@ -151,7 +151,7 @@ button.stall:focus-visible{outline:1px solid currentColor;outline-offset:2px}
 "use strict";
 const ROLES = ["ui-steward", "architect", "operator", "verifier", "builder"];
 const STATES = [["working", "Working"], ["idle", "Idle"], ["waiting-agent", "Waiting for another role"],
-                ["waiting-reviewer", "Waiting for you"], ["landed", "Landed"], ["not-running", "Not running"]];
+                ["waiting-reviewer", "Waiting for you"], ["landed", "Finished"], ["not-running", "Not running"]];
 const ROLE_VAR = r => "var(--" + r.replace(/^girsa-/, "") + ")";
 const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const linkify = s => esc(s).replace(/https?:\/\/[^\s<]+/g, u => `<a href="${u}" target="_blank" rel="noopener">${u}</a>`);
@@ -283,7 +283,7 @@ function draw() {
   document.getElementById("tokentoggle").hidden = showTokens;
   document.getElementById("visittoggle").hidden = showVisitors;
   const lands = (data.landings || []).slice().reverse(), lt = document.getElementById("landtoggle");
-  lt.hidden = showLandings || !lands.length; lt.textContent = `Landings (${lands.length})`;
+  lt.hidden = showLandings || !lands.length; lt.textContent = `Finished sessions (${lands.length})`;
   // ONE ROLE'S OPEN MESSAGES, oldest first, from its pill; a message marked done leaves the list at the next refresh
   if (showMsgs) {
     const ms = (data.roles[showMsgs] || {}).unacted || [];
@@ -293,13 +293,13 @@ function draw() {
     document.getElementById("qlist").innerHTML = ms.length ? ms.map(msgCard).join("") : `<p class="empty">No message to ${esc(showMsgs)} is open.</p>`;
     return;
   }
-  // LANDINGS, newest first: every session's landing summary, kept after its corner moves on (the reviewer, 2026-10-25)
+  // FINISHED SESSIONS ("Landings" until 2026-11-10: a session finishes, a change lands), newest first: every session's summary, kept after its corner moves on (the reviewer, 2026-10-25)
   if (showLandings) {
-    document.getElementById("qtitle").textContent = `Landings (${lands.length})`;
+    document.getElementById("qtitle").textContent = `Finished sessions (${lands.length})`;
     document.getElementById("toggle").textContent = "Back";
     document.getElementById("deftoggle").hidden = true; document.getElementById("qatoggle").hidden = false;
     document.getElementById("qlist").innerHTML = lands.map(l => `<div class="qa landing" style="--role:${ROLE_VAR(l.role)}">
-      <div class="head"><span class="role">${esc(l.role)}</span><span>landed ${esc(when(l.ts))}</span>${l.length ? `<span>ran ${esc(l.length)}</span>` : ""}${l.nth_words ? `<span>${esc(l.nth_words)}</span>` : ""}${l.session ? `<span>session ${esc(l.session.slice(0, 8))}</span>` : ""}</div>
+      <div class="head"><span class="role">${esc(l.role)}</span><span>finished ${esc(when(l.ts))}</span>${l.length ? `<span>ran ${esc(l.length)}</span>` : ""}${l.nth_words ? `<span>${esc(l.nth_words)}</span>` : ""}${l.session ? `<span>session ${esc(l.session.slice(0, 8))}</span>` : ""}</div>
       <div class="sum" dir="auto">${linkify(l.summary)}</div></div>`).join("");
     return;
   }
@@ -708,13 +708,13 @@ def board_view():
         open_ids = sorted(i for i, it in its.items() if it["role"] == role and board.is_waiting(it))
         lv = live.get(role)
         shown, words = board.shown_state(st, lv and lv["status"], open_ids, lv and lv["last_prompt"])
-        # LANDED (the reviewer, 2026-10-25): the role's last landing is shown until another session runs as it - over
+        # FINISHED (the reviewer, 2026-10-25; the word 2026-11-10): the role's last finished session is shown until another session runs as it - over
         # "Not running" once the night run has closed it, and over Idle while the landed session is still open
         landing = board.last_landing(role, events)
         if landing and shown in ("not-running", "idle") and (
                 lv.get("session_id") == landing.get("session") if lv else not board.started_since(role, landing)):
             landing = with_facts(landing)
-            shown, words = "landed", "Landed " + landing["ts"][11:16] + "".join(
+            shown, words = "landed", "Finished " + landing["ts"][11:16] + "".join(
                 " \u00b7 " + x for x in (landing.get("length"), landing.get("nth_words")) if x)
         else:
             landing = None

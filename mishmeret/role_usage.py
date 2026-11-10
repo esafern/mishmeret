@@ -12,6 +12,7 @@ Each transcript is parsed again only when its size or mtime changed. Needs only 
 import glob
 import json
 import os
+import re
 import sys
 from datetime import datetime
 
@@ -87,6 +88,40 @@ def synthetic_after(path, since, tail=256 * 1024):
             return None
         blocks = m.get("content") if isinstance(m.get("content"), list) else []
         return " ".join(b.get("text", "") for b in blocks if isinstance(b, dict)).strip() or "(no text)"
+    return None
+
+
+# THE TWO CLOSING SENTENCES a project's finish commands end with (the reviewer, 2026-11-10: "during the day I want to
+# clear a session after landing, then exit and start a new one"; "add finish-and-exit and have the night run use
+# that"): what is done after each - both are cleared and exited; "again" is then started again in its pane.
+CLOSING = {"The session is ready to clear.": "again", "The session is ready to clear and exit.": "exit"}
+
+
+def closing(text):
+    """What a message's closing sentence asks for, "again" or "exit" - or None. THE SENTENCE ITSELF, whole, as the
+    message's last line, its emphasis stripped - never the phrase anywhere (girsa-verifier, 2026-10-11, on f4f82233: "I
+    am not ready to clear yet ...", or a message quoting the rule, matched it). The rule's one home: the Stop hook
+    (finish_hook.py) asks it of the turn's last message, the night run (said_closing) of a transcript."""
+    lines = [line for line in (text or "").splitlines() if line.strip()]
+    return CLOSING.get(re.sub(r"[*_`]", "", lines[-1]).strip()) if lines else None
+
+
+def said_closing(path, tail=4 * 1024 * 1024):
+    """closing() of the last thing in a transcript, when that is the session's own message - a prompt put to it after
+    its last words, and it has not said so (the reviewer, 2026-10-11, Board #12: "If the last thing in an agent's
+    transcript is landed or ready to clear, don't wait for it to be idle")."""
+    for rec in tail_records(path, tail):
+        if rec.get("type") not in ("user", "assistant") or rec.get("isMeta"):
+            continue
+        c = (rec.get("message") or {}).get("content")
+        blocks = [{"type": "text", "text": c}] if isinstance(c, str) else (c if isinstance(c, list) else [])
+        text = " ".join(b.get("text", "") for b in blocks if isinstance(b, dict) and b.get("type") == "text")
+        if rec["type"] == "user":
+            if any(isinstance(b, dict) and b.get("type") == "tool_result" for b in blocks) or not text.strip():
+                continue        # a tool's answer, not a prompt
+            return None
+        if text.strip():
+            return closing(text)
     return None
 
 
@@ -267,7 +302,11 @@ def main(argv=None):
     if argv[:1] == ["synthetic-after"]:      # the night run's: synthetic-after PATH EPOCH - the notice's text, or nothing
         print(synthetic_after(argv[1], float(argv[2])) or "")
         return
-    if argv[:1] == ["context"]:              # the night run's: context PATH - its last call's context, 0 when not read
+    if argv[:1] == ["closing"]:              # the night run's: closing PATH - "again" or "exit"; exit 1 when not said
+        said = said_closing(argv[1]) if os.path.exists(argv[1]) else None
+        print(said or "")
+        sys.exit(0 if said else 1)
+    if argv[:1] == ["context"]:             # the night run's: context PATH - its last call's context, 0 when not read
         lc = last_call(argv[1]) if os.path.exists(argv[1]) else None
         print(lc[1] if lc else 0)
         return

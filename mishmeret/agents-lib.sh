@@ -60,3 +60,16 @@ pane_of() {   # role -> its tmux pane id, or nothing
   local pid; pid=$(role_info "$1" | cut -d' ' -f3)
   [ "$pid" = "-" ] || pane_of_pid "$pid"
 }
+
+run_going() {   # a night run's lock folder -> success unless the run that wrote its process id there is gone (a lock
+                # with no id counts as going, as every lock did before the id was kept)
+  local p; p=$(cat "$1/pid" 2>/dev/null) || return 0
+  kill -0 "$p" 2>/dev/null
+}
+
+going_run() {   # -> the lock of a night run that is going (<state_dir>/night/<its date>/.running), or nothing
+  local l
+  for l in "$MM_STATE_DIR"/night/*/.running; do
+    if [ -d "$l" ] && run_going "$l"; then echo "$l"; return; fi
+  done
+}

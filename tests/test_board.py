@@ -405,6 +405,68 @@ def test_a_pill_of_open_messages_lists_each_one(tmp_path, monkeypatch, size):
         gone["empty"] == "No message to ex-demo-operator is open.", gone
 
 
+WORDS = """() => { const line = el => { const r = el.getBoundingClientRect(); return [Math.round(r.top), Math.round(r.height)]; };
+    const head = [...document.querySelectorAll(".qhead button")].filter(b => !b.hidden && b.getBoundingClientRect().width);
+    return {badges: [...document.querySelectorAll(".corner .chead")].map(h => { const b = h.querySelector(".badge");
+                return {words: b.textContent, cut: b.scrollWidth > b.clientWidth, rects: b.getClientRects().length,
+                        row: line(b)[0] < line(h.querySelector(".rname"))[0] + line(h.querySelector(".rname"))[1]}; }),
+            toggle: document.getElementById("landtoggle").textContent,
+            tops: [...new Set(head.map(b => line(b)[0]))], heights: [...new Set(head.map(b => line(b)[1]))],
+            wide: [document.documentElement.scrollWidth, innerWidth],
+            title: document.getElementById("qtitle").textContent,
+            rows: [...document.querySelectorAll("#qlist .landing .head")].map(h => h.textContent)}; }"""
+
+
+@pytest.mark.parametrize("size", [(1229, 673), (1864, 1033)])
+def test_a_finished_session_reads_finished_on_the_page_at_both_window_sizes(tmp_path, monkeypatch, size):
+    """The reviewer, 2026-11-10 (the first project's Board #183): a session finishes, a change lands - so the corner's
+    "Landed 09:56" is "Finished 09:56", and the page's list "Finished sessions (N)", its rows "finished <when>".
+    girsa-ui-steward's look (2026-11-10): the words are longer - at the reviewer's smaller window and the larger, a
+    corner's whole line (its time, how long it ran, which session of the day) still stands on one line, uncut, and
+    the footer's toggle neither wraps nor pushes a neighbour to a second row; the case as it was in each place. The
+    real page from a scratch Board, every role finished, headless; skipped without Playwright."""
+    sync_api = pytest.importorskip("playwright.sync_api")
+    import importlib.util
+    import threading
+    monkeypatch.setenv("MISHMERET_BOARD_DIR", str(tmp_path / "board"))
+    monkeypatch.setenv("MISHMERET_TRANSCRIPTS", str(tmp_path))
+    monkeypatch.syspath_prepend(PKG)
+    spec = importlib.util.spec_from_file_location("board_server", os.path.join(PKG, "board_server.py"))
+    bs = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(bs)
+    roles = ["ex-" + s for s in ("operator", "builder", "verifier", "ui-steward", "architect")]
+    for n, role in enumerate(roles):
+        for sid, start in ((f"a{n}", "2030-01-02T07:00:00+02:00"), (f"b{n}", "2030-01-02T09:00:00+02:00")):
+            (tmp_path / f"{sid}.jsonl").write_text(json.dumps({"type": "agent-name", "agentName": role}) + "\n" +
+                                                   json.dumps({"type": "user", "timestamp": start}) + "\n", encoding="utf-8")
+            os.utime(tmp_path / f"{sid}.jsonl", (1893600000, 1893600000))
+        bs.board.landed(role, "- placeholder work done\n- open: a placeholder", f"b{n}", at="2030-01-02T20:45:00+02:00")
+    monkeypatch.setattr(bs.LIVE, "get", lambda: {})
+    server = bs.ThreadingHTTPServer(("127.0.0.1", 0), bs.Handler)
+    threading.Thread(target=server.serve_forever, daemon=True).start()
+    try:
+        with sync_api.sync_playwright() as p:
+            browser = p.chromium.launch()
+            page = browser.new_page(viewport={"width": size[0], "height": size[1]})
+            page.goto(f"http://127.0.0.1:{server.server_address[1]}/")
+            page.locator("#landtoggle").wait_for()
+            first = page.evaluate(WORDS)
+            page.click("#landtoggle")
+            listed = page.evaluate(WORDS)
+            browser.close()
+    finally:
+        server.shutdown()
+    assert len(first["badges"]) == 5, first
+    for b in first["badges"]:
+        assert b["words"].startswith("Finished ") and b["words"].endswith(" · 11 h 45 min · session 2 of the day"), b
+        assert not b["cut"] and b["rects"] == 1 and b["row"], f"the corner's line whole, on one line beside its name: {b}"
+    assert first["toggle"] == "Finished sessions (5)" and len(first["tops"]) == 1 and len(first["heights"]) == 1, \
+        f"the footer's buttons on one row, none wrapped: {first}"
+    assert first["wide"][0] <= first["wide"][1], first
+    assert listed["title"] == "Finished sessions (5)" and len(listed["rows"]) == 5, listed
+    assert all("finished " in r and "Finished" not in r and "landed" not in r for r in listed["rows"]), listed["rows"]
+
+
 SIGN = """() => { const c = document.getElementById("copied");
     return {shown: !c.hidden && c.getBoundingClientRect().width > 0, words: c.textContent}; }"""
 
@@ -814,7 +876,9 @@ def test_a_landing_shows_on_its_corner_until_the_next_session_and_stays_in_the_h
     live = {}
     monkeypatch.setattr(bs.LIVE, "get", lambda: live)
     r = bs.board_view()["roles"]["ex-builder"]
-    assert r["shown"] == "landed" and r["landing"]["summary"].startswith("- built X"), "closed: Landed, not Not running"
+    assert r["shown"] == "landed" and r["landing"]["summary"].startswith("- built X"), "closed: Finished, not Not running"
+    # THE WORD (the reviewer, 2026-11-10: a session finishes, a change lands): the corner says Finished
+    assert r["shown_words"].startswith("Finished ") and "Landed" not in r["shown_words"], r["shown_words"]
     live["ex-builder"] = {"status": "idle", "last_prompt": None, "session_id": "s1"}
     assert bs.board_view()["roles"]["ex-builder"]["shown"] == "landed", "the landed session still open"
     live["ex-builder"] = {"status": "busy", "last_prompt": None, "session_id": "s1"}
@@ -856,8 +920,14 @@ def test_a_landing_shows_on_its_corner_until_the_next_session_and_stays_in_the_h
     last = bs.board_view()["landings"][-1]
     assert last["length"] == "3 h 30 min" and last["nth_words"] == "session 2 of the day", last
     page = open(os.path.join(PKG, "board_server.py"), encoding="utf-8").read()
-    assert 'id="landtoggle"' in page and "landed-sum" in page and '["landed", "Landed"]' in page
-    # the project's /land calls `board.py landed --role`: Girsa's configuration test
+    assert 'id="landtoggle"' in page and "landed-sum" in page and '["landed", "Finished"]' in page
+    assert "Finished sessions (${lands.length})" in page and "<span>finished ${esc(when(l.ts))}</span>" in page
+    assert "Landings (" not in page and '"Landed' not in page and "<span>landed " not in page
+    # THE COMMAND: `board.py finished` posts; `landed`, its old name, still does (the first project's command file
+    # calls it until its pin moves)
+    for cmd in ("finished", "landed"):
+        assert bd.main([cmd, "--role", "ex-verifier", "--summary", f"- by {cmd}", "--session", "v-" + cmd]) == 0
+    assert [l["summary"] for l in bs.board_view()["landings"] if l["role"] == "ex-verifier"] == ["- by finished", "- by landed"]
 
 
 def test_the_board_shows_a_role_idle_once_its_turn_ended_and_a_keepalive_refreshes_its_corner(tmp_path, monkeypatch):

@@ -12,8 +12,8 @@ and how one person stays in charge of every decision that is theirs.
   to the verifier role.
 - **The Board** (`board.py`, `board_server.py`): a local web page where the roles put their questions and decisions to
   the person in charge, and wait for the answer.
-- **Sessions and the night run** (`agents.sh`, `agents-morning.sh`): start the roles in tmux, keep them warm, and clear
-  the ones that have finished.
+- **Sessions and the night run** (`agents.sh`, `agents-morning.sh`, `finish_hook.py`): start the roles in tmux, keep
+  them warm, and clear the ones that have finished - by day each is started again in its pane, by night none is.
 - **Reports**: tokens per role, start-up reading sizes, each role's effort setting, and a check of every draft the
   moment it is written.
 
@@ -44,7 +44,8 @@ edited: a change is a new commit and a new pin. The shim's helper is the project
 with the module that reads each: the project's name, its roles (name, short name, tmux colour, the Board page's two
 colours, whether it has a corner and a tmux pane), the page's order, the operator, the Board's folder and port, the
 tmux session and settings file, Claude Code's transcripts folder, the agent files, the project's Python, the launchd
-prefix, the state folder and the night run's knobs; and the reports' tables - the start-up documents' limits and where
+prefix, the state folder and the night run's knobs (with the project's two commands that end a session, below);
+and the reports' tables - the start-up documents' limits and where
 a whole block of each goes (`sizes`), the briefs and the logs never named at start (`start_reads`), the recommended
 effort per role (`effort`), and which files are drafts, their check and its two sentences (`drafts`); and the guard's
 and the landing's - the list of the project's homes (its corpus roots) with a fallback, the other trees whose main
@@ -63,8 +64,20 @@ a project named - through the project's own, whose shim sets `MISHMERET_CONFIG` 
 
 ## What the project's sessions must say
 
-The night run clears a role whose last message ends with the line `The session is ready to clear.` - the project's
-own `/land` command prints it.
+A session finishes; a change lands. The project has two commands of its own that end a session, named in its config
+and never in a script, each ending its report with a sentence on a line of its own once every step is done - and with
+what is left instead, when one is not:
+
+- `night.finish_command` (in Girsa, `/finish`) ends with `The session is ready to clear.` The session is then cleared,
+  exited and started again in its pane. The morning run (`bash agents-morning.sh`) types it.
+- `night.finish_exit_command` (`/finish-and-exit`) ends with `The session is ready to clear and exit.` The session is
+  cleared and exited, and nothing is started. The night run types it.
+
+By day the project's Stop hook does the rest: its `.claude/settings.json` names `finish_hook.py` on `Stop`, which
+starts `agents.sh --next` for a role's pane that said either sentence. That script types nothing over words standing
+in the pane's prompt, and does not start a role twice in ten minutes; what it did is in `<state_dir>/next.log`.
+While a night run is going it stands down and the run closes the session itself: at night nothing is started again,
+and `bash agents.sh` starts each closed role in its pane when you are back.
 
 ## Tests
 
