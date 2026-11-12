@@ -190,6 +190,12 @@ its own miss in its sweep.
   Red checks on the round: green with nothing out, red with each of 48 parts out. The new parts are each cd from
   the one before, a keyword cd keeping the place it leaves, the quoted path, the options, and pushd. Two runs gave
   the same result. The suite: 140 passed.
+- Sent, live, at db17aac: the SECOND ROUND to girsa-verifier. Not swept: a cd through a variable beyond `X=...; cd
+  "$X"` (export, the environment), and `cd` with no argument (home).
+- VERIFIED at db17aac (girsa-verifier: nothing above LOW). The suite 140 passed; its probe's 18 forms refused; on
+  the real trees its 26 forms - the chain forms and the six refused, each let through at 21cb9ba and 828abdc, the
+  worktree's own forms still running; three reds re-run against the whole test_guard.py, each red. Its own sweep:
+  `cd <worktree> && git -C ../<main> ...` refused; two LOWs, named under "Not in this piece".
 
 ## Files
 
@@ -203,5 +209,9 @@ its own miss in its sweep.
 - git written any other way (`g\it`, `gi''t`, `"$(which git)"`), behind a variable, an alias or another
   interpreter: as the docstring says, "a guard on the ordinary forms, not a sandbox".
 - `coproc`, `time -p` and `exec -a name` before git: not measured.
+- girsa-verifier's two LOWs on db17aac, unusual forms let through at every commit: two `-C`s (`git -C ~/work -C
+  <the project> reset --hard` - git takes each relative `-C` from the one before, `_git_trees` reads the first), and
+  `cd -` (`cd <main> && cd /tmp && cd - && git reset --hard`). The same for a bare `cd` (home) and a cd through a
+  variable beyond `X=...; cd "$X"`. Not changed here: each would be a code change and a round of its own.
 - `export GIT_DIR=...` earlier in the command, or `GIT_DIR` set in the session's environment: not read. Only an
   assignment standing before git on the same command is.
