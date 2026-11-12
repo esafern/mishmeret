@@ -3,6 +3,26 @@
 Findings, decisions and open work, each the moment it is known; a time from `date`. One item per run of work, newest
 first (`M01.`, `M02.` ...); what git records (what each commit did) is not repeated here.
 
+M09. **[2026-11-12, the seven fixes of my audit (notes/PLAN-AUDIT-FIXES.md)]**
+    * **[23:25]** Started at main 8818221 (= origin/main): the lessons file merged and pushed. The state file
+      rewritten (96454a1, branch `builder-state-after-lessons`). girsa-verifier's check at f87e3ce is not recorded in
+      this repository.
+    * The reviewer, in my pane: a whole-repository audit (ponytail-audit), a report changing no code - 7 findings;
+      the suite 143 passed. Probes on a scratch Board in my scratchpad. MY SLIP: a probe set `CLAUDE_CODE_AGENT`;
+      the guard refused it, and it was run again without.
+    * **[23:54]** The reviewer: "fix 1 through 7". Branch `builder-audit-fixes`, from 96454a1 (main 8818221 and my
+      unmerged state commit). Read in the first project (read only): its `check_lane.py` is argparse, so the message
+      goes to the lane check as a variable, not an argument; every role there posts to the Board as itself; its
+      builder's brief already asks for `--tests`. The measures run on prototypes in the scratchpad (the plan's case).
+      MY SLIP: the first prototype run piped the lane check into `tail`; the guard refused it, and it was run again
+      with each status read on its own.
+    * **[23:56]** RECEIVED, live, from girsa-demo-operator: a REQUEST on the reviewer's words, "mishmeret should keep
+      track of tokens, secrets and other things that expire - and set calendar alerts so the user can take timely
+      action" - the items from the project's config; four cases from its lane (the hosting MCP token, 14 days, its
+      date the JWT's `exp`, now 2026-11-17 13:49 UTC; the Claude login of the Board's stats fetch, 2026-12-07; two TLS
+      certificates, 2027-01-15; the domain, not known). Open for the reviewer: which calendar, how far ahead. Then a
+      second, on the reviewer's word: it holds the hosting key; the alert follows the new `exp` after each renewal.
+      Not answered: no reply asked. The next piece, after this one.
 M08. **[2026-11-12, the next work after the review]**
     * **[09:19]** Started at main 158993f: girsa-operator moved Mishmeret's own pin to dd3bcdb (M07's item 3, settled).
       No piece in work. Sent, live: a QUESTION to girsa-operator - the next work, with M07's open items (1, 2, 4, 5,
