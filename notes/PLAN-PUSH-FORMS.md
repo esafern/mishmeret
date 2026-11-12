@@ -112,6 +112,11 @@ original span and `shlex`. Two runs gave the same result.
   every delete, on two conditions, girsa-operator's asks and the abbreviated options, both already in f664982.
   girsa-verifier, its one verdict with that folded in: READY TO BUILD at f664982.
 - The suite on the build: 139 passed.
+- Sent, live, at 21cb9ba: the build's HANDOFF to girsa-verifier for its check, and a NOTE to girsa-operator.
+- VERIFIED at 21cb9ba (girsa-verifier, nothing found; sent to girsa-operator for the merge as the first project's
+  message #986). On a git-archive export: the suite 139 passed; its probe's 19 forms all refused, the comment case
+  too. Four of my reds re-run against the whole test_guard.py, each red. Not verified by it: whether `!` passes
+  the hook.
 
 ## Files
 
