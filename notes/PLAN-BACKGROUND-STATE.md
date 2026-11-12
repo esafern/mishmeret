@@ -1,6 +1,7 @@
 # The Board shows a role working on its own background task, and keeps a wait a notification follows: the plan (mishmeret-builder, 2026-11-12)
 
-Written 17:20 (`date`). This is the last item in the reviewer's order ("A" on the first project's Board #201, 09:38).
+Written by 17:15 (`date` read 17:11 before it and 17:15 after; my first line here said "17:20", a time I did not read
+from the clock). This is the last item in the reviewer's order ("A" on the first project's Board #201, 09:38).
 It is on branch `builder-background-state` from main 7d1167c. Its messages are recorded here, and in the log once
 `builder-lessons` is merged. Sent, live, at 8011157: the look's QUESTION to girsa-ui-steward, and the plan's HANDOFF
 to girsa-verifier.
@@ -37,7 +38,16 @@ limit's reset) and "plugin" were all seen. A task notification is `{"kind": "tas
   person's prompt.
 
 QUESTION to girsa-ui-steward (a look on the page): the new state's words, its colour in both themes, and its place in
-the legend. Drafts: "Working on its own"; the working green, lighter; after "Working".
+the legend. Drafts: "Working on its own"; the working green, lighter; after "Working". ANSWERED, to build so:
+- the words "Working in the background" ("Working on its own" reads as plain Working beside it);
+- no new colour: `--st-background` is the working green in both themes (#4f8048 light, #8fb487 dark), and the
+  difference is the dot's shape, a hollow ring (a lighter green is not told apart in a 7 px dot, and a shape reads
+  without colour): `.corner.background .badge::before, .key span.bg::before { background: transparent; box-shadow:
+  inset 0 0 0 1.5px var(--sc, var(--c)); }`, the legend's entry given class `bg`. The badge's words keep the green
+  text, as Working's do;
+- in `STATES` right after "Working". Naming the task: agreed not needed.
+- Before the landing, girsa-ui-steward reads the Board at 1864 and 1229 px, both themes, with a corner in the new
+  state beside one Working and one Idle.
 
 ## Tests (`tests/test_board.py`)
 
