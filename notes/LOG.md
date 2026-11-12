@@ -14,6 +14,11 @@ M08. **[2026-11-12, the next work after the review]**
       after-file; no hit from the lane check's patterns; one British spelling, "labelled". The plan:
       notes/PLAN-LESSONS.md. To send at this commit, live: the plan's path, with one QUESTION ("labeled"), to
       girsa-operator; the plan's HANDOFF to girsa-verifier.
+    * **[09:22]** girsa-operator's ANSWER, live: "labeled", made in the draft itself, which was remade (read here:
+      18,917 bytes, sha256 fa3308a4f17964e4..., "labelled" 0 times). `sizes.files` should list `LESSONS.md`. That is a
+      `.claude/` edit, so it is the operator's, not mine: I proposed a limit of 25,000. The code's four lesson
+      numbers are not in this piece; it put them on the first project's Board #201. The landing condition stands.
+      Sent, live: a NOTE to girsa-operator with the limit. The plan revised.
 
 M07. **[2026-11-10, a review of all of Mishmeret's code and the first project's side of it (the reviewer's request)]**
     * **[20:49]** Read at main 120c3b5: every file of `mishmeret/` but the Board page's script, Mishmeret's own

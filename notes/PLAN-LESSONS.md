@@ -22,12 +22,12 @@ and moves the first project's pin (#155 B).
 
 ## The behaviour
 
-- `LESSONS.md` at the repository's top: the draft byte for byte, apart from the one change below if girsa-operator
-  agrees. The opening paragraph stays the draft's. It already says what the file is, that a lesson's name is its id,
-  and that a project keeps its own lessons in its own file and points here for these.
-- QUESTION to girsa-operator: one word, "labelled" in THE SAMPLE THAT SELECTED ITSELF, changed to "labeled". The
-  reviewer asked for American spelling (2026-11-12), and this is the draft's only British spelling the measure found.
-  The lesson is one of the 44 the reviewer saw. Without girsa-operator's yes, the draft goes in unchanged.
+- `LESSONS.md` at the repository's top: the draft byte for byte, in its 09:22 version (18,917 bytes, sha256
+  fa3308a4f17964e4...). The opening paragraph stays the draft's. It already says what the file is, that a lesson's
+  name is its id, and that a project keeps its own lessons in its own file and points here for these.
+- ANSWERED by girsa-operator (09:22): "labelled" (in THE SAMPLE THAT SELECTED ITSELF) is now "labeled", changed in
+  the draft itself and its three drafts remade from its `split.py`. The reviewer asked for American spelling
+  (2026-11-12). Read here: "labelled" 0 times, "labeled" at line 105, one byte fewer.
 - `README.md`: one bullet, so that the public page names the file: "`LESSONS.md`: the rules every session of a
   project run with Mishmeret works by, cited by name; a project's roles read it at the commit the project pins,
   beside the project's own lessons."
@@ -42,21 +42,24 @@ and moves the first project's pin (#155 B).
   lessons", and none is missing.
 - Spelling: one British form, "labelled" (the script's candidates, read by eye: called, calling, labelled,
   otherwise, raised, your).
-- Size: 18,918 bytes, as the request says.
+- Size: 18,918 bytes, as the request says. In the 09:22 version, 18,917.
 
 ## Files
 
 - `LESSONS.md` (new), `README.md`, `notes/BRIEF-mishmeret-builder.md`. This is one notes commit (`land.py commit
   mishmeret-builder notes`, `--doc-only`: every file is a `.md`), on branch `builder-lessons` from main.
-- Not changed: anything in `.claude/`, which is the operator's. The config's `sizes.files` does not list
-  `LESSONS.md`, so the start-reading report does not cover its size. That is girsa-operator's call.
+- Not changed: anything in `.claude/`, which is the operator's (the lane check refuses it from this role).
+  girsa-operator agrees (09:22) that `sizes.files` should list `LESSONS.md`. The limit proposed: 25,000 bytes, about
+  a third above its 18,917, with its overflow going to "a new lesson file, by the reviewer's word". The config edit
+  is the operator's own commit.
 
 ## Not in this piece
 
 - Mishmeret's code still cites the first project's numbers for four moved lessons: `land.py:7` (60),
   `config.py:13` and `config.py:25` (21, 47), and `board.py:189`, `board.py:224`, `board_server.py:374` and
   `role_usage.py:130` (59). Those numbers mean nothing to a reader of this public repository. Citing them by name
-  would be a code piece of its own, on the reviewer's word.
+  would be a code piece of its own, on the reviewer's word. girsa-operator put it to the reviewer, as a line of
+  the first project's Board #201.
 - The first project's side (its `LESSONS.md`, its start reads, the pin) is girsa-operator's, after this lands.
 - Not checked: whether the draft is what `split.py` remakes from the first project's `LESSONS.md`. That script is
   girsa-operator's and I did not run it.
