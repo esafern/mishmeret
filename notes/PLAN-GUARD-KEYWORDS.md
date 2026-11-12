@@ -4,7 +4,8 @@ Written 12:13 (`date`). This is M07's item 1, the second in the reviewer's order
 Board #201, 09:38), taken after girsa-verifier verified item 4 at 21cb9ba. It is on branch `builder-guard-keywords`
 from 21cb9ba, not main: it changes the same two files, and 21cb9ba waits for girsa-operator's merge. It is rebased
 on main once that lands. The log and the state file record it once `builder-lessons` is merged; until then the
-messages are recorded here.
+messages are recorded here. Sent, live, at 46b378b: the plan's HANDOFF to girsa-verifier, the QUESTION to
+girsa-architect, and a NOTE to girsa-operator of the path and the merge order (builder-push-forms first).
 
 ## The case
 
@@ -38,12 +39,22 @@ THE SIBLING (the lesson SWEEP THE SIBLINGS): the tmux check has the same gap. `t
 - `mask` gives back, at the same length, a command name written `\name`, `"name"` or `'name'`, for git, tmux,
   pkill, killall and cp. It does this only where the mask left that text as it was: a name inside another quote, a
   comment or a heredoc's body stays masked. `\git` becomes ` git`, and `"git"` becomes ` git `.
-- `_git_where`: `--work-tree` names where git runs. Without it, `--git-dir` does: its parent if it ends in `.git`,
-  else the path itself. Either is relative to `-C`'s directory or the last `cd`, as today.
+- `_git_where` becomes `_git_trees`: it returns git's work tree and its repository's tree, or one of them when
+  they are the same. The work tree is `--work-tree` or `GIT_WORK_TREE=` before git. The repository's tree is
+  `--git-dir` or `GIT_DIR=` before git, its parent if it ends in `.git`. Either one, when not named, is the
+  directory git runs in (`-C`, else the last `cd`, else the cwd, as today). Each of the five callers asks whether
+  ANY of the trees is the main tree (or a pin, a foreign tree, a project tree).
 
-QUESTION to girsa-architect: is `--git-dir`/`--work-tree` as "where" inside item 1? Item 1 names `--git-dir` only
-as a form the guard does not see, but seeing it while judging it at the wrong tree leaves the main-tree rule open
-from a worktree. My recommendation: in, since it is five lines in `_git_where`, measured above.
+QUESTION to girsa-architect: is `--git-dir`/`--work-tree` as "where" inside item 1? ANSWERED (12:20; its
+MISHMERET-GUARD-KEYWORDS-ARCHITECT.md, the first project's main 5814c995):
+- In, but judged by BOTH trees: git uses the repository for HEAD, the index and the branch, and the work tree for
+  the files. So `git --git-dir=<main>/.git --work-tree=. commit`, from a worktree, commits onto the main clone's
+  branch. The plan's first rule judged that at `.` and let it through. Now a command is the main tree's if either
+  tree is.
+- `GIT_DIR=` / `GIT_WORK_TREE=` before git are the same two settings by another name, so they are read the same way.
+- The keywords in `BOUNDARY`: yes. It has SEVEN users, not six (`GIT`, `CD`, `SCRIPT`, `CP`, `TMUX_KILL`, `PKILL`,
+  `TMUX_SCRIPT`); the tests hold one keyword form of each. Its note, kept: `CD` reading `then cd <main>` moves
+  "where" for what follows, even on a branch the shell does not take. That refuses more, never less.
 
 ## The measure (the prototype: the behaviour above in a scratch copy of the build at 21cb9ba, one probe)
 
@@ -54,7 +65,14 @@ from a worktree. My recommendation: in, since it is five lines in `_git_where`, 
   `echo "a" git push`.
 - tmux: the 7 forms and `then pkill tmux`, `'pkill' tmux`, all refused. NONE REFUSED of `tmux ls`, `then tmux ls`,
   `echo "tmux" kill-server`, `echo \tmux kill-server`, `grep -n 'tmux kill-server' f`.
-- The whole suite in the copy: 136 passed. The 3 that failed are the copy's own, not the change's: the copy has no
+- REVISED PROTOTYPE (12:20, both trees): 10 where forms, all let through today but the two by `-C`, ALL REFUSED.
+  Among them are girsa-architect's `--git-dir=<main>/.git --work-tree=. commit`, `GIT_DIR=<main>/.git git commit`
+  and `GIT_DIR=... GIT_WORK_TREE=... git reset --hard`. NONE REFUSED from a worktree of `--git-dir=.git log`,
+  `commit -m x`, `reset --hard`, `GIT_DIR=.git git reset --hard` and `--work-tree=. reset --hard`. Each BOUNDARY
+  user with a keyword before it, all let through today and all refused: `then cd <main>; ...; git commit`
+  (`CD`), `then bash x.sh` (`SCRIPT`, a commit in it), `then cp -r <worktree>` (`CP`), `then bash k.sh` (`TMUX_SCRIPT`,
+  a kill in it), and the tmux kill and `pkill` forms above. `tests/test_guard.py` in the copy: 30 passed.
+- The whole suite in the first copy: 136 passed. The 3 that failed are the copy's own, not the change's: the copy has no
   `.claude/` (the lane check and Mishmeret's own config).
 
 ## Tests
@@ -78,3 +96,5 @@ from a worktree. My recommendation: in, since it is five lines in `_git_where`, 
 - git written any other way (`g\it`, `gi''t`, `"$(which git)"`), behind a variable, an alias or another
   interpreter: as the docstring says, "a guard on the ordinary forms, not a sandbox".
 - `coproc`, `time -p` and `exec -a name` before git: not measured.
+- `export GIT_DIR=...` earlier in the command, or `GIT_DIR` set in the session's environment: not read. Only an
+  assignment standing before git on the same command is.
