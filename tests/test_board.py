@@ -859,6 +859,36 @@ def test_the_status_line_gives_the_boards_state_on_a_second_row(tmp_path, monkey
     # the project's settings.json refreshes the line every 60 s: Girsa's configuration test
 
 
+def test_the_first_answers_asked_at_once_parse_each_landed_session_once(tmp_path, monkeypatch):
+    """M07 item 5 (notes/PLAN-BOARD-FIRST-ANSWER.md): a fresh server's first answers, asked at once, had each parsed
+    every landed session's transcript - 84 s for each of 12 on the first project's record. One request fills a
+    session's facts; the others wait and read them. Placeholder sessions in a temporary board; the facts a stub."""
+    import importlib.util
+    import threading
+    import time
+    monkeypatch.setenv("MISHMERET_BOARD_DIR", str(tmp_path / "board"))
+    monkeypatch.syspath_prepend(PKG)
+    spec = importlib.util.spec_from_file_location("board_server", os.path.join(PKG, "board_server.py"))
+    bs = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(bs)
+    for sid in ("s1", "s2", "s3"):
+        bs.board.landed("ex-builder", f"- built {sid}", sid)
+    monkeypatch.setattr(bs.LIVE, "get", lambda: {})
+    asked = []
+
+    def facts(sid):
+        asked.append(sid)
+        time.sleep(0.2)                     # a transcript's parse
+        return {"marker": sid}
+    monkeypatch.setattr(bs.role_usage, "session_facts", facts)
+    answers = []
+    threads = [threading.Thread(target=lambda: answers.append(bs.board_view())) for _ in range(8)]
+    [t.start() for t in threads]
+    [t.join() for t in threads]
+    assert sorted(asked) == ["s1", "s2", "s3"], asked
+    assert len(answers) == 8 and all(sorted(l["marker"] for l in a["landings"]) == ["s1", "s2", "s3"] for a in answers)
+
+
 def test_a_landing_shows_on_its_corner_until_the_next_session_and_stays_in_the_history(tmp_path, monkeypatch):
     """The reviewer, 2026-10-25: a session's landing summary goes on the Board - its corner says Landed, not Not running,
     and shows the summary until the role's next session starts; every landing is kept, newest first under Landings; and

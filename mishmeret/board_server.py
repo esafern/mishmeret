@@ -667,14 +667,18 @@ def stalled(st, lv, shown, also_words):
 
 
 FACTS = {}   # session id: its start and its number that day - fixed once the session has landed
+# ONE REQUEST FILLS IT, THE OTHERS WAIT AND READ IT (M07 item 5): a fresh server's first answers had each parsed every
+# landed session's transcript - 5.6 s alone, 84 s for each of 12 asked at once on the first project's record
+FACTS_LOCK = threading.Lock()
 
 
 def with_facts(landing):
     """A landing with how long its session ran and which of its role's sessions that day it was (the reviewer,
     2026-10-25: "include session length alongside completion time - and number of sessions today")."""
     sid = landing.get("session")
-    if sid and sid not in FACTS:
-        FACTS[sid] = role_usage.session_facts(sid)
+    with FACTS_LOCK:
+        if sid and sid not in FACTS:
+            FACTS[sid] = role_usage.session_facts(sid)
     f = FACTS.get(sid) or {}
     out = dict(landing, **f)
     if f.get("started"):
