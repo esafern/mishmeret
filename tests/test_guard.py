@@ -75,6 +75,27 @@ def test_the_role_guard_keeps_push_and_main_tree_commits_to_the_operator():
     for bad in ("git push --all origin", "git push --force origin b", "git push -f origin b", "git push retired b",
                 "git push --mirror origin"):
         assert "never pushes" in no("ex-operator", bad), bad
+    # M07 item 4 (PLAN-PUSH-FORMS.md): never a force or a delete in any form - a `+` or `:` refspec, a short cluster
+    # holding f or d, a long option by its unique prefix (git takes one as the option), a quoted word (the shell takes
+    # the quotes off), and a comment after the push read as words (refused: the safe side)
+    for bad in ("origin +main", "origin +HEAD:main", "-uf origin main", "-fu origin b", "-df origin b", "origin :main",
+                "--delete origin main", "-d origin main", "-ud origin b", "--prune origin", "--force-with-lease origin b",
+                "--force-if-includes origin b", "--branches origin", 'origin "+main"', "origin ':main'", '"-f" origin b',
+                '"--force" origin b', 'origin +"main"', "origin '+'main", '"retired" b', "--mirr origin", "--mi origin",
+                "--al origin", "--bra origin", "--b origin", "--de origin b", "--del origin b", "--delet origin b",
+                "--pru origin", "--prun origin", "--forc origin b", "--fo origin b", "--force-with-lease=main origin main",
+                "origin b # --force later"):
+        why = no("ex-operator", "git push " + bad)
+        assert why and "never pushes" in why, bad
+    assert "`! git push origin --delete <branch>` in the operator's pane" in no("ex-operator", "git push -d origin b")
+    for fine in ("origin some-branch", "-u origin some-branch", "origin HEAD:refs/heads/b", "-o ci.skip origin b",
+                 "-ofix origin b", "-uofix origin b", "--follow-tags origin b", "--fol origin b", "-v -n origin b",
+                 "origin b:b", "--set-upstream origin b", "origin 158993f5e2:refs/heads/main",
+                 "origin 158993f:refs/heads/some-branch", "--dry-run origin b", "--porcelain origin b",
+                 "--progress origin b", "--push-option=x origin b", "--atomic origin b", "--tags origin",
+                 "--no-verify origin b", "--recurse-submodules=check origin b", "--repo=origin b", "-- origin b",
+                 "--quiet origin b", "--verbose origin b", "origin refs/tags/v1", 'origin "unclosed b'):
+        assert no("ex-operator", "git push " + fine) is None, fine
     # committing: anywhere for the operator; in a worktree for the others; never in the main tree for them
     assert no("ex-operator", "git commit -m x") is None
     assert "main tree" in no("ex-ui-steward", "git commit -m x")

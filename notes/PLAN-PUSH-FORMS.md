@@ -89,9 +89,29 @@ does see them, the sentence above points to a command that is refused too.
 - `test_the_role_guard_keeps_push_and_main_tree_commits_to_the_operator`: its `bad` loop takes the probe's 34
   forms. A new loop runs the probe's 25 ordinary pushes, each let through. One refusal is checked for
   girsa-operator's sentence.
-- Each part of the rule is shown red with that part taken out: the `+`, the `:`, each long name in `PUSH_LONG`,
+- Each part of the rule is shown red with that part taken out (done: see BUILT): the `+`, the `:`, each long name in `PUSH_LONG`,
   the prefix reading (exact names only), the `=` cut, the cluster's `f`, the cluster's `d`, the `o` cut (red on
   `-ofix`, refused), the original span (the masked words back), and `shlex` (a plain split: red on `+"main"`).
+
+BUILT, 11:21. Run in a scratch copy of the build, one rule part taken out at a time: GREEN with nothing taken out,
+and RED with each of the 16 parts taken out, each failing on the form that part is there for. The 16: the `+`,
+the `:`, each of PUSH_LONG's seven, the prefix reading, the `=` cut, the cluster's `f`, its `d`, the `o` cut, the
+original span and `shlex`. Two runs gave the same result.
+
+- FOUND in the red run: `--force` as its own PUSH_LONG entry stayed green with it taken out. It is a prefix of
+  `--force-with-lease`, so the prefix reading refuses it anyway: an inert entry (the lesson THE MUTATION THAT DID
+  NOT FAIL), deleted, with a comment where it was. The plan's `startswith("--force")` was inert the same way once
+  the `=` cut is in, and was deleted before the run.
+- MY SLIP, in the red script: its first runs reported rows that ran the wrong code. Each mutation rewrote
+  `role_guard.py` within the same second, often at the same size (`"--force", ` and `"--prune", ` are both 11
+  characters), so Python reused the last mutation's `.pyc`. Three rows ran another row's code: "the :",
+  "--delete", and "--force" (red for another row's reason in two runs, green in one). Seen when that row changed
+  between runs. The script now clears `__pycache__` and
+  runs with `-B`, and has a baseline row that must be green. Only the runs after that fix are counted above.
+- girsa-architect's ANSWER (its MISHMERET-PUSH-FORMS-ARCHITECT.md, the first project's main 83f04750): refuse
+  every delete, on two conditions, girsa-operator's asks and the abbreviated options, both already in f664982.
+  girsa-verifier, its one verdict with that folded in: READY TO BUILD at f664982.
+- The suite on the build: 139 passed.
 
 ## Files
 

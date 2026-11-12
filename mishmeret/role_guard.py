@@ -7,7 +7,7 @@ The reviewer, 2026-10-01: "i want each role to have tools explicitly set so we c
 so this stops what the roles plan gives to the operator alone (`.claude/agents/LANES.md`; START_HERE "Working in
 parallel"):
   * `git push` - pushing is the operator's, on the reviewer's word; and the operator never pushes `--all`,
-    `--mirror` or `--force`, nor to `old-origin` (the retired repository);
+    `--mirror`, a force or a delete, in any form (PUSH_LONG below), nor to `old-origin` (the retired repository);
   * CHANGING THE MAIN TREE through git - it is the operator's alone; every other role works in its own worktree and
     lands with `git merge --ff-only`, the one change it may make there (girsa-verifier's probe, 2026-10-01: commit,
     update-ref, merge --no-ff, cherry-pick, revert and reset --hard had all passed the first version).
@@ -36,6 +36,7 @@ Exit 2 refuses the command and says why; exit 0 lets it run. Needs only Python's
 import json
 import os
 import re
+import shlex
 import subprocess
 import sys
 
@@ -101,6 +102,21 @@ OPERATOR_THROUGH_LAND = {"revert", "cherry-pick", "am", "rebase", "commit-tree",
 CHANGES_MAIN = {"commit", "update-ref", "cherry-pick", "revert", "rebase", "am", "reset", "stash", "checkout",
                 "switch", "restore", "clean", "rm", "mv", "add", "apply", "pull", "merge"}
 LEAVES_IT = {"merge": ("--ff-only",), "stash": ("list", "show"), "apply": ("--check", "--stat", "--numstat")}
+# THE OPERATOR'S PUSH NEVER FORCES OR DELETES, in any form (the builder's review, M07 item 4: `+main`, `-uf`, `:main`
+# and `--delete` had gone through; girsa-verifier on its plan: a quoted `"-f"` and a prefix `--del` too). Git takes a
+# unique prefix of a long option as the option (gitcli(7)), so a prefix of one of these is refused, and `--a`,
+# `--d`, `--p` with it - git takes those as ambiguous or as a force. `--force` itself is a prefix of the two below.
+PUSH_LONG = ("--all", "--branches", "--mirror", "--delete", "--prune", "--force-with-lease", "--force-if-includes")
+
+
+def push_forces(word):
+    """True when `word`, as the shell gives it to git push, forces or deletes: a `+` or `:` refspec, a long option of
+    PUSH_LONG or a prefix of one, or a short cluster holding f or d (copy_refusal's reading; after an `o`, the rest is
+    `-o`'s argument)."""
+    opt = word.split("=", 1)[0]
+    return (word.startswith(("+", ":"))
+            or (len(opt) > 2 and opt[:2] == "--" and any(o.startswith(opt) for o in PUSH_LONG))
+            or (word[:1] == "-" and word[1:2] != "-" and bool({"f", "d"} & set(word[1:].split("o", 1)[0]))))
 
 
 def mask(text):
@@ -370,11 +386,18 @@ def refusal(role, command, cwd, main_tree=is_main_tree, read=_read, depth=0, pro
                 return (f"refused by the role guard: pushing is the operator's ({OPERATOR}), on the reviewer's "
                         "word - send it a LANDED or a REQUEST instead" + no_role)
             retired = GUARD["retired_remotes"]
-            bad = [w for w in rest if w in ("--all", "--mirror", "-f", *retired) or w.startswith("--force")]
+            span = command[m.start(3):m.end(3)]     # the words as given: masked, a quoted word is spaces
+            try:
+                words = shlex.split(span)
+            except ValueError:                      # a quote the span leaves open
+                words = span.split()
+            bad = [w for w in words if w in retired or push_forces(w)]
             if bad:
-                return ("refused by the role guard: the operator never pushes --all, --mirror or --force"
+                return ("refused by the role guard: the operator never pushes --all, --mirror, a force or a delete"
                         + (f", nor to {' or '.join(retired)}" if retired else "")
-                        + f" (found {' '.join(bad)}) - push the branch to origin by name")
+                        + f" (found {' '.join(bad)}) - push the branch to origin by name; a delete on a remote runs "
+                        "only as the reviewer's own command: `! git push origin --delete <branch>` in the operator's "
+                        "pane")
         elif (verb == "stash" and not (rest[:1] and rest[0] in LEAVES_IT["stash"])
               and project_tree(_git_where(command, masked, m, cwd))):
             return ("refused by the role guard: `git stash` in this repository - its stash list is shared by the main "
