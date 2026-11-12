@@ -151,16 +151,21 @@ def test_the_reviewer_can_change_an_answer_on_the_board(tmp_path, monkeypatch):
     threading.Thread(target=srv.serve_forever, daemon=True).start()
     port = srv.server_address[1]
 
+    said = []
+
     def post(body):
         req = urllib.request.Request(f"http://127.0.0.1:{port}/api/answer", data=json.dumps(body).encode(),
                                      headers={"Content-Type": "application/json", "Origin": f"http://127.0.0.1:{port}"})
         try:
             return urllib.request.urlopen(req, timeout=5).status
         except urllib.error.HTTPError as e:
+            said.append(e.read().decode("utf-8"))
             return e.code
     try:
         assert post({"id": one["id"], "answer": "a"}) == 200
         assert post({"id": one["id"], "answer": "b"}) == 409, "an answered item is not answered again unasked"
+        # the page's own way, never the command's flag (girsa-verifier's LOW 1 on the build; girsa-operator's "B")
+        assert said[-1] == "#1 is answered (a): Change answer gives it a new one", said
         assert bd.items()[one["id"]]["answer"]["answer"] == "a"
         assert post({"id": one["id"], "answer": "b", "note": "on second thought", "change": True}) == 200
         got = bd.items()[one["id"]]

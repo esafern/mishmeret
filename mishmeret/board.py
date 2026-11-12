@@ -393,6 +393,11 @@ class NotOpen(ValueError):
     """An item that takes no answer now: missing, withdrawn, or answered with no change asked."""
 
 
+class Answered(NotOpen):
+    """An answered item, with no change asked: each caller says its own way to change it - the page its button, the
+    command its flag (girsa-verifier's LOW 1 on the build: the page had shown the command's flag)."""
+
+
 def answer(item_id, text, note="", change=False, via=None):
     """THE ONE RULE FOR AN ANSWER, the page's and a relay's (notes/PLAN-AUDIT-FIXES.md, item 1: the command's relay went
     over an answered item with no word, and the record told a relay only by its note): an open item takes one, an
@@ -408,7 +413,7 @@ def answer(item_id, text, note="", change=False, via=None):
         if it["withdrawn"]:
             raise NotOpen(f"#{item_id} is withdrawn")
         if it["answer"] and not change:
-            raise NotOpen(f"#{item_id} is answered ({it['answer']['answer']}): a new answer is a change (--change)")
+            raise Answered(f"#{item_id} is answered ({it['answer']['answer']})")
         return dict({"type": "answer", "id": item_id, "ts": _now(), "answer": str(text).strip(),
                      "note": (note or "").strip()}, **({"via": via} if via else {}))
     return _append(make)
@@ -947,7 +952,10 @@ def main(argv=None):
             if lim:
                 print(lim)
         elif args.cmd == "answer":
-            answer(args.id, args.answer, args.note, change=args.change, via="command")
+            try:
+                answer(args.id, args.answer, args.note, change=args.change, via="command")
+            except Answered as e:
+                raise ValueError(f"{e}: a new answer is a change (--change)") from None
             print(describe(items()[args.id]))
         elif args.cmd in ("qa", "qa-more"):
             if (args.answer is None) == (args.answer_file is None):

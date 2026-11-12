@@ -837,6 +837,8 @@ class Handler(BaseHTTPRequestHandler):
             # rule is board.answer's, the relay's too
             board.answer(int(data.get("id")), data.get("answer", ""), data.get("note", ""),
                          change=data.get("change") is True)
+        except board.Answered as e:         # the page's own way to change it, never the command's flag
+            return self._send(409, f"{e}: Change answer gives it a new one", "text/plain; charset=utf-8")
         except board.NotOpen as e:
             return self._send(409, str(e), "text/plain; charset=utf-8")
         except (ValueError, TypeError) as e:
