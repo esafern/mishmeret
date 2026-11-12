@@ -580,18 +580,29 @@ class Live:
             if row.get("name") in board.ROLES:
                 status = row.get("status")
                 if status == "busy" and role_usage.turn_ended(row.get("sessionId")):
-                    status = "idle"     # busy only for a background task of its own: its turn has ended
+                    status = "background"   # busy only for a background task of its own: its turn has ended
                 out[row["name"]] = {"status": status, "last_prompt": last_prompt(row.get("sessionId")),
                                     "session_id": row.get("sessionId")}
         return out
 
 
+def is_prompt(e):
+    """True when a transcript's user record is work put to the session: a person's prompt or another role's message.
+    Not a task's notification, a usage limit's continuation or a plugin's note (girsa-operator, 2026-11-10: a reported
+    wait was dropped by a notification). `origin.kind` decides first - every peer message is also isMeta; with no kind,
+    an isMeta record or a compaction summary is Claude Code's own (girsa-verifier's MEDIUM 1, PLAN-BACKGROUND-STATE)."""
+    kind = (e.get("origin") or {}).get("kind")
+    if kind:
+        return kind in ("human", "peer")
+    return not (e.get("isMeta") or e.get("isCompactSummary"))
+
+
 def last_prompt(session_id, tail=512 * 1024):
-    """The time of the last message put to a session (a prompt or a notification - not a tool's result), or None."""
+    """The time of the last work put to a session (`is_prompt` - not a tool's result), or None."""
     path = role_usage.transcript(session_id)
     if path:
         for e in role_usage.tail_records(path, tail):
-            if e.get("type") != "user":
+            if e.get("type") != "user" or not is_prompt(e):
                 continue
             c = (e.get("message") or {}).get("content")
             if isinstance(c, str) or (isinstance(c, list) and not any(b.get("type") == "tool_result" for b in c

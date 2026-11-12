@@ -203,6 +203,8 @@ def shown_state(st, live, open_ids, last_prompt=None):
             return "waiting-agent", "Waiting for " + st["waiting_for"]
         if st.get("state") == "waiting-reviewer":
             return "waiting-reviewer", "Waiting for the Reviewer"
+    if live == "background":        # its turn ended, its own task still running: not a role with nothing to do
+        return "background", "Working in the background"
     return "idle", "Idle"
 
 

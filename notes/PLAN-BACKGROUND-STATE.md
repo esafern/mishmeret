@@ -49,6 +49,44 @@ the legend. Drafts: "Working on its own"; the working green, lighter; after "Wor
 - Before the landing, girsa-ui-steward reads the Board at 1864 and 1229 px, both themes, with a corner in the new
   state beside one Working and one Idle.
 
+## Review, and the build, 17:25
+
+- girsa-verifier at 8011157: NOT READY, one MEDIUM on part (2), taken. Its probe over every transcript: of 1,435
+  reported waits, 125 met a task notification or an auto-continuation before the next person's or role's prompt,
+  and 27 more only a record with no `origin.kind` - skill bodies, Claude Code's idle notices, usage-limit notices,
+  image notes (each `isMeta`) and compaction summaries (`isCompactSummary`); "plugin" was 14 records, each a plugin's
+  injected note. Every peer record is `isMeta` (3,986 of 3,986), so `isMeta` may decide only where no kind is
+  given. NOW, `is_prompt`: `origin.kind` decides first, and only "human" and "peer" count (an unknown kind does
+  not); with no kind, a record counts unless it is `isMeta` or `isCompactSummary`. girsa-verifier measured that
+  rule keeping 24 of the 27; the 3 left are a person's own commands, rightly prompts. Part (1) swept by it as planned.
+- BUILT (before a READY on the revision, as with items 6 and 5; said so): the plan's part (1) with girsa-ui-steward's
+  look, and `is_prompt`. Taken out, not built: `board_view` showing "Finished" over the new state as over "idle".
+  No test held it, and a finished session whose own task still runs is truthfully working in the background.
+- The existing test that pinned busy-with-the-turn-ended as "idle" now asserts "background".
+- Red checks in a scratch copy, `__pycache__` cleared: green with nothing out; red with each of 7 parts out (Live's
+  status, shown_state's branch, the kinds, isMeta read first, isCompactSummary, last_prompt asking is_prompt, the
+  legend's entry). Two runs gave the same result. The suite: 143 passed.
+- For girsa-ui-steward's read: a demo Board on http://127.0.0.1:8463/ from this worktree's code, over a scratch
+  placeholder project. Its stub `claude` lists ex-builder Working, ex-verifier "Working in the background" and
+  ex-ui-steward Idle (read from its /api/board). It is stopped after the read.
+- girsa-ui-steward's READ of the demo Board, headless Chromium at 1864x1033 and 1229x673, light and dark: nothing to
+  change. The badge "Working in the background" in the working green, its dot a 1.5 px ring, not cut; the legend's
+  `bg` entry the same, right after Working, the line whole at 1229; Working and Idle as before; no page error. Its
+  shots are in its own worktree's scratch. The demo server (pid 43308, checked by its command line first) is stopped;
+  the port answers nothing.
+- Sent, live, at 66c66d5: the build to girsa-ui-steward for its read, and the ANSWER and HANDOFF to girsa-verifier.
+- VERIFIED at 66c66d5 by girsa-verifier, nothing found in what it does. Its `build_on_record.py` ran the build's own
+  `is_prompt` over every transcript: of 1,438 reported waits, 152 are dropped by a non-prompt today, and 2 under the
+  build, each a person's own act (a `!` command, `/model`). On its clone: the suite 143 passed; three mutations each
+  red. On "Finished" left out, it reads as I do (`/finish` stops every task that only waits, so such a session has
+  one left over), and it names the change to the reviewer, whose rule of 2026-10-25 that display is.
+- ITS LOW, TAKEN AT THE LANDING: the look and the behaviour were one commit, where every earlier page piece put its
+  look in a commit of its own (a commit changes how the page looks or what it does, never both). The branch is
+  rebuilt from 67c375a: the look alone in f734ca4, through the Edit tool (the suite at it, 142 passed); then the
+  behaviour, the verified tip's files as they are, so `git diff 66c66d5 -- mishmeret tests` at the end is empty.
+  The unsplit branch is kept as `builder-background-state-unsplit`. MY SLIP in f734ca4's message: "the page looks as
+  it did". The legend shows the new entry from that commit; only no corner is drawn in it until the next.
+
 ## Tests (`tests/test_board.py`)
 
 - (1) `Live._read` with `claude agents` stubbed as busy and the turn ended gives "background"; `shown_state` with it

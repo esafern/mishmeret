@@ -994,7 +994,7 @@ def test_the_board_shows_a_role_idle_once_its_turn_ended_and_a_keepalive_refresh
     monkeypatch.setattr(bs.board, "live_agents", lambda: rows)
     live = bs.Live._read()
     assert (live["ex-ui-steward"]["status"], live["ex-builder"]["status"], live["ex-architect"]["status"]) \
-        == ("idle", "busy", "idle")
+        == ("background", "busy", "idle")       # its own task still running: a state of its own (the last #201 item)
     # status --still: the corner again as it stands, its time now; a role that never gave a state is idle
     bd = bs.board
     bd.set_status("ex-builder", now="placeholder", state="waiting-agent", waiting_for="ex-verifier")
@@ -1012,6 +1012,49 @@ def test_the_board_shows_a_role_idle_once_its_turn_ended_and_a_keepalive_refresh
     assert not bd.behind_its_work(corner, "idle", "2026-10-26T21:30:00+02:00")      # not working: its own report stands
     assert bd.behind_its_work({"ts": None}, "busy", "2026-10-26T21:30:00+02:00")
     assert "before its current work" in open(os.path.join(PKG, "board_server.py"), encoding="utf-8").read()
+
+
+def test_a_background_task_is_drawn_apart_and_a_notification_keeps_a_reported_wait(tmp_path, monkeypatch):
+    """The last item of the reviewer's Board #201 order (notes/PLAN-BACKGROUND-STATE.md; the reviewer: "the ver board
+    said idle"): a role whose turn ended while its own task runs is drawn "Working in the background", not Idle; and a
+    wait it reported is kept past a task's notification, a usage limit's continuation, a plugin's note or Claude Code's
+    own records - dropped by a person's prompt or another role's message (girsa-verifier's MEDIUM 1: every peer
+    message is isMeta, so origin.kind decides first). Placeholder transcripts and sessions."""
+    import importlib.util
+    import json as _json
+    monkeypatch.setenv("MISHMERET_BOARD_DIR", str(tmp_path / "board"))
+    monkeypatch.syspath_prepend(PKG)
+    spec = importlib.util.spec_from_file_location("board_server", os.path.join(PKG, "board_server.py"))
+    bs = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(bs)
+    bd = bs.board
+    # the shown state: background where it would be Idle; an open question and a fresh reported wait still first
+    wait = {"state": "waiting-agent", "waiting_for": "ex-verifier", "state_ts": "2030-01-02T10:05:00+00:00"}
+    assert bd.shown_state({}, "background", []) == ("background", "Working in the background")
+    assert bd.shown_state({}, "background", [7])[0] == "waiting-reviewer"
+    assert bd.shown_state(wait, "background", [], "2030-01-02T10:00:00+00:00")[0] == "waiting-agent"
+    assert bd.shown_state({}, "idle", []) == ("idle", "Idle")
+    assert '["background", "Working in the background"]' in open(os.path.join(PKG, "board_server.py")).read()
+    # what is a prompt: origin.kind first, then isMeta and isCompactSummary
+    peer = {"origin": {"kind": "peer"}, "isMeta": True}
+    for e, prompt in (({"origin": {"kind": "human"}}, True), (peer, True),
+                      ({"origin": {"kind": "task-notification"}}, False), ({"origin": {"kind": "auto-continuation"}}, False),
+                      ({"origin": {"kind": "plugin"}}, False), ({"isMeta": True}, False), ({"isCompactSummary": True}, False),
+                      ({}, True)):
+        assert bs.is_prompt(e) is prompt, e
+    # the measured case: a wait at 10:05, a task's notification at 10:30 keeps it; another role's message drops it
+    sdir = tmp_path / "stx"
+    sdir.mkdir()
+    monkeypatch.setenv("MISHMERET_TRANSCRIPTS", str(sdir))
+    rows = [dict(type="user", timestamp="2030-01-02T10:00:00+00:00", origin={"kind": "human"}, message={"content": "do X"}),
+            dict(type="user", timestamp="2030-01-02T10:30:00+00:00", origin={"kind": "task-notification"},
+                 message={"content": "<task-notification> done </task-notification>"})]
+    (sdir / "s1.jsonl").write_text("\n".join(map(_json.dumps, rows)) + "\n", encoding="utf-8")
+    assert bd.shown_state(wait, "idle", [], bs.last_prompt("s1"))[0] == "waiting-agent"
+    rows.append(dict(type="user", timestamp="2030-01-02T10:40:00+00:00", isMeta=True, origin={"kind": "peer"},
+                     message={"content": "ANSWER (ex-verifier): placeholder"}))
+    (sdir / "s1.jsonl").write_text("\n".join(map(_json.dumps, rows)) + "\n", encoding="utf-8")
+    assert bd.shown_state(wait, "idle", [], bs.last_prompt("s1")) == ("idle", "Idle")
 
 
 def test_the_board_flags_a_stalled_role_and_counts_errors_and_a_week(tmp_path, monkeypatch):
