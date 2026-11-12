@@ -28,7 +28,13 @@ and moves the first project's pin (#155 B).
   reviewer asked of WRITE THE ENUMERATION DOWN's Do: "what happens when a new place is added later?" As written,
   nothing catches it, since the test checks only the list. My wording, now in girsa-operator's draft word for word:
   a second test that finds every place holding the name on its own and fails on one the list lacks. It is still the
-  reviewer's to accept. The opening paragraph stays the draft's. It already says what the file is, that a lesson's
+  reviewer's to accept.
+- NOW its 18:43 version (19,056 bytes, sha256 739a9ee805d5b81e...). The reviewer asked again: "a list in code of every
+  place - what happens when the code changes?" The second test, as worded, found places by one rule (each table with
+  a product_name column), so a new place of another kind was missed by both tests. My wording, sent on the
+  reviewer's "yes" and now in girsa-operator's draft word for word: the second test "searches the code and the
+  schema for the name's field - every reader and writer of it". Its limits, told to the reviewer and not in the
+  text: the name held under another field name or as copied text, and a place outside the code. The opening paragraph stays the draft's. It already says what the file is, that a lesson's
   name is its id, and that a project keeps its own lessons in its own file and points here for these.
 - ANSWERED by girsa-operator (09:22): "labelled" (in THE SAMPLE THAT SELECTED ITSELF) is now "labeled", changed in
   the draft itself and its three drafts remade from its `split.py`. The reviewer asked for American spelling

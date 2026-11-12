@@ -230,8 +230,8 @@ example from no project in particular: what the rule is there to avoid, and what
   - *Avoid:* "when a product is renamed, update everything that mentions it" is done from memory,
     and the search index is forgotten.
   - *Do:* a list in code of every place that holds the name, one test that renames a product and
-    checks each, and a second test that finds every place holding the name on its own (each table
-    with a product_name column) and fails on one the list lacks.
+    checks each, and a second that searches the code and the schema for the name's field - every
+    reader and writer of it - and fails on one the list lacks.
 - **A PATH TURNED ON IS RUN FOR THE FIRST TIME** - run every input type through it on a clone.
   - *Avoid:* an "import from spreadsheet" feature written months ago and never enabled is switched
     on for everyone.

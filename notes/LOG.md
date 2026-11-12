@@ -83,6 +83,13 @@ M08. **[2026-11-12, the next work after the review]**
       option B keeps "Finished" first). MY SLIPS: f734ca4's message said the page looks as it did, though the legend
       shows the new entry from it (corrected in febf285's message and the plan); and febf285's message quoted the
       full suite before I had run it at that commit, so I ran it after: 143 passed.
+    * **[18:43]** The reviewer, in this session: "answered 206" (A: the first project's pin moved to febf285, by
+      girsa-operator), "show me lessons" (shown: the six borderline and the changed example), "push when finished"
+      (passed to girsa-operator, which pushes only on the reviewer's own word to it, and will ask them once the
+      lessons file has landed). Their second question on WRITE THE ENUMERATION DOWN's Do, "what happens when the code
+      changes?": the second test's one rule (a table's column) is a hand-kept copy too. On their "yes", my wording
+      went to girsa-operator: the second test searches the code and the schema for the name's field. Its draft remade;
+      `LESSONS.md` rebuilt from it (19,056 bytes, sha256 739a9ee8..., `cmp` exit 0, two lines changed).
     * THE REVIEWER'S BOARD #201 ORDER IS DONE: items 4, 1, 6, 5, 2 and the background state, all merged. Open for
       the reviewer: the lessons file's landing (their read of the six and of the changed example); the first
       project's pin move to febf285 (#206); Mishmeret's push (origin 158993f).

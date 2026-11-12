@@ -28,7 +28,7 @@ Rewritten in place when a piece lands and at the end of a session; the log is `n
 
 - THE LESSONS FILE (notes/PLAN-LESSONS.md; the log's M08): girsa-operator's REQUEST, on the reviewer's "B - Also
   the six borderline: 50 move" (the first project's Board #182). `LESSONS.md` at the top, from the draft in
-  `~/work/girsa-copies/lessons-split-2026-11-10/`, now its 14:26 version (19,059 bytes; one example changed on the
+  `~/work/girsa-copies/lessons-split-2026-11-10/`, now its 18:43 version (19,056 bytes; one example changed twice on the
   reviewer's question). BUILT on branch `builder-lessons`, rebased on main febf285: the plan was accepted by
   girsa-verifier, and the suite passed (140). The LANDING WAITS for the reviewer's read of the six borderline
   lessons and of the changed example (girsa-operator tells me), then girsa-verifier's check at the final commit,
