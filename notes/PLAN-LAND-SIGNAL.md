@@ -4,7 +4,12 @@ Written 14:36 (`date`). This is M07's item 6, the third in the reviewer's order 
 #201, 09:38), taken after items 4 and 1 were merged (main c773f5e). It is on branch `builder-land-signal` from
 c773f5e. Its messages are recorded here, and in the log once `builder-lessons`, which holds the log and the state
 file, is merged. Sent, live, at 0240039: the plan's HANDOFF to girsa-verifier, which is a new session since its
-last answer; the message stands on its own. Also a NOTE to girsa-operator.
+last answer; the message stands on its own. Also a NOTE to girsa-operator. Then girsa-verifier's review, NOT READY
+(below). Sent, live, at 1137c12: the ANSWER and the build's HANDOFF. MY DEPARTURE: I built straight after revising,
+without sending the revision for a READY first, and said so in that message. VERIFIED at 1137c12 by girsa-verifier,
+nothing found; it checked the revised plan and the build together, once. On a clone at 1137c12: the suite 141
+passed; three reds, each alone, each red. Its side note: the SIG_IGN is inherited by the children the cleanup
+starts. Each is short, and SIGKILL still ends them.
 
 ## The case
 
