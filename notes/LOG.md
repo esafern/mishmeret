@@ -23,6 +23,20 @@ M09. **[2026-11-12, the seven fixes of my audit (notes/PLAN-AUDIT-FIXES.md)]**
       certificates, 2027-01-15; the domain, not known). Open for the reviewer: which calendar, how far ahead. Then a
       second, on the reviewer's word: it holds the hosting key; the alert follows the new `exp` after each renewal.
       Not answered: no reply asked. The next piece, after this one.
+    * Sent, live: the plan's HANDOFF to girsa-verifier (dbbcf29), with one QUESTION (is `.claude/lane_check.py` mine
+      with `--because`, or the operator's own commit?); a QUESTION to girsa-architect on items 3 and 5.
+    * **[00:02]** girsa-architect's ANSWER, live: design-study/MISHMERET-AUDIT-FIXES-ARCHITECT.md in the first
+      project, f6f25c9c (read there, read only). Item 3: no role there writes as another; a subagent has its parent's
+      variable (not measured). Item 5: refuse, with `--tests none` as the stated way out, written into the message -
+      two of its demo operator's commits touch files no test names. The plan revised (items 5, its test, the first
+      project's paragraph). The build waits for girsa-verifier.
+    * **[00:03]** RECEIVED, live, from girsa-operator: a REQUEST on the reviewer's night directive ("move methodically
+      through our issue list ... until everything has been addressed"), two items, one at a time, after what I hold
+      and after girsa-demo-operator's request: (1) `_frozen_gate` is red while an Apply is uncommitted in the main
+      tree (the first project's Board #495); (2) the Board's hold is kept by role name, so a second session of one
+      role ends the first's hold. Each with its plan and girsa-verifier's check; the merge and the pin are
+      girsa-operator's. Queued: this piece, then the expiring items, then these two. Sent, live: an ANSWER with
+      that order.
 M08. **[2026-11-12, the next work after the review]**
     * **[09:19]** Started at main 158993f: girsa-operator moved Mishmeret's own pin to dd3bcdb (M07's item 3, settled).
       No piece in work. Sent, live: a QUESTION to girsa-operator - the next work, with M07's open items (1, 2, 4, 5,

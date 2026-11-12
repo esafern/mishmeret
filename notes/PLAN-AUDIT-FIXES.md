@@ -46,7 +46,11 @@ today, and its measure on a prototype (run before this plan was written; scratch
    inherits from the session running it.
 4. agents-morning.sh's `notify` uses agents.sh's form.
 5. `land.py commit ROLE code` on a branch without `--tests` is refused, before anything is staged, with the form to
-   use. In the main tree (the operator's) the landing gate runs, as today.
+   use. In the main tree (the operator's) the landing gate runs, as today. THE WAY OUT (girsa-architect's answer,
+   design-study/MISHMERET-AUDIT-FIXES-ARCHITECT.md in the first project, f6f25c9c): `--tests none` runs no test and
+   writes "No test was run (--tests none)." into the commit message - a record a reviewer reads. Its case: the first
+   project's demo operator's 0b43841c and 1bbf7b95 touch files no test names, and a refusal with no way out would
+   stop such commits at the pin bump.
 6. The README's sentence names the optional fields by pointing at `config.OPTIONAL`; config.py's header says what the
    loader does: an OPTIONAL field may be absent, and `MISHMERET_<FIELD>` overrides a text or number field,
    `MISHMERET_NIGHT_<KEY>` a night key.
@@ -73,14 +77,17 @@ today, and its measure on a prototype (run before this plan was written; scratch
 3. With `CLAUDE_CODE_AGENT` set: another role's hold, release, status and send refused, the own role's taken; unset,
    taken.
 4. The night run's notice test: a notice text with a `"` reaches osascript whole, as one argument.
-5. A code commit on a branch with no `--tests` is refused and stages nothing; a notes commit needs none.
+5. A code commit on a branch with no `--tests` is refused and stages nothing; with `--tests none` it is made, no
+   pytest run, and its message carries the line; a notes commit needs none.
 6. none (prose).
 7. `board.py landed` exits 2 (argparse); `finished` works.
 
 ## For the first project (its pin bump, girsa-builder's)
 
-3 and 5 change what its roles may do: every role there posts as itself (its role files, git grep), and its builder's
-brief already asks for `--tests`; a verifier's, steward's or demo-operator's code commit on a branch now names tests.
+3 and 5 change what its roles may do. girsa-architect (f6f25c9c): no role there writes to the Board as another (every
+tracked brief, skill and command read); a subagent's Bash has its parent's `$CLAUDE_CODE_AGENT` (not measured on a
+real subagent). Its builder's brief already asks for `--tests`; the demo operator's and the steward's briefs gain one
+line at the pin bump - the form with `--tests`, and when `none` is right.
 2 protects it only once its own `check_lane.py` reads `MISHMERET_COMMIT_MESSAGE`.
 
 ## Not in this piece
