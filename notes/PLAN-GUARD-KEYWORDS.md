@@ -81,8 +81,10 @@ MISHMERET-GUARD-KEYWORDS-ARCHITECT.md, the first project's main 5814c995):
   through; the tmux forms refused and the five fine ones let through.
 - Each part shown red with it out, with the red script's baseline row and its `__pycache__` cleared before each
   run: each keyword, the `--` options with a spaced argument, the generic `-` option, the name restore's `\`, its
-  quotes, the "only where unmasked" check (red on `echo '"git" push'`, refused), `--work-tree`, `--git-dir`, and
-  the `.git` parent.
+  quotes, the "only where unmasked" check (red on `echo '"git" push'`, refused), `--work-tree`, `--git-dir`,
+  `GIT_WORK_TREE=`, `GIT_DIR=`, the `.git` parent, and "either tree" (one tree only: red on `--work-tree=.`).
+- The tests also hold the ten where forms and five fine ones, and one keyword form for each of BOUNDARY's seven
+  users.
 
 ## Files
 
