@@ -31,10 +31,10 @@ PAGE = r"""<!doctype html>
    No filled pills, no thick stripes, no sentence in colour. */
 :root{--bg:#f5f5f4;--card:#fff;--ink:#24272b;--muted:#6b7075;--line:#e0e0dd;--accent:#3a6596;--ok:#4f8048;
  --operator:#9a7f2e;--builder:#3d8590;--verifier:#4f8048;--ui-steward:#a75a80;--architect:#4a6fa0;
- --st-done:#4f8048;--st-next:#8a8f94;--st-working:#4f8048;--st-idle:#8a8f94;--st-waiting-agent:#b07a2a;--st-waiting-reviewer:#b5493f;--st-not-running:#a0a4a8;--st-landed:#4a6f9a}
+ --st-done:#4f8048;--st-next:#8a8f94;--st-working:#4f8048;--st-background:#4f8048;--st-idle:#8a8f94;--st-waiting-agent:#b07a2a;--st-waiting-reviewer:#b5493f;--st-not-running:#a0a4a8;--st-landed:#4a6f9a}
 @media (prefers-color-scheme:dark){:root{--bg:#161719;--card:#1d1e21;--ink:#d6d8db;--muted:#868b92;--line:#2b2d31;
  --accent:#86a8d2;--ok:#8fb487;--operator:#bfa66e;--builder:#73aab2;--verifier:#8fb487;--ui-steward:#c793ab;--architect:#86a2c9;
- --st-done:#8fb487;--st-next:#868b92;--st-working:#8fb487;--st-idle:#7b8087;--st-waiting-agent:#cda265;
+ --st-done:#8fb487;--st-next:#868b92;--st-working:#8fb487;--st-background:#8fb487;--st-idle:#7b8087;--st-waiting-agent:#cda265;
  --st-waiting-reviewer:#d9857b;--st-not-running:#575c62;--st-landed:#8fb0d6}}
 *{box-sizing:border-box}
 html,body{height:100%;margin:0}
@@ -48,6 +48,7 @@ h1{font-size:14px;font-weight:600;margin:0;white-space:nowrap}
  padding:1px 8px}#quiet:empty{display:none}
 #usage{font-size:12px;color:var(--muted)}#usage:empty{display:none}#usage.warn{color:var(--st-waiting-agent);font-weight:600}.key{display:flex;gap:10px;flex-wrap:wrap;color:var(--muted);font-size:11.5px}
 .key span::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:4px;background:var(--c)}
+.corner.background .badge::before,.key span.bg::before{background:transparent;box-shadow:inset 0 0 0 1.5px var(--sc,var(--c))}
 /* THE CORNERS, laid out as the role panes in agents.sh's tmux window: steward and architect on top, operator and
    verifier in the middle, the builder along the bottom */
 #roles{flex:none;height:54vh;display:grid;gap:10px;padding:0 14px;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr 1fr;
@@ -150,7 +151,7 @@ button.stall:focus-visible{outline:1px solid currentColor;outline-offset:2px}
 <script>
 "use strict";
 const ROLES = ["ui-steward", "architect", "operator", "verifier", "builder"];
-const STATES = [["working", "Working"], ["idle", "Idle"], ["waiting-agent", "Waiting for another role"],
+const STATES = [["working", "Working"], ["background", "Working in the background"], ["idle", "Idle"], ["waiting-agent", "Waiting for another role"],
                 ["waiting-reviewer", "Waiting for you"], ["landed", "Finished"], ["not-running", "Not running"]];
 const ROLE_VAR = r => "var(--" + r.replace(/^girsa-/, "") + ")";
 const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -160,7 +161,7 @@ const ago = ts => { if (!ts) return "no report yet"; const m = Math.round((Date.
   return m < 1 ? "reported just now" : m < 60 ? `reported ${m} min ago` : m < 1440 ? `reported ${Math.floor(m / 60)} h ${m % 60} min ago` : "reported " + when(ts); };
 let last = "", showDone = false, showQA = false, showDeferred = false, showTokens = false, showLandings = false, showVisitors = false, showMsgs = false, visitors = null, tokens = null, tokenDay = "", data = {items: [], roles: {}, qa: []};
 const changing = new Set();   // answered items the reviewer is changing (their options open again)
-document.getElementById("key").innerHTML = STATES.map(([k, w]) => `<span style="--c:var(--st-${k})">${w}</span>`).join("");
+document.getElementById("key").innerHTML = STATES.map(([k, w]) => `<span${k === "background" ? ' class="bg"' : ""} style="--c:var(--st-${k})">${w}</span>`).join("");
 // WHAT THE SESSION ITSELF REPORTS (Q&A #56 ideas 1, 2 and 5): a prompt waiting for you in its pane, its context and
 // prompt cache as its status line last saw them (compacted, no context until its next turn: what it was at its last
 // turn), and the file it edited in the last 15 minutes - in the corner's head, so a corner keeps its height (the rows
