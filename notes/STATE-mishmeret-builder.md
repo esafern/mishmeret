@@ -19,10 +19,10 @@ Rewritten in place when a piece lands and at the end of a session; the log is `n
 
 - THE LESSONS FILE (notes/PLAN-LESSONS.md; the log's M08): girsa-operator's REQUEST, on the reviewer's "B - Also
   the six borderline: 50 move" (the first project's Board #182). `LESSONS.md` at the top, from the draft in
-  `~/work/girsa-copies/lessons-split-2026-11-10/`. The plan is written on branch `builder-lessons`; the build is
-  next. The LANDING WAITS for the reviewer's read of the six borderline lessons (girsa-operator tells me), then
-  girsa-verifier's check, then girsa-operator's merge and pin. One question is open with girsa-operator: "labelled"
-  to "labeled".
+  `~/work/girsa-copies/lessons-split-2026-11-10/`. BUILT on branch `builder-lessons`: the plan was accepted by
+  girsa-verifier, and the suite passed (139). The LANDING WAITS for the reviewer's read of the six borderline lessons
+  (girsa-operator tells me), then girsa-verifier's check at the final commit, then girsa-operator's merge with its
+  `sizes.files` entry and the pin.
 - The first project's pin is dd3bcdb since its main e955b2cf (girsa-operator's step 1 of 2:
   the pin, the finish hook's shim and Stop hook). Its step 2 - `night.finish_command`, `night.finish_exit_command`
   in its config - waits until every worktree there is at or past e955b2cf; its command files calling `board.py
@@ -34,7 +34,10 @@ Rewritten in place when a piece lands and at the end of a session; the log is `n
 
 ## Next, in order
 
-1. THE REVIEW'S FINDINGS (the log's M07, 2026-11-10, given to the reviewer; none is given as work yet): the guard
+0. GIVEN (the reviewer's "A" on the first project's Board #201, 09:38, 2026-11-12): M07's items 4, 1 and 6, then 5,
+   then 2 and item 2 below. One plan at a time, each checked by girsa-verifier before the next. Plans go to
+   girsa-operator. NEXT: the plan for item 4, on a new branch from main. The code's lesson numbers are not given.
+1. THE REVIEW'S FINDINGS (the log's M07, 2026-11-10): the guard
    not seeing git after `then`, `do`, `{`, `!` or behind `--no-pager` (1); a subagent's type judged as the role (2);
    (3, Mishmeret's own pin, settled: main 158993f); the operator's `+main` push (4); the Board's slow first
    answer, traced - girsa-operator's 110 s: each request builds the whole answer itself, 5.0 s alone, 68.5 s for

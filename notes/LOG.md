@@ -19,6 +19,19 @@ M08. **[2026-11-12, the next work after the review]**
       `.claude/` edit, so it is the operator's, not mine: I proposed a limit of 25,000. The code's four lesson
       numbers are not in this piece; it put them on the first project's Board #201. The landing condition stands.
       Sent, live: a NOTE to girsa-operator with the limit. The plan revised.
+    * **[09:22]** girsa-operator, live: it adds the `sizes.files` entry itself, in its merge of this landing (25,000
+      bytes), so the file and its size check arrive together. Nothing for me to change. The build waits for
+      girsa-verifier's plan review.
+    * **[09:37]** girsa-verifier, live: the plan ACCEPTED at 5142cbe, nothing found. Its `split.py` run on a copy
+      remakes the three drafts byte for byte. BUILT: `LESSONS.md` is copied with `cp` rather than written through the
+      Edit tool, so that it is the draft byte for byte (`cmp` exit 0; sha256 fa3308a4f17964e4...; 18,917 bytes). The
+      README has its bullet and the brief's START READS names the file. The start-reading report's `--check`, run
+      on this worktree's config: exit 0, 34 KB at start, LESSONS.md 18.9 of it. Suite 139 passed. The landing
+      waits on the reviewer's read of the six.
+    * **[09:38]** girsa-operator, live: the reviewer answered the first project's Board #201 "A". M07's items are
+      given in this order, one plan at a time, each checked by girsa-verifier before the next: 4, 1, 6, then 5, then
+      2 and the Board's background-task state. The four lesson numbers in the code are not given. Plans go to
+      girsa-operator, which is at its usage limit until the window resets.
 
 M07. **[2026-11-10, a review of all of Mishmeret's code and the first project's side of it (the reviewer's request)]**
     * **[20:49]** Read at main 120c3b5: every file of `mishmeret/` but the Board page's script, Mishmeret's own

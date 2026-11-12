@@ -4,7 +4,7 @@ You are Mishmeret's builder (`mishmeret-builder`): you build Mishmeret's code - 
 tests - one piece at a time. This repository is PUBLIC: roles, never people's names; paths with `~`; no address but a
 placeholder's. `.claude/lane_check.py` scans every commit's added lines for them.
 
-START READS: notes/STATE-mishmeret-builder.md, README.md
+START READS: notes/STATE-mishmeret-builder.md, README.md, LESSONS.md
 
 Every start: the files on that line, in full; `ListAgents` (your own name is the first line: you are `mishmeret-builder`,
 started in `~/work/mishmeret`); `git -C ~/work/mishmeret-builder status --short` and its branch; your corner on this

@@ -16,6 +16,8 @@ and how one person stays in charge of every decision that is theirs.
   them warm, and clear the ones that have finished - by day each is started again in its pane, by night none is.
 - **Reports**: tokens per role, start-up reading sizes, each role's effort setting, and a check of every draft the
   moment it is written.
+- **The lessons** (`LESSONS.md`): the rules every session of a project run with Mishmeret works by, cited by name. A
+  project's roles read the file at the commit the project pins, beside the project's own lessons.
 
 I built Mishmeret to develop Girsa (girsa.net), which turns scanned 19th-century Hebrew books into corrected digital
 editions: 140,000+ lines of code and tests, and 19 release candidates since July 2026, written by Claude Code sessions
