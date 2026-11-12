@@ -2,7 +2,7 @@
 
 Rewritten in place when a piece lands and at the end of a session; the log is `notes/LOG.md`, by item.
 
-## Built, on main (main 8818221 = origin/main, pushed; each verified by girsa-verifier, merged by girsa-operator)
+## Built, on main (main d35d110; origin at 8818221, the reviewer's push pending; each verified by girsa-verifier, merged by girsa-operator)
 
 - c1963d1: A (`guard.foreign`), A2 (seven config fields optional) and B (Mishmeret's own `.claude/`, `notes/`, the
   lane check) (notes/PLAN-OWN-CLAUDE.md). The Board on 8451 runs from the main clone.
@@ -26,31 +26,29 @@ Rewritten in place when a piece lands and at the end of a session; the log is `n
 - f87e3ce (girsa-operator's 8818221 adds its `sizes.files` limit, 25,000 bytes): `LESSONS.md`, from girsa-operator's
   draft of 18:43, byte for byte (notes/PLAN-LESSONS.md; the log's M08; the reviewer's "go then push when done").
   Merged by girsa-operator; girsa-verifier's check at f87e3ce is not recorded in this repository - ask it if needed.
+- d6a8ce7, 090253c (with girsa-operator's f7c7d1d, the lane check's half): the seven fixes of my audit - a relayed
+  answer keeps the page's rule; the commit message scanned; a role's session writes to the Board as itself; one
+  alert function; a code commit names its tests (or `none`); the config docs; `landed` gone (notes/PLAN-AUDIT-FIXES.md;
+  the log's M09). Suite 147 passed. At the first project's pin bump (girsa-builder's; girsa-operator keeps the
+  notes): its briefs gain `--tests`/`none` and the relay's `--change`.
 
 ## Now
 
-- THE SEVEN AUDIT FIXES (notes/PLAN-AUDIT-FIXES.md; the log's M09; the reviewer's "fix 1 through 7"): branch
-  `builder-audit-fixes`, rebased on main f7c7d1d (girsa-operator's commit of the lane check's half, from
-  notes/PLAN-AUDIT-FIXES-LANE-CHECK.md). Plan reviewed (girsa-verifier, the first project's 3a321c10;
-  girsa-architect's f6f25c9c). BUILT at d6a8ce7, 147 passed, 9 of 9 rules red without them, both halves run
-  together. Waiting: girsa-verifier's check at the branch's final commit, then girsa-operator's merge and pin. At the first
-  project's pin bump (girsa-builder's): the demo operator's and steward's briefs gain `--tests` and `none`; the
-  operator's the relay with `--change`.
-- `builder-lessons` and `builder-background-state-unsplit` (a backup before a split) are merged or done with; they
-  can be deleted. `builder-state-after-lessons` (96454a1) is inside `builder-audit-fixes`.
+- THE EXPIRING ITEMS (girsa-demo-operator's REQUEST, the reviewer's words: track tokens, secrets and other things that
+  expire, and set calendar alerts - the items from the project's config, never Girsa's names in code): branch
+  `builder-expiring` from main d35d110. Its cases (the log's M09): the hosting MCP token (its JWT's `exp`, now
+  2026-11-17 13:49 UTC; the alert follows each renewal), the Board stats fetch's Claude login (2026-12-07), two TLS
+  certificates (2027-01-15), the domain (not known). The reviewer's to decide: which calendar, how far ahead.
+- `builder-lessons`, `builder-background-state-unsplit`, `builder-state-after-lessons` and `builder-audit-fixes` are
+  merged or done with; they can be deleted.
 - To resume: `git -C ~/work/mishmeret log --oneline -3`; `git -C ~/work/mishmeret-builder status -sb`; the Board;
-  girsa-verifier's and girsa-operator's answers, live; the log's M09.
+  the log's M10.
 
 ## Next, in order
 
-1. girsa-demo-operator's REQUEST, the reviewer's words: track tokens, secrets and other things that expire, and set
-   calendar alerts - the items from the project's config, never Girsa's names in code. Its cases (the log's M09):
-   the hosting MCP token (its JWT's `exp`, now 2026-11-17 13:49 UTC; the alert follows each renewal), the Board
-   stats fetch's Claude login (2026-12-07), two TLS certificates (2027-01-15), the domain (not known). The
-   reviewer's to decide: which calendar, how far ahead.
-2. girsa-operator's REQUEST (the night directive): `_frozen_gate` red while an Apply is uncommitted in the main tree
+1. girsa-operator's REQUEST (the night directive): `_frozen_gate` red while an Apply is uncommitted in the main tree
    (the first project's Board #495).
-3. girsa-operator's REQUEST: the Board's hold kept by role name, so a second session of one role ends the first's.
+2. girsa-operator's REQUEST: the Board's hold kept by role name, so a second session of one role ends the first's.
 
 Not given: the code's citations of the first project's lesson numbers; M07's smaller items; role_guard.py's header
 sentence on subagents (girsa-verifier's LOW, for its next touch).

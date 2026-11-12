@@ -71,6 +71,13 @@ M09. **[2026-11-12, the seven fixes of my audit (notes/PLAN-AUDIT-FIXES.md)]**
       a new one", the command "...: a new answer is a change (--change)". Suite 147 passed; each wording red with
       the other in its place, on a scratch copy (2 of 2). To send at this commit, live: that change to
       girsa-verifier.
+    * Sent, live, at d35d110: that HANDOFF to girsa-verifier.
+    * **[01:01]** girsa-verifier's ANSWER, live: VERIFIED at d35d110 (090253c on a copy: 147 passed; 3 mutations
+      red); sent to girsa-operator as #1162. Sent, live: LANDED-READY to girsa-operator, with the pin bump's brief
+      lines. This entry is committed after the merge, so the verified tip stays the branch's last commit.
+    * **[01:03]** girsa-operator's ANSWER, live: MERGED, main d35d110 (fast-forward from f7c7d1d, 8 commits); suite on
+      main 147 passed; not pushed (the reviewer's word); neither Board's pin moved. The first project's pin bump waits
+      for its owner and the reviewer; the briefs' notes are in its state file. Next: the expiring items.
 M08. **[2026-11-12, the next work after the review]**
     * **[09:19]** Started at main 158993f: girsa-operator moved Mishmeret's own pin to dd3bcdb (M07's item 3, settled).
       No piece in work. Sent, live: a QUESTION to girsa-operator - the next work, with M07's open items (1, 2, 4, 5,
