@@ -19,7 +19,8 @@
   "state_dir": ".night",
   "night": {"check_every": 1800, "you_idle": 900, "role_idle": 900, "landed_quiet": 120, "poll": 60, "context_limit": 200000, "gap": 5},
   "sizes": {"warn_percent": 80, "files": {
-    "notes/BRIEF-mishmeret-builder.md": [30000, "notes/LOG.md, under a dated heading"]
+    "notes/BRIEF-mishmeret-builder.md": [30000, "notes/LOG.md, under a dated heading"],
+    "LESSONS.md": [25000, "a new lesson file, by the reviewer's word"]
     },
     "status_file": "notes/LOG.md", "item_pattern": "^(M[0-9]{2})\\. ", "item_limit": 100000,
     "item_home": "a new item, the old one left whole",
