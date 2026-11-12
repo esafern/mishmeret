@@ -361,16 +361,17 @@ def _dir_before(text, masked, at, base):
 def _git_trees(command, masked, m, cwd):
     """The trees a GIT match may use - each place it may run in, its work tree and its repository's (once, when they
     are the same). A command is a tree's when any of them is (girsa-architect on 46b378b: `--git-dir=<main>/.git
-    --work-tree=. commit` commits onto the main clone's branch). The place: its `-C`, else the last `cd` before it,
-    else `cwd` - and beside it each keyword-led cd before it (KEYWORD_CD). The work tree: `--work-tree` or
+    --work-tree=. commit` commits onto the main clone's branch). The place: the last `cd` before it, else `cwd` -
+    and beside it each keyword-led cd before it (KEYWORD_CD) - with its `-C` taken from each. The work tree: `--work-tree` or
     GIT_WORK_TREE= before git, else the place; the repository's: `--git-dir` or GIT_DIR= (its parent if it ends in
     .git), else the place."""
     opts, lead, before = command[m.start(1):m.end(1)], command[m.start():m.start(1)], command[:m.start()]
     c = re.search(r"-C\s+(\S+)", opts)
-    places = ([os.path.join(cwd, _expand(_unquote(c.group(1)), before))] if c
-              else [_dir_before(command, masked, m.start(), cwd)]
-              + [os.path.join(cwd, _expand(_unquote(command[k.start(1):k.end(1)]), before))
-                 for k in KEYWORD_CD.finditer(masked[:m.start()])])
+    places = [_dir_before(command, masked, m.start(), cwd)] + [
+        os.path.join(cwd, _expand(_unquote(command[k.start(1):k.end(1)]), before))
+        for k in KEYWORD_CD.finditer(masked[:m.start()])]
+    if c:                                   # a relative -C from where the cd went (girsa-verifier's MEDIUM on db7b0ff)
+        places = [os.path.join(place, _expand(_unquote(c.group(1)), before)) for place in places]
     named = {flag: re.search(flag + r"(?:=|\s+)(\S+)", opts) or re.search(r"(?<![\w$])" + var + r"=(\S+)", lead)
              for flag, var in (("--work-tree", "GIT_WORK_TREE"), ("--git-dir", "GIT_DIR"))}
     trees = []

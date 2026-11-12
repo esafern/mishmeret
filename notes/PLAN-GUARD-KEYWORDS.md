@@ -150,6 +150,23 @@ each of the 42 parts out, each failing on the form that part is there for. Two r
   nothing the guard reads.
 - My red script's first run had faults of its own: three keyword rows matched two places, and two rows broke the code
   rather than taking a part out. All were rewritten before the counted runs.
+- Sent, live, at db7b0ff: the build's HANDOFF to girsa-verifier, and a NOTE to girsa-operator about the cd hole in
+  the guard its project runs (pinned at dd3bcdb, the same line). MY SLIP: that NOTE said I had read the line at
+  dd3bcdb before I had. I read it after sending (role_guard.py:77 there, the same pattern) and sent a CORRECTION. The
+  forms were not run at dd3bcdb itself.
+
+THE ROUND, 12:50, on girsa-verifier's check of db7b0ff: ONE MEDIUM, NOT VERIFIED; nothing else found. It confirmed
+the `;` hole on the real trees, at 21cb9ba and at the first project's live pin dd3bcdb.
+
+- MEDIUM 1, A RELATIVE -C WAS JOINED TO THE SESSION'S DIRECTORY, not to where the cd went. From a worktree, `cd
+  ~/work && git -C <the project> reset -q --hard` and `cd <main> && git -C . reset -q --hard` were let through, by
+  21cb9ba and by db7b0ff. Now `-C` is joined to each place (the last cd's, and each keyword-led cd's); an absolute
+  `-C` is unchanged. Test: those two, and `if true; then cd /work; fi; git -C book reset --hard`, refused; `cd /work
+  && git -C book-builder reset --hard` and an absolute `-C` to the worktree, let through. On the two real
+  repositories in scratch: both forms refused; a relative `-C` to the worktree and an absolute `-C <main>` as before.
+- Red checks again, on the round: green with nothing out, red with each of 43 parts out, the new one being "-C
+  from each place" (red on `cd /work && git -C book reset -q --hard`). Two runs gave the same result. The suite: 140
+  passed.
 
 ## Files
 
