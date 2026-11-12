@@ -17,7 +17,7 @@ Rewritten in place when a piece lands and at the end of a session; the log is `n
 - 21cb9ba: the operator's push refused for a force or a delete in any form (M07 item 4; notes/PLAN-PUSH-FORMS.md).
 - db17aac (with db7b0ff, 828abdc): the guard sees git after a shell keyword, behind its own options and written
   quoted; every tree git may use, every cd in order, a cd quoted, optioned or by pushd (M07 item 1;
-  notes/PLAN-GUARD-KEYWORDS.md). The first project's pin is 7d1167c (#205 A); its move to febf285 is #206.
+  notes/PLAN-GUARD-KEYWORDS.md). The first project's pin is febf285 (#206 A; girsa-verifier checks the bump).
 - 1137c12: land.py ended by a stop's SIGTERM, or SIGHUP, releases the hold and leaves nothing staged (M07 item 6).
 - d7c97bc: the Board's first answers asked at once parse each landed session once (M07 item 5).
 - 5aa9a0a: a subagent is judged as no role (M07 item 2; the reviewer's "No role (c)").
@@ -29,15 +29,16 @@ Rewritten in place when a piece lands and at the end of a session; the log is `n
 - THE LESSONS FILE (notes/PLAN-LESSONS.md; the log's M08): girsa-operator's REQUEST, on the reviewer's "B - Also
   the six borderline: 50 move" (the first project's Board #182). `LESSONS.md` at the top, from the draft in
   `~/work/girsa-copies/lessons-split-2026-11-10/`, now its 18:43 version (19,056 bytes; one example changed twice on the
-  reviewer's question). BUILT on branch `builder-lessons`, rebased on main febf285: the plan was accepted by
-  girsa-verifier, and the suite passed (140). The LANDING WAITS for the reviewer's read of the six borderline
-  lessons and of the changed example (girsa-operator tells me), then girsa-verifier's check at the final commit,
-  then girsa-operator's merge with its `sizes.files` entry and the pin.
-- The reviewer's Board #201 order is done. Theirs to answer: the first project's #206 (its pin to febf285; option B
-  keeps "Finished" first over a finished session's own running task, a change of mine); Mishmeret's push.
+  reviewer's question). BUILT on branch `builder-lessons`, rebased on main febf285; the suite 143 passed. THE
+  REVIEWER'S READ IS GIVEN: "go then push when done and finish" (after the six borderline lessons and the example
+  were shown to them in this session). Waiting at the session's end: girsa-verifier's check at this branch's final
+  commit, then girsa-operator's merge with its `sizes.files` entry and the pin. The push of Mishmeret's main is
+  girsa-operator's, which pushes only on the reviewer's own word to it and will ask them once this has landed.
+  If girsa-verifier finds something, the round is the next session's.
+- The reviewer's Board #201 order is done and merged.
 - `builder-background-state-unsplit` is a backup of the branch before its split; it can be deleted.
-- To resume: `git -C ~/work/mishmeret log --oneline -3`; `git -C ~/work/mishmeret-builder status -sb` (on
-  `builder-lessons`); the log's M08.
+- To resume: `git -C ~/work/mishmeret log --oneline -3` (is `builder-lessons` merged?); `git -C
+  ~/work/mishmeret-builder status -sb`; girsa-verifier's and girsa-operator's answers, live; the log's M08.
 
 ## Next, in order
 
@@ -61,3 +62,5 @@ role_guard.py's header sentence on subagents (girsa-verifier's LOW, for its next
 - The 5 s refresh redraws the corners, so a focused pill loses its focus then (page-wide; girsa-ui-steward: leave it).
 - Copy-on-select measured in headless Chromium alone; the page's new words too.
 - The first project's older worktree of this work (`...-mishmeret`) is finished with; its removal is the reviewer's.
+
+The session is ready to clear.

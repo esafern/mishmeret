@@ -90,6 +90,10 @@ M08. **[2026-11-12, the next work after the review]**
       changes?": the second test's one rule (a table's column) is a hand-kept copy too. On their "yes", my wording
       went to girsa-operator: the second test searches the code and the schema for the name's field. Its draft remade;
       `LESSONS.md` rebuilt from it (19,056 bytes, sha256 739a9ee8..., `cmp` exit 0, two lines changed).
+    * **[18:46]** The reviewer, in this session: "go then push when done and finish" - their read of the lessons file
+      is given. Sent, live, at this commit: the HANDOFF to girsa-verifier for its check at the final commit (this
+      one), and a NOTE to girsa-operator with the reviewer's words (the merge after the check; the push is its, on
+      the reviewer's own word to it). The session ends here; the state file says what waits.
     * THE REVIEWER'S BOARD #201 ORDER IS DONE: items 4, 1, 6, 5, 2 and the background state, all merged. Open for
       the reviewer: the lessons file's landing (their read of the six and of the changed example); the first
       project's pin move to febf285 (#206); Mishmeret's push (origin 158993f).
