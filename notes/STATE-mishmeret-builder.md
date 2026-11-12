@@ -30,10 +30,10 @@ Rewritten in place when a piece lands and at the end of a session; the log is `n
 ## Now
 
 - THE SEVEN AUDIT FIXES (notes/PLAN-AUDIT-FIXES.md; the log's M09; the reviewer's "fix 1 through 7"): branch
-  `builder-audit-fixes` from 96454a1 (main 8818221 + my state commit). Plan reviewed (girsa-verifier, the first
-  project's 3a321c10; girsa-architect's f6f25c9c). BUILT at 8426667, 146 passed, 9 of 9 rules red without them.
-  Waiting: girsa-verifier's check at the branch's final commit; girsa-operator's own commit of the lane check's half
-  (notes/PLAN-AUDIT-FIXES-LANE-CHECK.md, the diff and its apply command), then its merge and the pin. At the first
+  `builder-audit-fixes`, rebased on main f7c7d1d (girsa-operator's commit of the lane check's half, from
+  notes/PLAN-AUDIT-FIXES-LANE-CHECK.md). Plan reviewed (girsa-verifier, the first project's 3a321c10;
+  girsa-architect's f6f25c9c). BUILT at d6a8ce7, 147 passed, 9 of 9 rules red without them, both halves run
+  together. Waiting: girsa-verifier's check at the branch's final commit, then girsa-operator's merge and pin. At the first
   project's pin bump (girsa-builder's): the demo operator's and steward's briefs gain `--tests` and `none`; the
   operator's the relay with `--change`.
 - `builder-lessons` and `builder-background-state-unsplit` (a backup before a split) are merged or done with; they

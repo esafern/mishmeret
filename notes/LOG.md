@@ -51,6 +51,14 @@ M09. **[2026-11-12, the seven fixes of my audit (notes/PLAN-AUDIT-FIXES.md)]**
       SLIP: a stray `mkdir` made an empty `handover` folder in Mishmeret's Board folder; removed at once (it held
       nothing). To send at the notes commit, live: the build's HANDOFF to girsa-verifier; the diff's REQUEST to
       girsa-operator.
+    * Sent, live, at ea07915: the build's HANDOFF to girsa-verifier, and a NOTE with its review's path (its session
+      was new since the review); the diff's REQUEST to girsa-operator.
+    * **[00:41]** girsa-operator's ANSWER, live: the lane check's half committed on main as f7c7d1d, by the plan's
+      own apply command (its suite 144 passed); not pushed; rebase onto it. Rebased, clean: the build is d6a8ce7.
+      The suite at the rebased tip: 147 passed. BOTH HALVES TOGETHER, in a scratch repository with a worktree (this
+      branch's land.py, main's lane check): a message holding the home folder, exit 2 ("the commit message: 1 line
+      carries ..."), nothing staged; a clean one, committed. To send at this commit, live: the final commit to
+      girsa-verifier for its check, and the rebase to girsa-operator.
 M08. **[2026-11-12, the next work after the review]**
     * **[09:19]** Started at main 158993f: girsa-operator moved Mishmeret's own pin to dd3bcdb (M07's item 3, settled).
       No piece in work. Sent, live: a QUESTION to girsa-operator - the next work, with M07's open items (1, 2, 4, 5,
