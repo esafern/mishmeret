@@ -2,7 +2,7 @@
 
 Rewritten in place when a piece lands and at the end of a session; the log is `notes/LOG.md`, by item.
 
-## Built, on main (main febf285; origin at 158993f, the reviewer's push pending; each verified by girsa-verifier, merged by girsa-operator)
+## Built, on main (main 8818221 = origin/main, pushed; each verified by girsa-verifier, merged by girsa-operator)
 
 - c1963d1: A (`guard.foreign`), A2 (seven config fields optional) and B (Mishmeret's own `.claude/`, `notes/`, the
   lane check) (notes/PLAN-OWN-CLAUDE.md). The Board on 8451 runs from the main clone.
@@ -22,23 +22,17 @@ Rewritten in place when a piece lands and at the end of a session; the log is `n
 - d7c97bc: the Board's first answers asked at once parse each landed session once (M07 item 5).
 - 5aa9a0a: a subagent is judged as no role (M07 item 2; the reviewer's "No role (c)").
 - f734ca4 (the look), febf285: the Board draws a role working on its own background task "Working in the background",
-  and keeps a reported wait past a notification (notes/PLAN-BACKGROUND-STATE.md). The suite at febf285: 143 passed.
+  and keeps a reported wait past a notification (notes/PLAN-BACKGROUND-STATE.md).
+- f87e3ce (girsa-operator's 8818221 adds its `sizes.files` limit, 25,000 bytes): `LESSONS.md`, from girsa-operator's
+  draft of 18:43, byte for byte (notes/PLAN-LESSONS.md; the log's M08; the reviewer's "go then push when done").
+  Merged by girsa-operator; girsa-verifier's check at f87e3ce is not recorded in this repository - ask it if needed.
 
 ## Now
 
-- THE LESSONS FILE (notes/PLAN-LESSONS.md; the log's M08): girsa-operator's REQUEST, on the reviewer's "B - Also
-  the six borderline: 50 move" (the first project's Board #182). `LESSONS.md` at the top, from the draft in
-  `~/work/girsa-copies/lessons-split-2026-11-10/`, now its 18:43 version (19,056 bytes; one example changed twice on the
-  reviewer's question). BUILT on branch `builder-lessons`, rebased on main febf285; the suite 143 passed. THE
-  REVIEWER'S READ IS GIVEN: "go then push when done and finish" (after the six borderline lessons and the example
-  were shown to them in this session). Waiting at the session's end: girsa-verifier's check at this branch's final
-  commit, then girsa-operator's merge with its `sizes.files` entry and the pin. The push of Mishmeret's main is
-  girsa-operator's, which pushes only on the reviewer's own word to it and will ask them once this has landed.
-  If girsa-verifier finds something, the round is the next session's.
-- The reviewer's Board #201 order is done and merged.
-- `builder-background-state-unsplit` is a backup of the branch before its split; it can be deleted.
-- To resume: `git -C ~/work/mishmeret log --oneline -3` (is `builder-lessons` merged?); `git -C
-  ~/work/mishmeret-builder status -sb`; girsa-verifier's and girsa-operator's answers, live; the log's M08.
+- No piece is open. The lessons file is merged and pushed (main 8818221 = origin/main).
+- `builder-lessons` and `builder-background-state-unsplit` (a backup before a split) are merged or done with; they
+  can be deleted.
+- To resume: `git -C ~/work/mishmeret log --oneline -3`; `git -C ~/work/mishmeret-builder status -sb`; the Board.
 
 ## Next, in order
 
