@@ -2,7 +2,7 @@
 
 Rewritten in place when a piece lands and at the end of a session; the log is `notes/LOG.md`, by item.
 
-## Built, on main (main 7d1167c; origin at 158993f, the reviewer's push pending; each verified by girsa-verifier, merged by girsa-operator)
+## Built, on main (main febf285; origin at 158993f, the reviewer's push pending; each verified by girsa-verifier, merged by girsa-operator)
 
 - c1963d1: A (`guard.foreign`), A2 (seven config fields optional) and B (Mishmeret's own `.claude/`, `notes/`, the
   lane check) (notes/PLAN-OWN-CLAUDE.md). The Board on 8451 runs from the main clone.
@@ -17,27 +17,27 @@ Rewritten in place when a piece lands and at the end of a session; the log is `n
 - 21cb9ba: the operator's push refused for a force or a delete in any form (M07 item 4; notes/PLAN-PUSH-FORMS.md).
 - db17aac (with db7b0ff, 828abdc): the guard sees git after a shell keyword, behind its own options and written
   quoted; every tree git may use, every cd in order, a cd quoted, optioned or by pushd (M07 item 1;
-  notes/PLAN-GUARD-KEYWORDS.md). The first project's pin is db17aac; its move past it is the reviewer's Board #205.
+  notes/PLAN-GUARD-KEYWORDS.md). The first project's pin is 7d1167c (#205 A); its move to febf285 is #206.
 - 1137c12: land.py ended by a stop's SIGTERM, or SIGHUP, releases the hold and leaves nothing staged (M07 item 6).
 - d7c97bc: the Board's first answers asked at once parse each landed session once (M07 item 5).
-- 5aa9a0a: a subagent is judged as no role (M07 item 2; the reviewer's "No role (c)"). The suite at 7d1167c: 142.
+- 5aa9a0a: a subagent is judged as no role (M07 item 2; the reviewer's "No role (c)").
+- f734ca4 (the look), febf285: the Board draws a role working on its own background task "Working in the background",
+  and keeps a reported wait past a notification (notes/PLAN-BACKGROUND-STATE.md). The suite at febf285: 143 passed.
 
 ## Now
 
 - THE LESSONS FILE (notes/PLAN-LESSONS.md; the log's M08): girsa-operator's REQUEST, on the reviewer's "B - Also
   the six borderline: 50 move" (the first project's Board #182). `LESSONS.md` at the top, from the draft in
   `~/work/girsa-copies/lessons-split-2026-11-10/`, now its 14:26 version (19,059 bytes; one example changed on the
-  reviewer's question). BUILT on branch `builder-lessons`, rebased on main 7d1167c: the plan was accepted by
+  reviewer's question). BUILT on branch `builder-lessons`, rebased on main febf285: the plan was accepted by
   girsa-verifier, and the suite passed (140). The LANDING WAITS for the reviewer's read of the six borderline
   lessons and of the changed example (girsa-operator tells me), then girsa-verifier's check at the final commit,
   then girsa-operator's merge with its `sizes.files` entry and the pin.
-- THE BOARD'S BACKGROUND-TASK STATE, the last of the reviewer's Board #201 order (notes/PLAN-BACKGROUND-STATE.md, on
-  branch `builder-background-state` from 7d1167c): a "background" corner state, and a reported wait not dropped by a
-  task notification. girsa-ui-steward has answered the look ("Working in the background", the working green, a
-  hollow ring). girsa-verifier's review is awaited, then the build, then girsa-ui-steward's read of the Board
-  (1864 and 1229, both themes) before its landing.
-- To resume: `git -C ~/work/mishmeret log --oneline -3`; `git -C ~/work/mishmeret-builder branch` (the two
-  branches above); the log's M08.
+- The reviewer's Board #201 order is done. Theirs to answer: the first project's #206 (its pin to febf285; option B
+  keeps "Finished" first over a finished session's own running task, a change of mine); Mishmeret's push.
+- `builder-background-state-unsplit` is a backup of the branch before its split; it can be deleted.
+- To resume: `git -C ~/work/mishmeret log --oneline -3`; `git -C ~/work/mishmeret-builder status -sb` (on
+  `builder-lessons`); the log's M08.
 
 ## Next, in order
 

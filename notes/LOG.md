@@ -73,6 +73,19 @@ M08. **[2026-11-12, the next work after the review]**
       girsa-operator sent the ask's own words (2026-11-10 09:49). The plan is with girsa-verifier and its look with
       girsa-ui-steward. MY SLIP: the plan says "Written 17:20", a time not read from the clock; `date` read 17:15
       after it, and the plan is corrected.
+    * **[17:40]** THE LAST ITEM, done (notes/PLAN-BACKGROUND-STATE.md records each step). girsa-verifier's review of
+      the plan: a class of system records had still dropped a wait; taken (`is_prompt`: origin.kind first, then
+      isMeta and isCompactSummary). girsa-ui-steward's look ("Working in the background", the working green, a
+      hollow ring), read on a demo Board from the build at both widths and themes: nothing to change. Demo server
+      stopped. VERIFIED at 66c66d5; on its LOW, split into the look (f734ca4) and the behaviour (febf285, code equal
+      to 66c66d5). MERGED by girsa-operator: main febf285, the suite 143 passed. "Finished" no longer shows over a
+      finished session's own running task; girsa-verifier named it to the reviewer (the first project's Board #206,
+      option B keeps "Finished" first). MY SLIPS: f734ca4's message said the page looks as it did, though the legend
+      shows the new entry from it (corrected in febf285's message and the plan); and febf285's message quoted the
+      full suite before I had run it at that commit, so I ran it after: 143 passed.
+    * THE REVIEWER'S BOARD #201 ORDER IS DONE: items 4, 1, 6, 5, 2 and the background state, all merged. Open for
+      the reviewer: the lessons file's landing (their read of the six and of the changed example); the first
+      project's pin move to febf285 (#206); Mishmeret's push (origin 158993f).
 
 M07. **[2026-11-10, a review of all of Mishmeret's code and the first project's side of it (the reviewer's request)]**
     * **[20:49]** Read at main 120c3b5: every file of `mishmeret/` but the Board page's script, Mishmeret's own
