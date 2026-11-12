@@ -17,20 +17,26 @@ Rewritten in place when a piece lands and at the end of a session; the log is `n
 
 ## Now
 
-- No piece is in work. The first project's pin is dd3bcdb since its main e955b2cf (girsa-operator's step 1 of 2:
+- THE LESSONS FILE (notes/PLAN-LESSONS.md; the log's M08): girsa-operator's REQUEST, on the reviewer's "B - Also
+  the six borderline: 50 move" (the first project's Board #182). `LESSONS.md` at the top, from the draft in
+  `~/work/girsa-copies/lessons-split-2026-11-10/`. The plan is written on branch `builder-lessons`; the build is
+  next. The LANDING WAITS for the reviewer's read of the six borderline lessons (girsa-operator tells me), then
+  girsa-verifier's check, then girsa-operator's merge and pin. One question is open with girsa-operator: "labelled"
+  to "labeled".
+- The first project's pin is dd3bcdb since its main e955b2cf (girsa-operator's step 1 of 2:
   the pin, the finish hook's shim and Stop hook). Its step 2 - `night.finish_command`, `night.finish_exit_command`
   in its config - waits until every worktree there is at or past e955b2cf; its command files calling `board.py
   finished` are its builder's. girsa-verifier owes three checks there (the hook under the shim, the two fields, an
   older worktree's landing). The first project's Board was restarted on the pin: its page says "Finished"
   (girsa-ui-steward told, live, 17:41).
-- To resume: `git -C ~/work/mishmeret log --oneline -3`; `git -C ~/work/mishmeret-builder status -sb`; ask
-  girsa-operator, live, for the next work.
+- To resume: `git -C ~/work/mishmeret log --oneline -3`; `git -C ~/work/mishmeret-builder status -sb` (on
+  `builder-lessons`); read notes/PLAN-LESSONS.md and the log's M08 for the answers so far.
 
 ## Next, in order
 
 1. THE REVIEW'S FINDINGS (the log's M07, 2026-11-10, given to the reviewer; none is given as work yet): the guard
    not seeing git after `then`, `do`, `{`, `!` or behind `--no-pager` (1); a subagent's type judged as the role (2);
-   Mishmeret's own pin still a5faac2, the operator's (3); the operator's `+main` push (4); the Board's slow first
+   (3, Mishmeret's own pin, settled: main 158993f); the operator's `+main` push (4); the Board's slow first
    answer, traced - girsa-operator's 110 s: each request builds the whole answer itself, 5.0 s alone, 68.5 s for
    12 at once (5); `land.py` ended by a signal keeps the hold (6); and four smaller. Each is a piece of its own, with
    its plan, on the reviewer's word.

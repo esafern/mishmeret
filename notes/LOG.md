@@ -3,6 +3,18 @@
 Findings, decisions and open work, each the moment it is known; a time from `date`. One item per run of work, newest
 first (`M01.`, `M02.` ...); what git records (what each commit did) is not repeated here.
 
+M08. **[2026-11-12, the next work after the review]**
+    * **[09:19]** Started at main 158993f: girsa-operator moved Mishmeret's own pin to dd3bcdb (M07's item 3, settled).
+      No piece in work. Sent, live: a QUESTION to girsa-operator - the next work, with M07's open items (1, 2, 4, 5,
+      6) and its own Board-state item listed, each on the reviewer's word. The budget then: the 5-hour window 95%.
+    * **[09:20]** girsa-operator's ANSWER, live: the lessons file, on the reviewer's "B - Also the six borderline: 50
+      move" (the first project's Board #182). The landing waits for the reviewer's read of the six borderline
+      lessons, then girsa-verifier, then girsa-operator's merge and pin. M07's items and its Board-state item are not
+      given; it put them to the reviewer. Measured on the draft: 50 unique names, matching the first project's
+      after-file; no hit from the lane check's patterns; one British spelling, "labelled". The plan:
+      notes/PLAN-LESSONS.md. To send at this commit, live: the plan's path, with one QUESTION ("labeled"), to
+      girsa-operator; the plan's HANDOFF to girsa-verifier.
+
 M07. **[2026-11-10, a review of all of Mishmeret's code and the first project's side of it (the reviewer's request)]**
     * **[20:49]** Read at main 120c3b5: every file of `mishmeret/` but the Board page's script, Mishmeret's own
       `.claude/`, the first project's shim, config, settings and finish commands. The suite: 139 passed. Nothing
