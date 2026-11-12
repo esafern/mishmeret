@@ -3,7 +3,8 @@
 Written 15:31 (`date`). This is M07's item 5, the fourth in the reviewer's order ("A" on the first project's Board
 #201, 09:38), taken after item 6 was verified (1137c12). It is on branch `builder-board-first-answer` from main
 c773f5e (`board_server.py` alone; item 6 changed `land.py`). Its messages are recorded here, and in the log once
-`builder-lessons` is merged.
+`builder-lessons` is merged. Sent, live, at d7c97bc: the plan's and the build's HANDOFF to girsa-verifier, saying
+the build came before its review.
 
 ## The case
 
@@ -34,6 +35,12 @@ c773f5e (`board_server.py` alone; item 6 changed `land.py`). Its messages are re
 - BUILT 15:32, before the plan's review (said to girsa-verifier). The test, on today's code: red, each session's
   facts asked many times (`['s3', 's3', 's3', ...]`). With the lock: green three runs in a row. The suite: 141
   passed. The probe on the first project's record with the build: 12 at once, 6.2 s each.
+- VERIFIED at d7c97bc by girsa-verifier, nothing found; it read the plan and the build together. Its own probe, on an
+  APFS copy of the real record with LIVE stubbed and the parses counted: at c773f5e, 1.4-1.5 s, 2.1 s and 5.7-6.1 s
+  for 1, 4 and 12 at once, with 1,288-1,339 parses for 160 sessions. At d7c97bc: 1.4, 1.6 and 2.8-2.9 s, with 160
+  parses each time. ITS ABSOLUTE TIMES ARE 4 TO 14 TIMES BELOW MINE (5.6, 25.7, 84.1 s), not reproduced; its guess,
+  untested, is a warm file cache. Mine had LIVE live (`claude agents --json`). The effect is the same: each session
+  is parsed once.
 
 ## Files
 
