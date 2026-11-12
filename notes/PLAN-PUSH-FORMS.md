@@ -10,7 +10,8 @@ question), taken into the plan. Sent, live, at 1f349a4: a NOTE to girsa-operator
 a `!` git push was ever seen to pass the guard. Then girsa-operator's ANSWER (under "Not run"). Sent, live: a
 NOTE that the `!` test can run now, in any non-operator pane. Before 11:13: girsa-verifier's review of 4c65b64, NOT
 READY, two MEDIUMs and one LOW, all taken (under "The behaviour"). It holds its reading of the delete question
-until girsa-architect answers.
+until girsa-architect answers. Sent, live, at f664982: the ANSWER to girsa-verifier, the three findings taken. Then girsa-verifier: READY TO
+BUILD once girsa-architect answers, with two side effects read (under "The measure" and "Not in this piece").
 
 ## The case
 
@@ -78,6 +79,10 @@ does see them, the sentence above points to a command that is refused too.
   prescribes, 11:07), `--dry-run`, `--porcelain`, `--progress`, `--push-option=x`, `--atomic`, `--tags`,
   `--no-verify`, `--recurse-submodules=check`, `--repo=origin`, `--` before the remote, `--quiet` and `--verbose`.
 - `tests/test_guard.py` in the prototype: 30 passed.
+- A side effect girsa-verifier read on f664982: a comment after the push, `git push origin b # --force later`, is
+  now read as words (the mask had spaced it), so that push is refused. KEPT, and pinned by a test as refused: an
+  error on the safe side. NOT TAKEN: `shlex.split(..., comments=True)`. Measured, it ends a comment at a `#` inside
+  a word, which bash does not (`origin a#b` gives `origin a`). So `git push origin x#y +main` would lose its `+main`.
 
 ## Tests
 
@@ -107,5 +112,6 @@ does see them, the sentence above points to a command that is refused too.
 
 - A push with no refspec, where the force comes from config (`remote.origin.push = +refs/heads/*:...`, or `git -c`
   setting one): the guard reads the command, not git's config. Not read today; not changed here.
+- A refspec or an option in a variable (`git push origin $REF`): not read (girsa-verifier, on f664982).
 - A force given through an alias (`git config alias.p "push -f"`): not read either. The docstring does not name
   aliases, but they fall under its "a guard on the ordinary forms, not a sandbox".
