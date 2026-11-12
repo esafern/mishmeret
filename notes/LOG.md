@@ -55,6 +55,24 @@ M08. **[2026-11-12, the next work after the review]**
       rebased on main c773f5e with no conflict, and `LESSONS.md` rebuilt from the draft (19,059 bytes, sha256
       624b7510ff2f0d7e..., `cmp` exit 0; the one example changed). The start-reading check: exit 0. The suite: 140
       passed. Mishmeret's origin is still at 158993f: the reviewer's push failed on the network and waits for them.
+    * ITEM 6, land.py ended by a signal (notes/PLAN-LAND-SIGNAL.md, which records each message): MEASURED, a Bash
+      command at its time limit is not ended but moved to the background; a stop sends SIGTERM to its group and
+      SIGKILL about 1.5 s later. girsa-verifier's review: a stop in the after-landing gate still left the hold (the
+      frozen copy removed inside it). VERIFIED at 1137c12. MY DEPARTURE: built before the revised plan's READY, said so.
+    * ITEM 5, the Board's slow first answer (notes/PLAN-BOARD-FIRST-ANSWER.md): FACTS_LOCK; 12 at once 6.2 s each
+      (84.1 s before) on the first project's record. VERIFIED at d7c97bc; girsa-verifier's absolute times were 4 to 14
+      times below mine, not reproduced. Built before the plan's review, said so.
+    * ITEM 2, a subagent judged as its type (notes/PLAN-SUBAGENT-ROLE.md): MEASURED in a scratch project with its own
+      logging hook and headless sessions: a role's own session carries no agent_id; a subagent's hook env holds the
+      parent's role; a no-role session's role-typed subagent has the env unset. girsa-architect: (c); girsa-verifier:
+      (c), its MEDIUM 1 correcting the plan's reason against (b). THE REVIEWER, asked directly: "No role (c)". VERIFIED
+      at 5aa9a0a; its LOW (the module header) left for the next touch of role_guard.py.
+    * Items 6, 5 and 2 MERGED by girsa-operator: main 7d1167c, the suite 142 passed; the first project's pin move waits
+      on the reviewer's Board #205.
+    * THE LAST ITEM, the Board's background-task state (notes/PLAN-BACKGROUND-STATE.md, on `builder-background-state`):
+      girsa-operator sent the ask's own words (2026-11-10 09:49). The plan is with girsa-verifier and its look with
+      girsa-ui-steward. MY SLIP: the plan says "Written 17:20", a time not read from the clock; `date` read 17:15
+      after it, and the plan is corrected.
 
 M07. **[2026-11-10, a review of all of Mishmeret's code and the first project's side of it (the reviewer's request)]**
     * **[20:49]** Read at main 120c3b5: every file of `mishmeret/` but the Board page's script, Mishmeret's own

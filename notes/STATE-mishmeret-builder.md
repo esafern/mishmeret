@@ -2,7 +2,7 @@
 
 Rewritten in place when a piece lands and at the end of a session; the log is `notes/LOG.md`, by item.
 
-## Built, on main (code as of db17aac, notes to c773f5e; origin at 158993f, the reviewer's push pending; each verified by girsa-verifier, merged by girsa-operator)
+## Built, on main (main 7d1167c; origin at 158993f, the reviewer's push pending; each verified by girsa-verifier, merged by girsa-operator)
 
 - c1963d1: A (`guard.foreign`), A2 (seven config fields optional) and B (Mishmeret's own `.claude/`, `notes/`, the
   lane check) (notes/PLAN-OWN-CLAUDE.md). The Board on 8451 runs from the main clone.
@@ -17,33 +17,32 @@ Rewritten in place when a piece lands and at the end of a session; the log is `n
 - 21cb9ba: the operator's push refused for a force or a delete in any form (M07 item 4; notes/PLAN-PUSH-FORMS.md).
 - db17aac (with db7b0ff, 828abdc): the guard sees git after a shell keyword, behind its own options and written
   quoted; every tree git may use, every cd in order, a cd quoted, optioned or by pushd (M07 item 1;
-  notes/PLAN-GUARD-KEYWORDS.md). The first project's pin is db17aac. The suite at db17aac: 140 passed.
+  notes/PLAN-GUARD-KEYWORDS.md). The first project's pin is db17aac; its move past it is the reviewer's Board #205.
+- 1137c12: land.py ended by a stop's SIGTERM, or SIGHUP, releases the hold and leaves nothing staged (M07 item 6).
+- d7c97bc: the Board's first answers asked at once parse each landed session once (M07 item 5).
+- 5aa9a0a: a subagent is judged as no role (M07 item 2; the reviewer's "No role (c)"). The suite at 7d1167c: 142.
 
 ## Now
 
 - THE LESSONS FILE (notes/PLAN-LESSONS.md; the log's M08): girsa-operator's REQUEST, on the reviewer's "B - Also
   the six borderline: 50 move" (the first project's Board #182). `LESSONS.md` at the top, from the draft in
   `~/work/girsa-copies/lessons-split-2026-11-10/`, now its 14:26 version (19,059 bytes; one example changed on the
-  reviewer's question). BUILT on branch `builder-lessons`, rebased on main c773f5e: the plan was accepted by
+  reviewer's question). BUILT on branch `builder-lessons`, rebased on main 7d1167c: the plan was accepted by
   girsa-verifier, and the suite passed (140). The LANDING WAITS for the reviewer's read of the six borderline
   lessons and of the changed example (girsa-operator tells me), then girsa-verifier's check at the final commit,
   then girsa-operator's merge with its `sizes.files` entry and the pin.
-- To resume: `git -C ~/work/mishmeret log --oneline -3`; `git -C ~/work/mishmeret-builder status -sb` (on
-  `builder-lessons`); the log's M08.
+- THE BOARD'S BACKGROUND-TASK STATE, the last of the reviewer's Board #201 order (notes/PLAN-BACKGROUND-STATE.md, on
+  branch `builder-background-state` from 7d1167c): a "background" corner state, and a reported wait not dropped by a
+  task notification. girsa-ui-steward has answered the look ("Working in the background", the working green, a
+  hollow ring). girsa-verifier's review is awaited, then the build, then girsa-ui-steward's read of the Board
+  (1864 and 1229, both themes) before its landing.
+- To resume: `git -C ~/work/mishmeret log --oneline -3`; `git -C ~/work/mishmeret-builder branch` (the two
+  branches above); the log's M08.
 
 ## Next, in order
 
-GIVEN (the reviewer's "A" on the first project's Board #201, 09:38, 2026-11-12), one plan at a time, each checked
-by girsa-verifier before the next; plans go to girsa-operator. Items 4 and 1 are done. The log's M07 has each:
-
-1. M07's item 6: `land.py` ended by a signal (a tool's time limit) runs no `finally`, so the Board's hold and the
-   staged names stay. Reasoned, not run. NEXT: its plan, on a new branch from main.
-2. M07's item 5: the Board's slow first answer - each request builds the whole answer itself (5.0 s alone, 68.5 s
-   for 12 at once); one lock around the build, and the page not asking again while it waits.
-3. M07's item 2 (a subagent's type judged as the role), and the Board state for a session busy only with its own
-   background task (`board_server.py`'s busy-to-idle rule, `board.py`'s `shown_state`).
-
-Not given: the code's citations of the first project's lesson numbers; M07's smaller items.
+Nothing more is given. Not given: the code's citations of the first project's lesson numbers; M07's smaller items;
+role_guard.py's header sentence on subagents (girsa-verifier's LOW, for its next touch).
 
 ## Open
 
