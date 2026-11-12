@@ -3,7 +3,10 @@
 Written 11:05 (`date`). This is M07's item 4, given by the reviewer's "A" on the first project's Board #201 (09:38,
 by way of girsa-operator). It is the first of the items given there, taken one plan at a time, each checked by
 girsa-verifier before the next. It is on branch `builder-push-forms` from main 158993f. The log and the state file
-record it once the lessons branch (`builder-lessons`) is merged, as M06 was kept off M05's branch.
+record it once the lessons branch (`builder-lessons`) is merged, as M06 was kept off M05's branch. Until then
+the messages are recorded here. Sent, live, at 4c65b64: the QUESTION to girsa-architect, the HANDOFF to
+girsa-verifier, and a NOTE of the path to girsa-operator. 11:07: girsa-operator's ANSWER (above, under the
+question), taken into the plan.
 
 ## The case
 
@@ -28,12 +31,19 @@ The push rule (`role_guard.py`, the `bad` list under `verb == "push"`) refuses a
   `-o`'s argument (`-ofix` is the push option "fix"), so it is not read as options.
 
 The refusal's words become "never pushes --all, --mirror, a force or a delete". The module's docstring line says
-the same.
+the same. A delete's refusal adds girsa-operator's sentence (11:07): "a delete on a remote runs only as the
+reviewer's own command: `! git push origin --delete <branch>` in the operator's pane".
 
 QUESTION to girsa-architect: should the operator be refused EVERY remote delete, a merged branch's too? The rule
-as planned refuses them all. A branch is then deleted on the remote by the reviewer, or through a host's page. The
-other way would refuse a delete of main alone, and that needs the remote's default branch, which the guard does
-not know. My recommendation: refuse every delete.
+as planned refuses them all. The other way would refuse a delete of main alone, and that needs the remote's default
+branch, which the guard does not know. My recommendation: refuse every delete. girsa-operator's answer (11:07, also
+sent to girsa-architect as the first project's Board #979): refuse every delete. Its one delete on record, of
+origin/master on 2026-11-04 on the reviewer's word, was of a merged branch, and the guard cannot tell from the
+command whether the reviewer gave that word. girsa-architect's answer is still awaited.
+
+NOT VERIFIED: that a command the reviewer types with `!` in a pane runs without the PreToolUse hook. Claude Code
+runs `!` commands itself rather than through the Bash tool, but I have not seen it on this machine. If the hook
+does see them, the sentence above points to a command that is refused too.
 
 ## The measure (the prototype: the rule above in a scratch copy of `mishmeret/`, the same probe)
 
@@ -41,6 +51,8 @@ not know. My recommendation: refuse every delete.
 - Still let through, 8 ordinary pushes: `origin some-branch`, `-u origin some-branch`, `origin
   HEAD:refs/heads/b`, `-o ci.skip`, `--follow-tags`, `-v -n`, `origin b:b`, `--set-upstream`. Also let through:
   `-ofix` and `-uofix` (an `f` inside `-o`'s argument). `--branches` is refused.
+- Let through: girsa-operator's push by sha, `git push origin <sha>:refs/heads/<branch>`, the form its push procedure
+  prescribes (11:07, for main and for a branch). It goes in the test's list of ordinary pushes.
 
 ## Tests
 
