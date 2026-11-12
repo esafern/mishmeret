@@ -167,6 +167,29 @@ the `;` hole on the real trees, at 21cb9ba and at the first project's live pin d
 - Red checks again, on the round: green with nothing out, red with each of 43 parts out, the new one being "-C
   from each place" (red on `cd /work && git -C book reset -q --hard`). Two runs gave the same result. The suite: 140
   passed.
+- Sent, live, at 828abdc: the ROUND to girsa-verifier.
+
+THE SECOND ROUND, 13:00, on girsa-verifier's check of 828abdc: MEDIUM 1 FIXED; ONE MORE MEDIUM, which it names as
+its own miss in its sweep.
+
+- MEDIUM 2, A RELATIVE cd AFTER A cd WAS JOINED TO THE SESSION'S DIRECTORY: `_dir_before` joined only the last cd,
+  to the cwd. On the real trees, from a worktree, `cd ~/work && cd <the project> && git reset -q --hard`, the same
+  with `;`, and `cd ~/work && if true; then cd <the project>; fi; git reset -q --hard` were let through at
+  21cb9ba, db7b0ff and 828abdc. NOW: `_places_before` walks every cd in order, each from where the one before it
+  left. A keyword-led cd adds the moved place beside the one it leaves. `_dir_before` is that walk over plain cds
+  alone, so a script, `cp`, tmux and the shells' arguments are judged from the right place too.
+- FOUND, sweeping this round's siblings myself before sending (the lesson SWEEP THE SIBLINGS, after the last two
+  rounds' misses): on the two real repositories, from a worktree, at 21cb9ba AND at 828abdc, ALL LET THROUGH: `cd
+  "<main>" && git reset`, `cd '<main>'; git reset`, `cd -P <main>`, `cd -L <main>`, `cd -- <main>`, `pushd <main>`.
+  In the masked text a quoted path had read as a lone quote character, and an option word as the path. NOW: one
+  path pattern for both cd patterns, `CD_TO`: `cd` or `pushd`, its options, then a quoted path or one ending at a
+  separator. All six refused, and `if true; then cd -P '<main>'; fi; ...` and `X=<main>; cd "$X" && ...` too. The
+  worktree's own `cd "<wt>"`, `cd -P <wt>` and `cd <wt> && git status` still run. Not read: `popd`, so `pushd <main>;
+  popd; git reset --hard` from a worktree is refused - on the safe side.
+- The test gained the three chain forms, a script after a chain, the six forms with two more, and four fine ones.
+  Red checks on the round: green with nothing out, red with each of 48 parts out. The new parts are each cd from
+  the one before, a keyword cd keeping the place it leaves, the quoted path, the options, and pushd. Two runs gave
+  the same result. The suite: 140 passed.
 
 ## Files
 

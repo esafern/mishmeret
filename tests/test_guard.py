@@ -196,12 +196,22 @@ def test_the_role_guard_sees_git_after_a_keyword_behind_its_options_and_quoted()
                 "cd /work/book-builder; if true; then cd /work/book; fi; git commit -m x",
                 "cd /work/book; ls; git reset --hard", "cd /work/book; true && git reset --hard",
                 "cd /work && git -C book reset -q --hard", "cd /work/book && git -C . reset -q --hard",
-                "if true; then cd /work; fi; git -C book reset --hard"):
+                "if true; then cd /work; fi; git -C book reset --hard",
+                # every cd from where the one before it left (girsa-verifier's MEDIUM 2 on 828abdc)
+                "cd /work && cd book && git reset -q --hard", "cd /work; cd book; git reset -q --hard",
+                "cd /work && if true; then cd book; fi; git reset -q --hard", "cd /work && cd book && bash x.sh",
+                # a cd's path quoted, after its options, or by pushd (found sweeping the round's siblings)
+                'cd "/work/book" && git reset -q --hard', "cd '/work/book'; git reset -q --hard",
+                "cd -P /work/book && git reset -q --hard", "cd -- /work/book && git reset -q --hard",
+                "pushd /work/book && git reset -q --hard", "if true; then cd -P '/work/book'; fi; git reset -q --hard",
+                'X=/work/book; cd "$X" && git reset -q --hard'):
         assert no(bad, "/work/book-builder"), bad
     for fine in ("git --git-dir=.git log", "git reset --hard", "GIT_DIR=.git git reset --hard",
                  "git --work-tree=. reset --hard", "if false; then cd /work/book; fi; git status",
                  "if true; then cd /work/book-builder; git reset --hard; fi", "cd /work && git -C book-builder reset --hard",
-                 "cd /work/book && git -C /work/book-builder reset --hard"):
+                 "cd /work/book && git -C /work/book-builder reset --hard", "cd /work && cd book-builder && git reset --hard",
+                 "cd /work/book && cd /work/book-builder && git reset --hard",
+                 'cd "/work/book-builder" && git reset --hard', "cd -P /work/book-builder && git reset --hard"):
         assert no(fine, "/work/book-builder") is None, fine
     # from the main tree: a cd in a branch that may not run does not move the git after it out of the main tree
     for bad in ("if false; then cd /work/book-builder; fi; git reset --hard",

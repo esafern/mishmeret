@@ -96,10 +96,13 @@ def shell_c(command, masked):
 
 # A cd after a keyword may stand in a branch that does not run (girsa-verifier's MEDIUM 1 on 2324302: `if false; then
 # cd <worktree>; fi; git reset --hard` from the main tree had lost its refusal): it is not where the next command runs
-# (CD, on today's boundary), only where git may (KEYWORD_CD, read by _git_trees beside it). The path ends at a
-# separator: `cd <main>; ls; git reset --hard` had been judged at `<main>;`, no tree, and let through
-CD = re.compile(BASE_BOUNDARY + r"cd\s+([^\s;&|)`]+)", re.M)
-KEYWORD_CD = re.compile(BASE_BOUNDARY + KEYWORD + r"+cd\s+([^\s;&|)`]+)", re.M)
+# (CD, on today's boundary), only where git may (KEYWORD_CD, read by _git_trees beside it). The path (found while
+# building M07 item 1, each let through from a worktree into the main tree): it ends at a separator (`cd <main>; ls;
+# git reset --hard` had been judged at `<main>;`), it may be quoted (in the masked text a quoted path had read as a
+# lone quote), it comes after cd's options (`cd -P <main>`, `cd -- <main>`), and `pushd` goes there too
+CD_TO = r"""(?:cd|pushd)(?:\s+(?:-[LPe@]+|--))*\s+("[^"]*"|'[^']*'|[^\s;&|)`]+)"""
+CD = re.compile(BASE_BOUNDARY + CD_TO, re.M)
+KEYWORD_CD = re.compile(BASE_BOUNDARY + KEYWORD + "+" + CD_TO, re.M)
 SCRIPT = re.compile(BOUNDARY + r"(?:(?:bash|sh|zsh)\s+(?:-\w+\s+)*)?(\S+\.sh)(?![\w.])", re.M)
 ASSIGN = re.compile(r"(?<![\w$])([A-Za-z_]\w*)=(\"[^\"]*\"|'[^']*'|[^\s;&|]+)")
 HEREDOC = re.compile(r"<<-?\s*(['\"]?)([A-Za-z_]\w*)\1")
@@ -349,27 +352,34 @@ def _read(path):
         return None
 
 
+def _places_before(text, masked, at, base, keyword_cds=True):
+    """Each directory a command at position `at` may run in: every cd before it, in order, from where the one before
+    it left (girsa-verifier's MEDIUM 2 on 828abdc: `cd ~/work && cd <the project> && git reset --hard` had been judged
+    at `<cwd>/<the project>`). A keyword-led cd (KEYWORD_CD) may not run, so the place it leaves stays one too."""
+    cds = sorted([(c, False) for c in CD.finditer(masked[:at])]
+                 + [(c, True) for c in KEYWORD_CD.finditer(masked[:at])] * keyword_cds, key=lambda cd: cd[0].start())
+    places = [base]
+    for c, maybe in cds:
+        moved = [os.path.join(p, _expand(_unquote(text[c.start(1):c.end(1)]), text[:at])) for p in places]
+        places = list(dict.fromkeys(places + moved if maybe else moved))
+    return places
+
+
 def _dir_before(text, masked, at, base):
-    """The directory the last `cd` before position `at` went to, or `base`."""
-    cds = list(CD.finditer(masked[:at]))
-    if not cds:
-        return base
-    a, b = cds[-1].span(1)
-    return os.path.join(base, _expand(_unquote(text[a:b]), text[:at]))
+    """The directory the cds before position `at` went to, each from where the one before it left, or `base`."""
+    return _places_before(text, masked, at, base, keyword_cds=False)[0]
 
 
 def _git_trees(command, masked, m, cwd):
     """The trees a GIT match may use - each place it may run in, its work tree and its repository's (once, when they
     are the same). A command is a tree's when any of them is (girsa-architect on 46b378b: `--git-dir=<main>/.git
-    --work-tree=. commit` commits onto the main clone's branch). The place: the last `cd` before it, else `cwd` -
-    and beside it each keyword-led cd before it (KEYWORD_CD) - with its `-C` taken from each. The work tree: `--work-tree` or
+    --work-tree=. commit` commits onto the main clone's branch). The places: `_places_before` - each with its `-C`
+    taken from it. The work tree: `--work-tree` or
     GIT_WORK_TREE= before git, else the place; the repository's: `--git-dir` or GIT_DIR= (its parent if it ends in
     .git), else the place."""
     opts, lead, before = command[m.start(1):m.end(1)], command[m.start():m.start(1)], command[:m.start()]
     c = re.search(r"-C\s+(\S+)", opts)
-    places = [_dir_before(command, masked, m.start(), cwd)] + [
-        os.path.join(cwd, _expand(_unquote(command[k.start(1):k.end(1)]), before))
-        for k in KEYWORD_CD.finditer(masked[:m.start()])]
+    places = _places_before(command, masked, m.start(), cwd)
     if c:                                   # a relative -C from where the cd went (girsa-verifier's MEDIUM on db7b0ff)
         places = [os.path.join(place, _expand(_unquote(c.group(1)), before)) for place in places]
     named = {flag: re.search(flag + r"(?:=|\s+)(\S+)", opts) or re.search(r"(?<![\w$])" + var + r"=(\S+)", lead)
