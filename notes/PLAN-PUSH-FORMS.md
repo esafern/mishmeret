@@ -6,7 +6,8 @@ girsa-verifier before the next. It is on branch `builder-push-forms` from main 1
 record it once the lessons branch (`builder-lessons`) is merged, as M06 was kept off M05's branch. Until then
 the messages are recorded here. Sent, live, at 4c65b64: the QUESTION to girsa-architect, the HANDOFF to
 girsa-verifier, and a NOTE of the path to girsa-operator. 11:07: girsa-operator's ANSWER (above, under the
-question), taken into the plan.
+question), taken into the plan. Sent, live, at 1f349a4: a NOTE to girsa-operator of the revision, asking whether
+a `!` git push was ever seen to pass the guard.
 
 ## The case
 
@@ -65,6 +66,16 @@ does see them, the sentence above points to a command that is refused too.
 
 - `mishmeret/role_guard.py`, `tests/test_guard.py`, this plan. One code commit through `land.py commit
   mishmeret-builder code --tests "tests/test_guard.py"`, then the suite.
+
+## Not run (until the reviewer runs it)
+
+- Whether `!` passes through the hook. girsa-operator (11:10) has no record of a `!` git push going through with
+  the guard on, and treats the answer as unknown. Its test is harmless: the reviewer types `! git push --dry-run
+  origin --delete no-such-branch-girsa-test` in a role's pane. If the guard's refusal prints, `!` runs through the
+  hook, and the delete's sentence must name another way. If git answers itself ("remote ref does not exist", or a
+  dry-run line), `!` goes around the hook and the sentence is true. With `--dry-run` and a branch that does not
+  exist, nothing can be deleted either way. In a pane of any role but the operator, today's guard already refuses
+  every push, so the test does not need this build: it can be run now. girsa-operator puts it to the reviewer.
 
 ## Not in this piece
 
