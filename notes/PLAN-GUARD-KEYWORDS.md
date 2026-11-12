@@ -8,7 +8,10 @@ messages are recorded here. Sent, live, at 46b378b: the plan's HANDOFF to girsa-
 girsa-architect, and a NOTE to girsa-operator of the path and the merge order (builder-push-forms first).
 12:20: girsa-architect's ANSWER (under "The behaviour"), taken. Sent, live, at 2324302: a NOTE to girsa-verifier
 of the revision. Before 12:26: girsa-verifier's review at 2324302, NOT READY, and girsa-architect's CORRECTION
-(its "refuses more, never less" withdrawn), both taken.
+(its "refuses more, never less" withdrawn), both taken. Then girsa-operator: builder-push-forms merged, main
+21cb9ba, so this branch sits on main with no rebase. Sent, live, at 155298d: the ANSWER to girsa-verifier (the
+four taken, and the `land.py` sibling), a NOTE to girsa-architect (its correction taken), and a NOTE to
+girsa-operator.
 
 ## The case
 
@@ -125,6 +128,28 @@ REVISED 12:26 on girsa-verifier's review at 2324302 (NOT READY: two MEDIUMs, two
   `KEYWORD_CD` out (red on `then cd <main>` from a worktree), each group of NAMES (the shells, PREFIX's words, cd),
   `SHELL`'s quote in `SHELL_C`, in `PIPED_TO_SHELL` and in `STDIN_SHELL`, the original span for `STDIN_SHELL`,
   `shell_c`'s letter check, and `--attr-source`.
+
+BUILT, 12:39, on girsa-verifier's READY TO BUILD at 155298d. The test,
+`test_the_role_guard_sees_git_after_a_keyword_behind_its_options_and_quoted`, holds every form above. Run in a
+scratch copy, one part taken out at a time, with `__pycache__` cleared and `-B`: GREEN with nothing out, RED with
+each of the 42 parts out, each failing on the form that part is there for. Two runs gave the same result. The suite:
+140 passed.
+
+- FOUND in the build, not in the plan: `CD`'s `(\S+)` took a `;` into the path. At 21cb9ba, from a worktree,
+  `cd <main>; ls; git reset --hard` and `cd <main>; true && git reset --hard` are LET THROUGH: the guard judged them
+  at `<main>;`, which is no tree. This was measured on two real repositories in scratch, with `is_main_tree` itself.
+  A cd straight before git was safe, because the text is cut there. Now both cd patterns end the path at `; & | )`
+  or a backtick. Both forms are refused on the real repositories, and `cd <worktree>; ls; git reset --hard` still
+  runs.
+- To make each part show red, the test gained `git -c ...`, `--namespace` and `--config-env` forms, `--work-tree` and
+  `GIT_WORK_TREE=` alone, `"bash" <<<`, `"cp" -r`, and a name inside a multi-line quote or a heredoc's body (the "only
+  where unmasked" check). Its main-tree predicate now excludes `<main>/.git` and `<main>;`; the old loose one let both
+  pass as the main tree, which hid the `.git` parent's part and the bug above.
+- Deleted, inert: `re.escape` in KEYWORD and in the names' pattern. No keyword or name holds a character that
+  matters to a regex there: a lone `{` is literal, and the `.` in `land.py` matching any character gives back
+  nothing the guard reads.
+- My red script's first run had faults of its own: three keyword rows matched two places, and two rows broke the code
+  rather than taking a part out. All were rewritten before the counted runs.
 
 ## Files
 

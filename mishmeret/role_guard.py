@@ -17,7 +17,9 @@ parallel"):
 
 WHAT IT READS: the command, and the text of a shell script it runs (`bash x.sh`, `sh x.sh`, `./x.sh`, its path from
 a variable the same command sets) - commits here are made by script. Only git in COMMAND POSITION counts (a line's
-start, or after ; & | ( ` or $(), and never what stands inside quotes or a heredoc's body: `grep "git push"` and a
+start, or after ; & | ( ` or $(, and after the shell's keywords then, do, else, elif, if, while, until, ! and {;
+git also written `\\git`, "git" or 'git', and behind its own options), and never what stands inside quotes or a
+heredoc's body: `grep "git push"` and a
 commit message saying "never git push --all" are words, not commands (the builder's and the verifier's probes). It
 is a guard on the ordinary forms, not a sandbox: `bash -c "..."`'s argument and git behind env, time, command, exec,
 nice, sudo or xargs, or by a path, are read; git hidden in a variable, another interpreter or a deeper script is not. Anything it cannot judge runs.
@@ -49,20 +51,34 @@ _CFG = config.load()
 OPERATOR = _CFG["operator"]
 PLANNED = _CFG["land"]["planned"]
 GUARD = _CFG["guard"]
-BOUNDARY = r"(?:^|[;&|(`]|\$\()\s*"
+# COMMAND POSITION (M07 item 1, notes/PLAN-GUARD-KEYWORDS.md): after a separator, and after any run of the shell's
+# keywords - `if true; then git push; fi`, `{ git push; }`, `! git push` had gone through every check built on it
+BASE_BOUNDARY = r"(?:^|[;&|(`]|\$\()\s*"
+KEYWORDS = ("if", "!", "then", "else", "elif", "do", "while", "until", "{")
+KEYWORD = r"(?:(?:" + "|".join(KEYWORDS) + r")\s+)"
+BOUNDARY = BASE_BOUNDARY + KEYWORD + "*"
+# the names the guard reads in command position: `mask` gives each back written `\name`, `"name"` or `'name'` (a
+# path inside the quotes too), as the shell runs it
+NAMES = ("git", "tmux", "pkill", "killall", "cp", "cd", "bash", "sh", "zsh", "dash", "ksh", "env", "time", "command",
+         "exec", "nice", "sudo", "xargs", "land.py")
+_NAME = "(?:" + "|".join(NAMES) + ")"
+NAME_WORD = re.compile(r"""(?<![\w"'\\])(?:\\""" + _NAME + r"""|(["'])(?:[\w.~/-]*/)?""" + _NAME + r"""\1)(?![\w"'-])""")
+SHELL = r"""(?:\\|["'])?(?:\S*/)?(?:bash|sh|zsh|dash|ksh)["']?"""     # for the patterns that read the original text
 # what may stand before git and still run it (girsa-verifier's probe of 78b8088): assignments, and the prefixes env,
 # time, command, exec, nice, sudo and xargs with their options; and git by a path (/usr/bin/git)
 PREFIX = (r"(?:(?:[A-Za-z_]\w*=\S*|env(?:\s+-\S+)*|time|command|exec|nice(?:\s+-n\s*\S+|\s+-\d+)?"
           r"|sudo(?:\s+-[A-Za-z]+(?:\s+[\w.-]+)?)*|xargs(?:\s+-\S+(?:\s+\S+)?)*)\s+)*")
+# git's own options before the verb: those with a spaced argument, then any other word starting with `-`
 GIT = re.compile(BOUNDARY + PREFIX + r"(?:\S*/)?git"
-                 r"((?:\s+-C\s+\S+|\s+-c\s+\S+)*)\s+([a-z][\w-]*)([^;&|\n]*)", re.M)
-SHELL_C = re.compile(r"(?<![\w-])(?:bash|sh|zsh|dash|ksh)\s+(?:-\w+\s+)*-c\s+(\"(?:[^\"\\]|\\.)*\"|'[^']*')"
-                     r"|(?<![\w-])(?:bash|sh|zsh|dash|ksh)(?:\s+-\w+)*\s*<<<\s*(\"(?:[^\"\\]|\\.)*\"|'[^']*')")
+                 r"((?:\s+-[Cc]\s+\S+|\s+--(?:git-dir|work-tree|namespace|config-env|attr-source)\s+\S+|\s+-\S+)*)"
+                 r"\s+([a-z][\w-]*)([^;&|\n]*)", re.M)
+SHELL_C = re.compile(r"(?<![\w-])" + SHELL + r"\s+(?:-\w+\s+)*-c\s+(\"(?:[^\"\\]|\\.)*\"|'[^']*')"
+                     r"|(?<![\w-])" + SHELL + r"(?:\s+-\w+)*\s*<<<\s*(\"(?:[^\"\\]|\\.)*\"|'[^']*')")
 # a heredoc that a shell reads as its script (girsa-verifier, 2026-10-11): `bash <<'EOF'`, `sh -s <<EOF`, `. /dev/stdin
 # <<EOF`, or `cat <<EOF | bash` - its body is commands, not words
 STDIN_SHELL = re.compile(r"^\s*(?:[A-Za-z_]\w*=\S*\s+|env(?:\s+-\S+)*\s+|exec\s+|command\s+)*"
-                         r"(?:(?:\S*/)?(?:bash|sh|zsh|dash|ksh)(?:\s+-\w+)*|(?:source|\.)\s+/dev/stdin)\s*$")
-PIPED_TO_SHELL = re.compile(r"\|\s*(?:\S*/)?(?:bash|sh|zsh|dash|ksh)(?:\s+-\w+)*\s*(?:$|[;&|)])")
+                         r"(?:" + SHELL + r"(?:\s+-\w+)*|(?:source|\.)\s+/dev/stdin)\s*$")
+PIPED_TO_SHELL = re.compile(r"\|\s*" + SHELL + r"(?:\s+-\w+)*\s*(?:$|[;&|)])")
 
 
 def shell_arg(m):
@@ -74,8 +90,16 @@ def shell_c(command, masked):
     """The SHELL_C matches standing in command text: not in a heredoc body, a quote or a comment the mask blanked (a
     probe's own heredoc quoting `bash -c '...'` is words - 2026-10-13, the check-status guard refused the operator's
     probe of it)."""
-    return [m for m in SHELL_C.finditer(command) if masked[m.start()] == command[m.start()]]
-CD = re.compile(BOUNDARY + r"cd\s+(\S+)", re.M)
+    lead = lambda m: m.start() + (command[m.start()] in "\\\"'")       # the name's first letter: a quote before it
+    return [m for m in SHELL_C.finditer(command) if masked[lead(m)] == command[lead(m)]]    # is given back blank
+
+
+# A cd after a keyword may stand in a branch that does not run (girsa-verifier's MEDIUM 1 on 2324302: `if false; then
+# cd <worktree>; fi; git reset --hard` from the main tree had lost its refusal): it is not where the next command runs
+# (CD, on today's boundary), only where git may (KEYWORD_CD, read by _git_trees beside it). The path ends at a
+# separator: `cd <main>; ls; git reset --hard` had been judged at `<main>;`, no tree, and let through
+CD = re.compile(BASE_BOUNDARY + r"cd\s+([^\s;&|)`]+)", re.M)
+KEYWORD_CD = re.compile(BASE_BOUNDARY + KEYWORD + r"+cd\s+([^\s;&|)`]+)", re.M)
 SCRIPT = re.compile(BOUNDARY + r"(?:(?:bash|sh|zsh)\s+(?:-\w+\s+)*)?(\S+\.sh)(?![\w.])", re.M)
 ASSIGN = re.compile(r"(?<![\w$])([A-Za-z_]\w*)=(\"[^\"]*\"|'[^']*'|[^\s;&|]+)")
 HEREDOC = re.compile(r"<<-?\s*(['\"]?)([A-Za-z_]\w*)\1")
@@ -172,7 +196,8 @@ def mask(text):
                 done = "".join(out[:i])
                 start = max(done.rfind(ch) for ch in ";&|(\n") + 1
                 eol = text.find("\n", m.end())
-                if not (STDIN_SHELL.match(done[start:]) or PIPED_TO_SHELL.search(text[m.end():n if eol < 0 else eol])):
+                if not (STDIN_SHELL.match(done[start:]) or STDIN_SHELL.match(text[start:i])     # `"bash" <<EOF` too
+                        or PIPED_TO_SHELL.search(text[m.end():n if eol < 0 else eol])):
                     pending.append(m.group(2))
                 i = m.end()
                 continue
@@ -188,6 +213,9 @@ def mask(text):
             pending, i = [], j
             continue
         i += 1
+    for q in NAME_WORD.finditer(text):              # a name the shell runs, written quoted or escaped: given back
+        if out[q.start()] != " ":                   # unless inside a quote, a comment or a heredoc's body
+            out[q.start():q.end()] = re.sub(r"[\\\"']", " ", q.group(0))
     return "".join(out)
 
 
@@ -330,12 +358,27 @@ def _dir_before(text, masked, at, base):
     return os.path.join(base, _expand(_unquote(text[a:b]), text[:at]))
 
 
-def _git_where(command, masked, m, cwd):
-    """The directory a GIT match runs in: its `-C`, else the last `cd` before it, else `cwd`."""
-    opts = command[m.span(1)[0]:m.span(1)[1]]
+def _git_trees(command, masked, m, cwd):
+    """The trees a GIT match may use - each place it may run in, its work tree and its repository's (once, when they
+    are the same). A command is a tree's when any of them is (girsa-architect on 46b378b: `--git-dir=<main>/.git
+    --work-tree=. commit` commits onto the main clone's branch). The place: its `-C`, else the last `cd` before it,
+    else `cwd` - and beside it each keyword-led cd before it (KEYWORD_CD). The work tree: `--work-tree` or
+    GIT_WORK_TREE= before git, else the place; the repository's: `--git-dir` or GIT_DIR= (its parent if it ends in
+    .git), else the place."""
+    opts, lead, before = command[m.start(1):m.end(1)], command[m.start():m.start(1)], command[:m.start()]
     c = re.search(r"-C\s+(\S+)", opts)
-    return (os.path.join(cwd, _expand(_unquote(c.group(1)), command[:m.start()])) if c
-            else _dir_before(command, masked, m.start(), cwd))
+    places = ([os.path.join(cwd, _expand(_unquote(c.group(1)), before))] if c
+              else [_dir_before(command, masked, m.start(), cwd)]
+              + [os.path.join(cwd, _expand(_unquote(command[k.start(1):k.end(1)]), before))
+                 for k in KEYWORD_CD.finditer(masked[:m.start()])])
+    named = {flag: re.search(flag + r"(?:=|\s+)(\S+)", opts) or re.search(r"(?<![\w$])" + var + r"=(\S+)", lead)
+             for flag, var in (("--work-tree", "GIT_WORK_TREE"), ("--git-dir", "GIT_DIR"))}
+    trees = []
+    for place in places:
+        work, repo = (named[f] and os.path.join(place, _expand(_unquote(named[f].group(1)), before)).rstrip("/")
+                      for f in ("--work-tree", "--git-dir"))
+        trees += [work or place, (os.path.dirname(repo) if os.path.basename(repo) == ".git" else repo) if repo else place]
+    return tuple(dict.fromkeys(trees))
 
 
 def refusal(role, command, cwd, main_tree=is_main_tree, read=_read, depth=0, project_tree=is_project_tree):
@@ -362,22 +405,22 @@ def refusal(role, command, cwd, main_tree=is_main_tree, read=_read, depth=0, pro
         verb, rest = m.group(2), m.group(3).split()
         if verb in CHANGES_MAIN and not ((verb == "stash" and rest[:1] and rest[0] in LEAVES_IT["stash"])
                                          or (verb == "apply" and any(w in rest for w in LEAVES_IT["apply"]))):
-            where = _git_where(command, masked, m, cwd)
-            pin = pin_of(where)                                     # a pin: refused to every role, merge --ff-only too
-            if pin:
-                return pin_refusal(pin)
-            repo = foreign_tree(where)                              # so is any tree of a foreign repository
-            if repo:
-                return foreign_refusal(repo)
+            for where in _git_trees(command, masked, m, cwd):
+                pin = pin_of(where)                                 # a pin: refused to every role, merge --ff-only too
+                if pin:
+                    return pin_refusal(pin)
+                repo = foreign_tree(where)                          # so is any tree of a foreign repository
+                if repo:
+                    return foreign_refusal(repo)
         if verb in THROUGH_LAND and "--abort" not in rest:
-            where = _git_where(command, masked, m, cwd)
-            in_main = main_tree(where)
-            if (verb == "commit" or in_main) and not (role == NO_ROLE and not in_main) and project_tree(where):
+            trees = _git_trees(command, masked, m, cwd)
+            in_main = any(map(main_tree, trees))
+            if ((verb == "commit" or in_main) and not (role == NO_ROLE and not in_main)
+                    and any(map(project_tree, trees))):
                 return (f"refused by the role guard: `git {verb}` in this repository goes through {THROUGH_LAND[verb]}"
                         + no_role)
         if role == OPERATOR and verb in OPERATOR_THROUGH_LAND and "--abort" not in rest:
-            where = _git_where(command, masked, m, cwd)
-            if main_tree(where) and project_tree(where):
+            if any(main_tree(w) and project_tree(w) for w in _git_trees(command, masked, m, cwd)):
                 return (f"refused by the role guard: `git {verb}` in the main tree makes a commit no gate saw - make the "
                         "change in a worktree and land it with `land.py land`, or commit its result with "
                         "`land.py commit`")
@@ -399,14 +442,14 @@ def refusal(role, command, cwd, main_tree=is_main_tree, read=_read, depth=0, pro
                         "only as the reviewer's own command: `! git push origin --delete <branch>` in the operator's "
                         "pane")
         elif (verb == "stash" and not (rest[:1] and rest[0] in LEAVES_IT["stash"])
-              and project_tree(_git_where(command, masked, m, cwd))):
+              and any(map(project_tree, _git_trees(command, masked, m, cwd)))):
             return ("refused by the role guard: `git stash` in this repository - its stash list is shared by the main "
                     "clone and every worktree, so a pop can take another role's work - set the work aside as a patch: `git diff > <file>.patch`" + no_role)
         elif verb in CHANGES_MAIN and role != OPERATOR:
             leaves = LEAVES_IT.get(verb, ())
             if (rest[:1] and rest[0] in leaves) if verb == "stash" else any(w in rest for w in leaves):
                 continue
-            if main_tree(_git_where(command, masked, m, cwd)):
+            if any(map(main_tree, _git_trees(command, masked, m, cwd))):
                 return (f"refused by the role guard: `git {verb}` would change the main tree or a root the "
                         "project lists, which are the operator's alone - work in your worktree or a copy and land with `git "
                         "merge --ff-only`, or send the operator a HANDOFF" + no_role)
@@ -591,7 +634,7 @@ FILE_TOOLS = {"Edit": "file_path", "Write": "file_path", "NotebookEdit": "notebo
 CHECKS = tuple(GUARD["checks"])
 GATED_STEPS = {"commit", "merge", "push", "tag", "update-ref", "cherry-pick", "am"}
 STEP_SPLIT = re.compile(r"(\|\||&&|\|&?|;|(?<![<>&])&(?![>&])|\n)")
-LEAD_WORDS = {"if", "!", "then", "else", "elif", "do", "while", "until", "{", "(", "time", "command", "exec"}
+LEAD_WORDS = {*KEYWORDS, "(", "time", "command", "exec"}
 
 
 def _words(stmt):

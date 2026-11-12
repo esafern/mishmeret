@@ -152,6 +152,85 @@ def test_the_role_guard_keeps_push_and_main_tree_commits_to_the_operator():
     assert no("ex-operator", "git checkout hashorashim-nli-rebuild-and-review") is None
 
 
+def test_the_role_guard_sees_git_after_a_keyword_behind_its_options_and_quoted():
+    """M07 item 1 (notes/PLAN-GUARD-KEYWORDS.md): git after a shell keyword, behind git's own options, or written
+    quoted, had gone through; so had the main tree reached by --git-dir / --work-tree / GIT_DIR= from a worktree, a
+    shell or a prefix word written quoted, and a quoted land.py path. A cd after a keyword is where git MAY run, never
+    where the next command does (girsa-verifier's MEDIUM 1 on 2324302). Placeholder paths; the main tree is a fake
+    predicate."""
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("role_guard", os.path.join(PKG, "role_guard.py"))
+    rg = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(rg)
+    main = lambda p: (os.path.normpath(p) + "/").startswith("/work/book/") and "/work/book/.git" not in p
+    scripts = {"/work/book/scratch/c.sh": "git commit -q -m x\n", "/work/book/x.sh": "git commit -q -m x\n",
+               "/work/book/k.sh": "tmux kill-server\n"}
+    no = lambda cmd, cwd="/work/book": rg.refusal("ex-builder", cmd, cwd, main_tree=main, read=scripts.get)
+    p = "git push origin main"
+    for bad in (f"if true; then {p}; fi", f"for i in 1; do {p}; done", f"{{ {p}; }}", f"! {p}", f"if {p}; then :; fi",
+                f"while {p}; do :; done", f"until {p}; do :; done", f"if false; then :; else {p}; fi",
+                f"if false; then :; elif {p}; then :; fi", f"then ! {p}",
+                f"git --no-pager {p[4:]}", f"git -p {p[4:]}", f"git -P {p[4:]}", f"git --paginate {p[4:]}",
+                f"git --git-dir=.git {p[4:]}", f"git --git-dir .git {p[4:]}", f"git --work-tree=. {p[4:]}",
+                f"git --no-optional-locks {p[4:]}", f"git --literal-pathspecs {p[4:]}", f"git -C . --no-pager {p[4:]}",
+                f"\\{p}", f'"git" {p[4:]}', f"'git' {p[4:]}", f"then \\git --no-pager {p[4:]}",
+                f"/usr/bin/git --no-pager {p[4:]}", f"env git --no-pager {p[4:]}", f"git -c core.pager=cat {p[4:]}",
+                f"git --namespace x {p[4:]}", f"git --config-env x=Y {p[4:]}"):
+        why = no(bad)
+        assert why and "operator's" in why, bad
+    for fine in ("echo then git push", 'echo "git" push', "grep -n 'git' push.txt", "echo \\git push", "git --no-pager log",
+                 "if true; then git status; fi", "ls {a,b}", "echo '\"git\" push'", 'x="git push"', "git --git-dir=.git log",
+                 "! git diff --quiet", "echo 'then git push origin main'", "git --no-pager diff | cat", 'echo "a" git push',
+                 'echo "bash" -c x', "cat <<'EOF'\n\"bash\" -c 'git commit -m x'\nEOF", 'echo "env" "sudo" "git"',
+                 "git --attr-source HEAD status", "cd /work/book-builder; git reset --hard",
+                 "echo '\n\"git\" push origin main\n'", "cat <<'EOF'\n\"git\" push origin main\nEOF"):
+        assert no(fine) is None, fine
+    # the main tree from a worktree: by either tree git uses (girsa-architect on 46b378b), or a cd in a branch
+    for bad in ("git --git-dir=/work/book/.git --work-tree=. commit -m x", "GIT_DIR=/work/book/.git git commit -m x",
+                "GIT_DIR=/work/book/.git GIT_WORK_TREE=/work/book git reset --hard",
+                "git --git-dir=/work/book/.git reset --hard", "git --git-dir /work/book/.git --work-tree /work/book commit -m x",
+                "git --git-dir=/work/book/.git --work-tree=/work/book reset --hard",
+                "git --work-tree=/work/book --git-dir=/work/book/.git checkout -- a", "git -C /work/book reset --hard",
+                "git --work-tree=/work/book checkout -- a", "GIT_WORK_TREE=/work/book git checkout -- a",
+                "if true; then cd /work/book; fi; git reset --hard", "\\cd /work/book && git reset --hard",
+                "cd /work/book-builder; if true; then cd /work/book; fi; git commit -m x",
+                "cd /work/book; ls; git reset --hard", "cd /work/book; true && git reset --hard"):
+        assert no(bad, "/work/book-builder"), bad
+    for fine in ("git --git-dir=.git log", "git reset --hard", "GIT_DIR=.git git reset --hard",
+                 "git --work-tree=. reset --hard", "if false; then cd /work/book; fi; git status",
+                 "if true; then cd /work/book-builder; git reset --hard; fi"):
+        assert no(fine, "/work/book-builder") is None, fine
+    # from the main tree: a cd in a branch that may not run does not move the git after it out of the main tree
+    for bad in ("if false; then cd /work/book-builder; fi; git reset --hard",
+                "until true; do cd /work/book-builder; done; git checkout -- a",
+                "while false; do cd /work/book-builder; done; git commit -m x", "git --attr-source HEAD reset --hard"):
+        assert no(bad), bad
+    # a shell, a prefix word, or land.py written quoted or escaped (girsa-verifier's MEDIUM 2 on 2324302)
+    for bad in ("\"bash\" -c 'git commit -m x'", "\\bash -c 'git commit -m x'", "'sh' -c \"git commit -m x\"",
+                '"bash" scratch/c.sh', "\\sh scratch/c.sh", '"env" git commit -m x', "'sudo' git commit -m x",
+                '"/usr/bin/git" commit -m x', "\"bash\" <<'EOF'\ngit commit -m x\nEOF",
+                "cat <<'EOF' | \"bash\"\ngit commit -m x\nEOF", "\"bash\" <<< 'git commit -m x'"):
+        assert no(bad), bad
+    for cmd, refused in (('python3 ".claude/land.py" commit ex-operator notes -F m a.md', True),
+                         ("python3 '.claude/land.py' commit ex-operator notes -F m a.md", True),
+                         ('python3 ".claude/land.py" commit ex-builder notes -F m a.md', False),
+                         ('grep -n "land.py commit ex-operator" notes.md', False)):
+        assert bool(no(cmd, "/work/book-builder")) is refused, cmd
+    # every check built on BOUNDARY reads a command after a keyword: git and cd (above), a script, cp, the tmux kill,
+    # pkill and a script with a tmux kill
+    assert no("if true; then bash x.sh; fi")
+    wt = lambda path: path.rstrip("/").endswith("book-builder")
+    assert rg.copy_refusal("if true; then cp -r /work/book-builder /tmp/c; fi", "/work", is_worktree=wt)
+    assert rg.copy_refusal('"cp" -r /work/book-builder /tmp/c', "/work", is_worktree=wt)
+    for bad in ("if true; then tmux kill-server; fi", "{ tmux kill-server; }", "! tmux kill-server",
+                "while true; do tmux kill-server; done", "\\tmux kill-server", '"tmux" kill-server', "then pkill tmux",
+                "'pkill' tmux", "if true; then bash k.sh; fi"):
+        assert rg.tmux_refusal(bad, "/work/book", read=scripts.get), bad
+    for fine in ("tmux ls", "then tmux ls", 'echo "tmux" kill-server', "echo \\tmux kill-server",
+                 "grep -n 'tmux kill-server' f"):
+        assert rg.tmux_refusal(fine, "/work/book", read=scripts.get) is None, fine
+
+
 def test_an_escaped_quote_inside_a_string_does_not_turn_the_guard_off():
     """girsa-verifier, 2026-11-10, HIGH (first seen by mishmeret-builder the same day: one line of agents.sh with a
     quote escaped inside a quote, and the guard no longer saw the script's `tmux kill-session`): role_guard.mask closed
