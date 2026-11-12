@@ -63,6 +63,13 @@ how it judged the role), whose running is the reviewer's to say.
   main tree and in a worktree, and `land.py commit ex-operator`, each refused; the project-tree predicate is held
   true, as girsa-architect's probe did. Red with the line out (the operator-typed subagent judged as `ex-operator`).
   The suite: 140 passed. `land.py` is unchanged: the guard refuses a subagent every `land.py` call.
+- VERIFIED at 5aa9a0a by girsa-verifier, nothing found in the code. On its clone: the suite 140 passed, the rule out
+  red, and a fall-back to `agent_type` in the subagent branch red. Its sweep found `role_of` the only reader of
+  `agent_type`/`agent_id` in Mishmeret and in the first project's `.claude/`, `tools/` and `pipeline/`;
+  `edit_refusal` takes `role_of`'s role, so a subagent's edits are judged the same way. ITS LOW, LEFT FOR THE NEXT
+  TOUCH of `role_guard.py` (words only, so the verified commit merges as checked): the module's header, "WHO: the
+  hook input's `agent_type`", should say that a subagent is no role. Not run: a real subagent under the built guard,
+  possible only once the first project's pin moves.
 
 ## The behaviour - QUESTION to girsa-architect
 
