@@ -2,7 +2,8 @@
 
 Written 17:20 (`date`). This is the last item in the reviewer's order ("A" on the first project's Board #201, 09:38).
 It is on branch `builder-background-state` from main 7d1167c. Its messages are recorded here, and in the log once
-`builder-lessons` is merged.
+`builder-lessons` is merged. Sent, live, at 8011157: the look's QUESTION to girsa-ui-steward, and the plan's HANDOFF
+to girsa-verifier.
 
 ## The case
 
