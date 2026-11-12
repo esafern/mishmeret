@@ -46,6 +46,24 @@ how it judged the role), whose running is the reviewer's to say.
 - Sent, live: girsa-verifier's option and both measures to girsa-architect (does (c) stand?); girsa-architect's
   answer and the measures to girsa-verifier. The build waits on girsa-architect's reply.
 
+## Decided, 15:47, and built
+
+- girsa-architect, revision 2 (e4d2def2): (c) stands. Its first reason against (b) is gone, since the hook's
+  `$CLAUDE_CODE_AGENT` is a source it can trust; the LANES.md reason holds whatever the source. Under (b) a role's
+  Haiku or Sonnet subagent could push or land as the role. (c)'s cost meets no task in the record: every subagent
+  task the briefs name writes nothing. It asked that the reviewer decide, believing girsa-verifier differed. It did
+  not: girsa-verifier's folded verdict already accepted (c) on the same ground, and girsa-architect corrected that
+  (f50ba18d). girsa-verifier: READY TO BUILD with (c), triggered by `agent_id` first and never falling back to
+  `agent_type`, with a test of the four measured inputs.
+- THE REVIEWER, asked directly in this session: "No role (c)".
+- BUILT: `role_of` returns "a subagent of type <X>" when the input has an `agent_id`, before any `agent_type`. The
+  test (in `test_the_role_guard_keeps_push_and_main_tree_commits_to_the_operator`) covers the four measured inputs:
+  a role's own session (its type is the role), a session with no role (NO_ROLE), and three subagent inputs
+  (operator-typed, general-purpose, no type), each judged as no role. For each it checks a push, a commit in the
+  main tree and in a worktree, and `land.py commit ex-operator`, each refused; the project-tree predicate is held
+  true, as girsa-architect's probe did. Red with the line out (the operator-typed subagent judged as `ex-operator`).
+  The suite: 140 passed. `land.py` is unchanged: the guard refuses a subagent every `land.py` call.
+
 ## The behaviour - QUESTION to girsa-architect
 
 When the input has an `agent_id` (a subagent or in-process teammate), its `agent_type` is not a role. What is it

@@ -967,9 +967,15 @@ def edit_refusal(role, path, main_tree=is_main_tree):
 
 def role_of(event, argv):
     """The role the guard judges: ROLE on the command line (a probe), else the session's agent_type, else NO_ROLE -
-    which is refused what every role but the operator is refused (the reviewer, 2026-10-04)."""
+    which is refused what every role but the operator is refused (the reviewer, 2026-10-04). A SUBAGENT IS NO ROLE (M07
+    item 2, notes/PLAN-SUBAGENT-ROLE.md; girsa-architect's answer): inside one, `agent_type` is the subagent's own type
+    and an `agent_id` is present, so a subagent of the operator's type had the operator's rights. It is judged as a
+    name no role has: refused a push, a commit and land.py. Measured (Claude Code 2.1.322): a role's own session
+    carries no `agent_id`."""
     if len(argv) > 1:
         return argv[1]
+    if event.get("agent_id"):
+        return f"a subagent of type {event.get('agent_type') or 'unknown'}"
     return event.get("agent_type") or NO_ROLE
 
 

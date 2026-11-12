@@ -143,6 +143,17 @@ def test_the_role_guard_keeps_push_and_main_tree_commits_to_the_operator():
     assert rg.role_of({"agent_type": "ex-builder"}, ["hook"]) == "ex-builder"
     assert rg.role_of({}, ["hook"]) == rg.NO_ROLE and rg.role_of({"agent_type": ""}, ["hook"]) == rg.NO_ROLE
     assert rg.role_of({"agent_type": "ex-builder"}, ["hook", "ex-verifier"]) == "ex-verifier"
+    # A SUBAGENT IS NO ROLE (M07 item 2): its hook input, as measured on Claude Code 2.1.322 - its own type and an
+    # agent_id - whatever its type and whether or not its session has a role
+    for sub in ({"agent_type": "ex-operator", "agent_id": "a1"}, {"agent_type": "general-purpose", "agent_id": "a2"},
+                {"agent_id": "a3"}):
+        role = rg.role_of(sub, ["hook"])
+        assert role not in ("ex-operator", "ex-builder", rg.NO_ROLE), role
+        for cmd, cwd in (("git push origin main", "/work/book"), ("git commit -m x", "/work/book"),
+                         ("git commit -m x", "/work/book-builder"),
+                         ("python3 tools/land.py commit ex-operator code -F m a.py", "/work/book")):
+            assert rg.refusal(role, cmd, cwd, main_tree=main, read=read, project_tree=lambda p: True), (sub, cmd, cwd)
+    assert rg.role_of({"agent_type": "ex-operator"}, ["hook"]) == "ex-operator"     # the operator's own session
     for refused in ("git commit -m x", "git checkout -b feature/x", "git switch other", "git push origin b"):
         why = no(rg.NO_ROLE, refused)
         assert why and "without a role" in why and "worktree" in why, refused
