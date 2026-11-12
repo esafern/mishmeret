@@ -76,6 +76,10 @@ REVISED 12:26 on girsa-verifier's review at 2324302 (NOT READY: two MEDIUMs, two
   forms), `PIPED_TO_SHELL`, and `STDIN_SHELL`, which `mask` now also asks of the original span (`"bash" <<'EOF'`).
   `SCRIPT` and `TMUX_SCRIPT` read the masked text, so the give-back covers them. `shell_c`'s "not masked" check
   looks at the name's first letter, since a quote before it is now given back blank.
+- FOUND, sweeping MEDIUM 2's siblings (12:27): `land.py` in quotes. `python3 ".claude/land.py" commit <another
+  role> ...` and the same in '...' are let through at 21cb9ba (LAND reads the masked text), so a role lands as
+  another. `land.py` joins NAMES, escaped as a regex, path included. The prototype refuses both, and still lets
+  through `".claude/land.py" commit <its own role>` and a `grep` of the words.
 - LOW 1: `BOUNDARY`'s keywords are one tuple, `KEYWORDS`, and `LEAD_WORDS` (the pipe check's) is built from it.
 - LOW 2: `--attr-source` takes a spaced argument (git 2.56); `--super-prefix`, unknown to it, is dropped.
 
