@@ -7,7 +7,8 @@ on main once that lands. The log and the state file record it once `builder-less
 messages are recorded here. Sent, live, at 46b378b: the plan's HANDOFF to girsa-verifier, the QUESTION to
 girsa-architect, and a NOTE to girsa-operator of the path and the merge order (builder-push-forms first).
 12:20: girsa-architect's ANSWER (under "The behaviour"), taken. Sent, live, at 2324302: a NOTE to girsa-verifier
-of the revision.
+of the revision. Before 12:26: girsa-verifier's review at 2324302, NOT READY, and girsa-architect's CORRECTION
+(its "refuses more, never less" withdrawn), both taken.
 
 ## The case
 
@@ -55,8 +56,28 @@ MISHMERET-GUARD-KEYWORDS-ARCHITECT.md, the first project's main 5814c995):
   tree is.
 - `GIT_DIR=` / `GIT_WORK_TREE=` before git are the same two settings by another name, so they are read the same way.
 - The keywords in `BOUNDARY`: yes. It has SEVEN users, not six (`GIT`, `CD`, `SCRIPT`, `CP`, `TMUX_KILL`, `PKILL`,
-  `TMUX_SCRIPT`); the tests hold one keyword form of each. Its note, kept: `CD` reading `then cd <main>` moves
-  "where" for what follows, even on a branch the shell does not take. That refuses more, never less.
+  `TMUX_SCRIPT`); the tests hold one keyword form of each. Its note that a keyword-led `cd` "refuses more, never
+  less" is WITHDRAWN by girsa-architect (its CORRECTION, 27834cbd): girsa-verifier measured the opposite (MEDIUM 1
+  below).
+
+REVISED 12:26 on girsa-verifier's review at 2324302 (NOT READY: two MEDIUMs, two LOWs), all four taken:
+
+- MEDIUM 1, A cd IN A BRANCH THAT DOES NOT RUN COUNTS AS TAKEN: with the keywords in BOUNDARY, `CD` reads `then cd
+  <worktree>`, and from the main tree `if false; then cd <worktree>; fi; git reset --hard` is let through (and the
+  same with `until` and `while`); 21cb9ba refuses all three. NOW: `CD` keeps today's boundary (`BASE_BOUNDARY`, no
+  keywords), so where the next command RUNS is as today for every caller of `_dir_before`. A keyword-led cd
+  (`KEYWORD_CD`) is where git MAY run: `_git_trees` adds it to the directories it judges, and refuses if any is the
+  main tree's (girsa-verifier's suggestion). The cost: from the main tree, `if true; then cd <worktree>; git reset
+  --hard; fi` is refused, as it is today.
+- MEDIUM 2, THE QUOTED NAME'S SIBLINGS: the give-back (`NAME_WORD`) now covers every name the guard reads in command
+  position. These are git, tmux, pkill, killall, cp and cd; the shells bash, sh, zsh, dash and ksh; and PREFIX's
+  words env, time, command, exec, nice, sudo and xargs, each also with a path inside the quotes (`"/usr/bin/git"`).
+  The patterns that read a shell from the ORIGINAL text take one quote-tolerant name, `SHELL`: `SHELL_C` (both
+  forms), `PIPED_TO_SHELL`, and `STDIN_SHELL`, which `mask` now also asks of the original span (`"bash" <<'EOF'`).
+  `SCRIPT` and `TMUX_SCRIPT` read the masked text, so the give-back covers them. `shell_c`'s "not masked" check
+  looks at the name's first letter, since a quote before it is now given back blank.
+- LOW 1: `BOUNDARY`'s keywords are one tuple, `KEYWORDS`, and `LEAD_WORDS` (the pipe check's) is built from it.
+- LOW 2: `--attr-source` takes a spaced argument (git 2.56); `--super-prefix`, unknown to it, is dropped.
 
 ## The measure (the prototype: the behaviour above in a scratch copy of the build at 21cb9ba, one probe)
 
@@ -74,7 +95,17 @@ MISHMERET-GUARD-KEYWORDS-ARCHITECT.md, the first project's main 5814c995):
   user with a keyword before it, all let through today and all refused: `then cd <main>; ...; git commit`
   (`CD`), `then bash x.sh` (`SCRIPT`, a commit in it), `then cp -r <worktree>` (`CP`), `then bash k.sh` (`TMUX_SCRIPT`,
   a kill in it), and the tmux kill and `pkill` forms above. `tests/test_guard.py` in the copy: 30 passed.
-- The whole suite in the first copy: 136 passed. The 3 that failed are the copy's own, not the change's: the copy has no
+- The whole suite in the first copy: 136 passed.
+- SECOND REVISION (12:26): girsa-verifier's 16 forms, of which 13 are let through by 21cb9ba (it refuses the three
+  branch cds), ALL REFUSED. They are the three branch cds from the main tree; `if true; then cd <main>; fi; git
+  reset --hard` from a worktree; `"bash" -c`, `\bash -c`, `'sh' -c`, `"bash" scratch/c.sh` and `\sh scratch/c.sh`
+  with a commit; `"env" git commit`, `'sudo' git commit`, `"/usr/bin/git" commit`; `"bash" <<'EOF'` and `cat
+  <<'EOF' | "bash"` with a commit in the body; `git --attr-source HEAD reset --hard`; and `\cd <main> && git reset
+  --hard`. NONE REFUSED of 7: `echo "bash" -c x`, a heredoc's body holding `"bash" -c '...'`, `if false; then cd
+  <main>; fi; git status` from a worktree, `cd <worktree>; git reset --hard` from the main tree, `echo "env" "sudo"
+  "git"`, `git --attr-source HEAD status`, and `if true; then cd <worktree>; git reset --hard; fi` from a worktree.
+  The first probe again: 26 refused, 14 not; each BOUNDARY user's keyword form refused; `test_guard.py` in the copy
+  30 passed. The 3 that failed are the copy's own, not the change's: the copy has no
   `.claude/` (the lane check and Mishmeret's own config).
 
 ## Tests
@@ -86,7 +117,10 @@ MISHMERET-GUARD-KEYWORDS-ARCHITECT.md, the first project's main 5814c995):
   quotes, the "only where unmasked" check (red on `echo '"git" push'`, refused), `--work-tree`, `--git-dir`,
   `GIT_WORK_TREE=`, `GIT_DIR=`, the `.git` parent, and "either tree" (one tree only: red on `--work-tree=.`).
 - The tests also hold the ten where forms and five fine ones, and one keyword form for each of BOUNDARY's seven
-  users.
+  users; and the second revision's 16 and 7. Reds added: `CD` on the keyword boundary (red on the branch cds),
+  `KEYWORD_CD` out (red on `then cd <main>` from a worktree), each group of NAMES (the shells, PREFIX's words, cd),
+  `SHELL`'s quote in `SHELL_C`, in `PIPED_TO_SHELL` and in `STDIN_SHELL`, the original span for `STDIN_SHELL`,
+  `shell_c`'s letter check, and `--attr-source`.
 
 ## Files
 
