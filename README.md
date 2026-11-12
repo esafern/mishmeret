@@ -42,8 +42,8 @@ edited: a change is a new commit and a new pin. The shim's helper is the project
 
 ## The config
 
-`mishmeret/config.py` is its one reader. Every field is required and no other is accepted; `FIELDS` there lists them
-with the module that reads each: the project's name, its roles (name, short name, tmux colour, the Board page's two
+`mishmeret/config.py` is its one reader. Every field is required but those `OPTIONAL` there names (each absent is
+taken as off), and no other is accepted; `FIELDS` lists them with the module that reads each: the project's name, its roles (name, short name, tmux colour, the Board page's two
 colours, whether it has a corner and a tmux pane), the page's order, the operator, the Board's folder and port, the
 tmux session and settings file, Claude Code's transcripts folder, the agent files, the project's Python, the launchd
 prefix, the state folder and the night run's knobs (with the project's two commands that end a session, below);

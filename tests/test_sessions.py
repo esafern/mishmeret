@@ -151,7 +151,8 @@ def test_the_night_run_does_not_take_a_land_answered_by_a_notice_for_a_landing(t
     typed, shown = tmp_path / "typed.txt", tmp_path / "shown.txt"
     stubs = {"claude": f"if [ \"$1\" = agents ]; then echo '{rows}'; fi",
              "tmux": f"case \"$1\" in list-panes) echo '{os.getppid()} %1' ;; send-keys) echo \"$*\" >> '{typed}' ;; esac",
-             "sleep": "exit 0", "caffeinate": "exit 0", "osascript": f"echo \"$*\" >> '{shown}'"}
+             "sleep": "exit 0", "caffeinate": "exit 0",
+             "osascript": f"for a in \"$@\"; do printf '%s\\n' \"$a\"; done >> '{shown}'"}     # an argument a line
     (tmp_path / "bin").mkdir()
     for name, body in stubs.items():
         (tmp_path / "bin" / name).write_text(f"#!/bin/sh\n{body}\n", encoding="utf-8")
@@ -177,6 +178,10 @@ def test_the_night_run_does_not_take_a_land_answered_by_a_notice_for_a_landing(t
     said = shown.read_text(encoding="utf-8") if shown.exists() else ""
     assert "4 closed and not started again - start them, each in its pane, with: bash agents.sh" in log, log
     assert "display alert" not in said and "iTerm" not in said and "agents.sh" not in said + sent, said
+    # the alert's text is osascript's argument, whole, never spliced into its script (notes/PLAN-AUDIT-FIXES.md, item
+    # 4: agents-lib.sh's `alert`, the night run's and agents.sh's one form)
+    assert (named in said.splitlines()) == kind.startswith("notice"), said
+    assert "display notification (item 1 of a) with title (item 2 of a)" in said or not said, said
     assert not (night / ".running").exists(), "the lock, with the run's process id in it, goes with the run"
 
 
@@ -717,7 +722,8 @@ def test_agents_sh_next_clears_exits_and_starts_the_role_again_in_its_own_pane(t
                      f" capture-pane) {capture} ;;\n"
                      f" send-keys) echo \"$*\" >> '{typed}'; case \"$*\" in *' /exit '*) {begun} ;; esac ;;\n"
                      "esac",
-             "sleep": "exit 0", "osascript": f"echo \"$*\" >> '{shown}'", "claude": "echo '[]'"}
+             "sleep": "exit 0", "claude": "echo '[]'",
+             "osascript": f"for a in \"$@\"; do printf '%s\\n' \"$a\"; done >> '{shown}'"}     # an argument a line
     (tmp_path / "bin").mkdir()
     for name, body in stubs.items():
         (tmp_path / "bin" / name).write_text(f"#!/bin/sh\n{body}\n", encoding="utf-8")
@@ -740,6 +746,9 @@ def test_agents_sh_next_clears_exits_and_starts_the_role_again_in_its_own_pane(t
         assert sent == [], sent
         assert ("words are standing in its prompt - /clear not typed over them" if case == "words in the prompt"
                 else "its prompt could not be read - /clear not typed") in said, said
+        if case == "words in the prompt":   # osascript's argument, whole (agents-lib.sh's `alert`, item 4)
+            assert "ex-builder: words are standing in its prompt - /clear not typed over them; type /clear and /exit " \
+                   "there, then: bash agents.sh" in said.splitlines(), said
     elif case == "words typed after /clear":
         assert [s.split("send-keys ")[1] for s in sent] == closes[:1], sent
         assert "words are standing in its prompt - /exit not typed over them" in said, said

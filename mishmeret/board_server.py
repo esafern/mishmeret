@@ -832,13 +832,13 @@ class Handler(BaseHTTPRequestHandler):
             return self._send(404, "not found", "text/plain; charset=utf-8")
         try:
             data = self._body()
-            item = board.items().get(int(data.get("id")))
             # A CHANGED ANSWER (the reviewer, 2026-10-11: "change #13 answer to B. no option to do that on the board"):
-            # an answered item takes a new answer only when the page asks for a change; a withdrawn one never
-            changing = data.get("change") is True and item is not None and item["answer"] and not item["withdrawn"]
-            if item is None or item["withdrawn"] or (item["answer"] and not changing):
-                return self._send(409, "that item is not open", "text/plain; charset=utf-8")
-            board.answer(item["id"], data.get("answer", ""), data.get("note", ""))
+            # an answered item takes a new answer only when the page asks for a change; a withdrawn one never - the
+            # rule is board.answer's, the relay's too
+            board.answer(int(data.get("id")), data.get("answer", ""), data.get("note", ""),
+                         change=data.get("change") is True)
+        except board.NotOpen as e:
+            return self._send(409, str(e), "text/plain; charset=utf-8")
         except (ValueError, TypeError) as e:
             return self._send(400, str(e), "text/plain; charset=utf-8")
         return self._send(200, json.dumps({"ok": True}))

@@ -33,12 +33,13 @@ stays private and no role's tree carries it): an item, its answer, a withdrawal,
     python3 board.py list [--role ROLE] [--open]
     python3 board.py withdraw ID --why "..."        # an item no longer needed
     python3 board.py defer ID                       # put off for later (the page also brings it back)
-    python3 board.py answer ID --answer "..."       # the page's own route, for a relay or a test
+    python3 board.py answer ID --answer "..." [--change]   # the page's own rule, for a relay or a test: an
+                                       # answered item only with --change; recorded as relayed by command
     python3 board.py finished --role ROLE (--summary "..." | --summary-file F) [--session ID]
                                        # a session's finish: bullet points of what it accomplished - its corner says
                                        # Finished until the role's next session; the page's Finished sessions keep
-                                       # every one. `landed` is its old name, still taken (a session finishes, a
-                                       # change lands: the reviewer, 2026-11-10)
+                                       # every one (`landed`, its old name, is no longer taken: a session
+                                       # finishes, a change lands - the reviewer, 2026-11-10)
     python3 board.py qa --role ROLE --question "..." (--answer "..." | --answer-file F) [--link URL]...
                                        # a question the reviewer asked in a role's pane, and the role's answer, kept
     python3 board.py qa-more N --role ROLE [--question "..."] (--answer "..." | --answer-file F)
@@ -338,7 +339,7 @@ def items(events=None):
         elif e.get("id") in out and e.get("type") == "answer":
             if out[e["id"]]["answer"]:
                 out[e["id"]]["earlier"].append(out[e["id"]]["answer"])
-            out[e["id"]]["answer"] = {k: e.get(k) for k in ("ts", "answer", "note")}
+            out[e["id"]]["answer"] = {k: e.get(k) for k in ("ts", "answer", "note", "via")}
         elif e.get("id") in out and e.get("type") == "withdraw":
             out[e["id"]]["withdrawn"] = {k: e.get(k) for k in ("ts", "why")}
         elif e.get("id") in out and e.get("type") == "defer":
@@ -388,13 +389,29 @@ def ask(role, title, body="", kind="question", options=(), recommend=None, links
                                    "links": links, "images": pics, "image_options": tied})
 
 
-def answer(item_id, text, note=""):
-    if item_id not in items():
-        raise ValueError(f"no item {item_id}")
+class NotOpen(ValueError):
+    """An item that takes no answer now: missing, withdrawn, or answered with no change asked."""
+
+
+def answer(item_id, text, note="", change=False, via=None):
+    """THE ONE RULE FOR AN ANSWER, the page's and a relay's (notes/PLAN-AUDIT-FIXES.md, item 1: the command's relay went
+    over an answered item with no word, and the record told a relay only by its note): an open item takes one, an
+    answered one only when a change is asked, a withdrawn or missing one none - read under the record's lock. `via`:
+    "command" for a relay, kept with the answer."""
     if not str(text).strip():
         raise ValueError("an answer is needed")
-    return _append(lambda events: {"type": "answer", "id": item_id, "ts": _now(), "answer": str(text).strip(),
-                                   "note": (note or "").strip()})
+
+    def make(events):
+        it = items(events).get(item_id)
+        if it is None:
+            raise NotOpen(f"no item {item_id}")
+        if it["withdrawn"]:
+            raise NotOpen(f"#{item_id} is withdrawn")
+        if it["answer"] and not change:
+            raise NotOpen(f"#{item_id} is answered ({it['answer']['answer']}): a new answer is a change (--change)")
+        return dict({"type": "answer", "id": item_id, "ts": _now(), "answer": str(text).strip(),
+                     "note": (note or "").strip()}, **({"via": via} if via else {}))
+    return _append(make)
 
 
 def withdraw(item_id, why):
@@ -592,7 +609,8 @@ def describe(it):
     said = (f'{a["answer"]} - {picked["label"]}' if picked else a["answer"]) if a else None
     state = ("withdrawn: " + it["withdrawn"]["why"]) if it["withdrawn"] else (f"answered: {said}" if a
                                                                               else "deferred" if it["deferred"] else "open")
-    return f'#{it["id"]} {it["role"]} [{state}] {it["title"]}' + (f' (note: {a["note"]})' if a and a["note"] else "")
+    return (f'#{it["id"]} {it["role"]} [{state}] {it["title"]}' + (f' (note: {a["note"]})' if a and a["note"] else "")
+            + (f' (relayed by {a["via"]})' if a and a.get("via") else ""))
 
 
 def waiting_on(role, events=None):
@@ -719,7 +737,24 @@ def record_session(session_id, **fields):
     return rec
 
 
-def main(argv=None):
+# EVERY COMMAND, CLASSED (notes/PLAN-AUDIT-FIXES.md, item 3; girsa-verifier: WRITE THE ENUMERATION DOWN): those that
+# write as `--role`, which a role's session runs only as itself; the reads; and those with no `--role`. A test fails on
+# a command in none of the three. The check stops a mistaken `--role`, not a chosen one: `env -u CLAUDE_CODE_AGENT`
+# passes the role guard.
+AS_ROLE = ("ask", "status", "plan", "hold", "release", "finished", "qa", "qa-more", "send", "done")
+READS = ("wait", "quiet", "list", "inbox", "waiting-for", "at-limit")
+NO_ROLE = ("withdraw", "defer", "answer")
+
+
+def as_self(role):
+    """Refuse `role` when a role's session ($CLAUDE_CODE_AGENT, the variable land.py reads) names another; unset - the
+    night run, the reviewer's terminal, a test - anything goes."""
+    agent = os.environ.get("CLAUDE_CODE_AGENT")
+    if agent and role != agent:
+        raise ValueError(f"this session is {agent}: it writes to the Board as itself, not as {role!r}")
+
+
+def parser():
     # --help prints the whole usage above: the commands' one home since Board #85 A, step 3 (START_HERE names it)
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -776,7 +811,8 @@ def main(argv=None):
     an.add_argument("id", type=int)
     an.add_argument("--answer", required=True)
     an.add_argument("--note", default="")
-    ld = sub.add_parser("finished", aliases=["landed"])   # `landed`: until the first project's command calls the new name
+    an.add_argument("--change", action="store_true", help="a new answer to an answered item")
+    ld = sub.add_parser("finished")
     ld.add_argument("--role", required=True)
     ld.add_argument("--summary")
     ld.add_argument("--summary-file")
@@ -805,9 +841,15 @@ def main(argv=None):
     dn = sub.add_parser("done")
     dn.add_argument("number", type=int, nargs="+")
     dn.add_argument("--role", required=True)
-    args = ap.parse_args(argv)
+    return ap
+
+
+def main(argv=None):
+    args = parser().parse_args(argv)
     me = os.environ.get("MISHMERET_AS", "board.py")
     try:
+        if args.cmd in AS_ROLE:
+            as_self(args.role)
         if args.cmd == "ask":
             body = open(args.body_file, encoding="utf-8").read() if args.body_file else args.body
             it = ask(args.role, args.title, body, args.kind, args.option, args.recommend, args.link, args.image)
@@ -864,7 +906,7 @@ def main(argv=None):
             for it in sorted(items().values(), key=lambda x: x["id"]):
                 if (not args.role or it["role"] == args.role) and (not args.open or not (it["answer"] or it["withdrawn"])):
                     print(describe(it))
-        elif args.cmd in ("finished", "landed"):
+        elif args.cmd == "finished":
             if bool(args.summary) == bool(args.summary_file):
                 raise ValueError("give the summary as --summary or --summary-file")
             text = args.summary or open(args.summary_file, encoding="utf-8").read()
@@ -905,7 +947,7 @@ def main(argv=None):
             if lim:
                 print(lim)
         elif args.cmd == "answer":
-            answer(args.id, args.answer, args.note)
+            answer(args.id, args.answer, args.note, change=args.change, via="command")
             print(describe(items()[args.id]))
         elif args.cmd in ("qa", "qa-more"):
             if (args.answer is None) == (args.answer_file is None):

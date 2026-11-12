@@ -657,39 +657,41 @@ def test_land_commit_stages_what_it_names_and_refuses_the_rest(tmp_path, monkeyp
     (tree / "other.txt").write_text("placeholder\n", encoding="utf-8")
     git(tree, "add", "other.txt")
     with pytest.raises(land.Refused, match="the index already holds other.txt"):
-        land.commit("ex-builder", "code", str(message), ["placeholder.py"], cwd=str(tree))
+        land.commit("ex-builder", "code", str(message), ["placeholder.py"], tests="none", cwd=str(tree))
     git(tree, "reset", "-q")
     with pytest.raises(land.Refused, match="no such file.py"):
-        land.commit("ex-builder", "code", str(message), ["placeholder.py", "no such file.py"], cwd=str(tree))
+        land.commit("ex-builder", "code", str(message), ["placeholder.py", "no such file.py"], tests="none",
+                    cwd=str(tree))
     (tree / ".gitignore").write_text("ignored.txt\n", encoding="utf-8")
     (tree / "ignored.txt").write_text("placeholder\n", encoding="utf-8")
     with pytest.raises(land.Refused):                        # an ignored file: git refuses it, or it stages nothing
-        land.commit("ex-builder", "code", str(message), ["placeholder.py", "ignored.txt"], cwd=str(tree))
+        land.commit("ex-builder", "code", str(message), ["placeholder.py", "ignored.txt"], tests="none", cwd=str(tree))
     (tree / ".gitignore").unlink()
     (tree / "ignored.txt").unlink()
     (tree / "unchanged.txt").write_text("placeholder\n", encoding="utf-8")
     git(tree, "add", "unchanged.txt")
     git(tree, "commit", "-q", "-m", "placeholder")
     with pytest.raises(land.Refused, match=r"staged \['placeholder.py'\], named"):     # a name that stages nothing
-        land.commit("ex-builder", "code", str(message), ["placeholder.py", "unchanged.txt"], cwd=str(tree))
+        land.commit("ex-builder", "code", str(message), ["placeholder.py", "unchanged.txt"], tests="none",
+                    cwd=str(tree))
     assert git(tree, "diff", "--cached", "--name-only") == ""
     assert git(tree, "diff", "--cached", "--name-only") == ""
     message.write_text("Placeholder change, done 2030-01-02 14:00\n", encoding="utf-8")     # two hours past the fixed clock
     with pytest.raises(land.Refused, match="later than the clock"):
-        land.commit("ex-builder", "code", str(message), ["placeholder.py"], cwd=str(tree))
+        land.commit("ex-builder", "code", str(message), ["placeholder.py"], tests="none", cwd=str(tree))
     message.write_text("Placeholder change\n", encoding="utf-8")
     with pytest.raises(land.Refused, match="this session is ex-builder, not ex-verifier"):
-        land.commit("ex-verifier", "code", str(message), ["placeholder.py"], cwd=str(tree))
+        land.commit("ex-verifier", "code", str(message), ["placeholder.py"], tests="none", cwd=str(tree))
     with pytest.raises(land.Refused, match="the main tree is ex-operator's alone"):
         land.commit("ex-builder", "code", str(message), ["placeholder.py"], cwd=str(main))
     monkeypatch.delenv("CLAUDE_CODE_AGENT")
     with pytest.raises(land.Refused, match="no role's session"):
-        land.commit("ex-builder", "code", str(message), ["placeholder.py"], cwd=str(tree))
+        land.commit("ex-builder", "code", str(message), ["placeholder.py"], tests="none", cwd=str(tree))
     monkeypatch.setenv("CLAUDE_CODE_AGENT", "ex-builder")
     assert git(tree, "diff", "--cached", "--name-only") == ""
     with pytest.raises(land.Refused, match="collected no test"):        # pytest's exit 5 (the plan's rehearsal)
         land.commit("ex-builder", "code", str(message), ["placeholder.py"], tests="-k no_such_test", cwd=str(tree))
-    land.commit("ex-builder", "code", str(message), ["placeholder.py"], cwd=str(tree))
+    land.commit("ex-builder", "code", str(message), ["placeholder.py"], tests="none", cwd=str(tree))
     assert git(tree, "log", "-1", "--format=%s").strip() == "Placeholder change"
     assert git(tree, "status", "--porcelain", "--untracked-files=no") == ""
     # ex-operator in the main tree: the landing gate under the Board's hold, released after
@@ -697,6 +699,48 @@ def test_land_commit_stages_what_it_names_and_refuses_the_rest(tmp_path, monkeyp
     (main / "placeholder.py").write_text("def kept():\n    return 3\n", encoding="utf-8")
     land.commit("ex-operator", "code", str(message), ["placeholder.py"], cwd=str(main))
     assert calls["board"] == ["hold", "release"] and calls["gate"] == [str(main)]
+
+
+def test_land_commit_names_its_tests_and_hands_the_lane_check_its_message(tmp_path, monkeypatch):
+    """notes/PLAN-AUDIT-FIXES.md, items 5 and 2. A code commit on a branch with no --tests is refused, nothing staged;
+    `--tests none` (girsa-architect's way out) commits with no test run, and its message says so; in the main tree
+    --tests is not read and no such line is written (girsa-verifier's LOW 1). The lane check is handed the message's
+    file - the reviewer's words included - and the file is gone after a lane-check refusal, after red tests and after
+    a commit (girsa-verifier's question 2 b). Placeholder repository."""
+    land, main, tree, git, calls = _placeholder_clone_and_worktree(tmp_path, monkeypatch)
+    message = tmp_path / "message.txt"
+    message.write_text("Placeholder change\n", encoding="utf-8")
+    (tree / "placeholder.py").write_text("def kept():\n    return 2\n", encoding="utf-8")
+    with pytest.raises(land.Refused, match="names the tests its change touches"):
+        land.commit("ex-builder", "code", str(message), ["placeholder.py"], cwd=str(tree))
+    assert git(tree, "diff", "--cached", "--name-only") == ""
+    handed = []
+
+    def lane(rc):
+        def check(repo, role, **kw):
+            with open(kw["message"], encoding="utf-8") as fh:
+                handed.append((kw["message"], fh.read()))
+            return rc, "placeholder"
+        return check
+    monkeypatch.setattr(land, "lane_check", lane(1))
+    with pytest.raises(land.Refused, match="the lane check refused"):
+        land.commit("ex-builder", "code", str(message), ["placeholder.py"], tests="none", because="placeholder words",
+                    cwd=str(tree))
+    assert "Placeholder change" in handed[-1][1] and "The reviewer's words: placeholder words" in handed[-1][1]
+    monkeypatch.setattr(land, "lane_check", lane(0))
+    (tree / "test_red.py").write_text("def test_red():\n    assert False\n", encoding="utf-8")      # untracked, unstaged
+    with pytest.raises(land.Red, match="the tests named exited 1"):
+        land.commit("ex-builder", "code", str(message), ["placeholder.py"], tests="test_red.py", cwd=str(tree))
+    land.commit("ex-builder", "code", str(message), ["placeholder.py"], tests="none", cwd=str(tree))
+    assert len(handed) == 3 and not any(os.path.exists(path) for path, _ in handed), "the message file, on every exit"
+    body = git(tree, "log", "-1", "--format=%B")
+    assert body.startswith("Placeholder change") and "No test was run (--tests none)." in body
+    assert git(tree, "diff", "--cached", "--name-only") == ""
+    # the operator in the main tree: the gate runs, `--tests none` is not read and writes no line
+    monkeypatch.setenv("CLAUDE_CODE_AGENT", "ex-operator")
+    (main / "placeholder.py").write_text("def kept():\n    return 3\n", encoding="utf-8")
+    land.commit("ex-operator", "code", str(message), ["placeholder.py"], tests="none", cwd=str(main))
+    assert calls["gate"] == [str(main)] and "No test was run" not in git(main, "log", "-1", "--format=%B")
 
 
 # A driver for a stopped land.py: the placeholder fixture, land.main (so its own signal handler), the Board's calls
@@ -748,7 +792,7 @@ if what == "land":
 else:
     (tmp / "message.txt").write_text("Placeholder change\n", encoding="utf-8")
     mp.setattr(land, "lane_check", lambda *a, **kw: (wait(), (0, "PASS"))[1])
-    land.main(["commit", "ex-builder", "code", "-F", str(tmp / "message.txt"), "placeholder.py"])
+    land.main(["commit", "ex-builder", "code", "-F", str(tmp / "message.txt"), "placeholder.py", "--tests", "none"])
 '''
 
 
@@ -1046,12 +1090,18 @@ def test_land_hands_the_plan_to_check_lane(monkeypatch):
     import types
     land = _land()
     ran = []
-    monkeypatch.setattr(subprocess, "run", lambda cmd, **kw: ran.append(cmd) or types.SimpleNamespace(
-        returncode=0, stdout="", stderr=""))
+    envs = []
+    monkeypatch.setattr(subprocess, "run", lambda cmd, **kw: ran.append(cmd) or envs.append(kw.get("env")) or
+                        types.SimpleNamespace(returncode=0, stdout="", stderr=""))
     land.lane_check("placeholder", "ex-builder", rng="a..b", plan="design-study/PLAN.md")
     land.lane_check("placeholder", "ex-builder", rng="a..b")
     assert ran[0][-5:] == ["ex-builder", "--range", "a..b", "--plan", "design-study/PLAN.md"]
     assert ran[1][-3:] == ["ex-builder", "--range", "a..b"]
+    # a commit's message reaches the lane check as a variable, never an argument (notes/PLAN-AUDIT-FIXES.md, item 2:
+    # the first project's check is argparse); none given, the environment is the process's own
+    land.lane_check("placeholder", "ex-builder", message="/placeholder/message.txt")
+    assert ran[2][-1] == "ex-builder" and envs[2]["MISHMERET_COMMIT_MESSAGE"] == "/placeholder/message.txt"
+    assert envs[0] is None and envs[1] is None
 
 
 def test_land_because_covers_only_the_commits_made_under_the_reviewers_words(monkeypatch):

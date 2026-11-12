@@ -6,11 +6,12 @@ project's `.claude/mishmeret.json`, read here and nowhere else:
 
     MISHMERET_CONFIG    the config file's path (the project's shim sets it); unset, `<root>/.claude/mishmeret.json`,
                         the root from $CLAUDE_PROJECT_DIR, else `git rev-parse --show-toplevel` in the current folder
-    MISHMERET_<FIELD>   overrides one field, MISHMERET_<FIELD>_<KEY> one key of a table field (an int field's value
-                        read as an int) - the one rule in place of a variable per knob
+    MISHMERET_<FIELD>   overrides a text or number field (a number field's value read as an int), and
+    MISHMERET_NIGHT_<KEY> one key of `night` - no other table's key has a variable
 
-A field missing from the file, or one the file has that FIELDS does not list, is an error (ConfigError) - never a
-default (Lesson 21 in Girsa: a loader that raises over one that returns nothing). The project's shim runs the one
+A field missing from the file, but one OPTIONAL names (its reader takes it as off), or one the file has that FIELDS
+does not list, is an error (ConfigError) - never a default (Lesson 21 in Girsa: a loader that raises over one that
+returns nothing). The project's shim runs the one
 pinned commit its config names, so the code and the config it reads change together, in one commit of the project.
 
     python3 config.py --shell    prints the fields the shell scripts read, as `NAME=value` lines for `eval`

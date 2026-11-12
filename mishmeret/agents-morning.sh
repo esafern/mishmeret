@@ -201,7 +201,7 @@ if [ "${1:-}" = "--night" ]; then
   say() { echo "$(date '+%F %H:%M:%S') $*" >> "$NIGHT/log.txt"; [ -z "$DRY" ] || echo "$*"; }
   notify() {
     say "told you: $*"
-    [ -n "$DRY" ] || osascript -e "display notification \"$*\" with title \"$MM_PROJECT: the night run\"" >/dev/null 2>&1
+    [ -n "$DRY" ] || alert "$*" "$MM_PROJECT: the night run"     # agents-lib.sh
   }
   type_in() {   # pane text
     if [ -n "$DRY" ]; then say "(dry run) would type $2 into $1"; else tmux send-keys -t "$1" "$2" Enter; fi

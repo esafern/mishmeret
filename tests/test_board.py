@@ -54,6 +54,83 @@ def test_the_board_takes_a_roles_question_and_hands_back_the_reviewers_answer(tm
     assert "filter(l => /^https?:" in page, "the page draws only http(s) links, whatever the record holds"
 
 
+def _scratch_board(tmp_path, monkeypatch):
+    import importlib.util
+    monkeypatch.setenv("MISHMERET_BOARD_DIR", str(tmp_path / "board"))
+    spec = importlib.util.spec_from_file_location("board", os.path.join(PKG, "board.py"))
+    bd = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(bd)
+    return bd
+
+
+def test_a_relayed_answer_keeps_the_pages_rule_and_says_it_was_relayed(tmp_path, monkeypatch, capsys):
+    """notes/PLAN-AUDIT-FIXES.md, item 1: `board.py answer` (a role relaying what the reviewer said in its pane) went over
+    an answered item with no word and took an answer to a withdrawn one; the record told a relay only by its note. The
+    page's rule is board.answer's now: an answered item takes a new answer only with --change, the earlier one kept; a
+    withdrawn or missing item none; the relay is recorded and said. Placeholder questions."""
+    bd = _scratch_board(tmp_path, monkeypatch)
+    one, two = bd.ask("ex-builder", "Placeholder?", options=["a=Yes", "b=No"]), bd.ask("ex-builder", "Second?")
+    bd.withdraw(two["id"], "placeholder")
+    assert bd.main(["answer", "1", "--answer", "a"]) == 0
+    assert "answered: a - Yes" in capsys.readouterr().out and bd.items()[1]["answer"]["via"] == "command"
+    assert bd.main(["answer", "1", "--answer", "b"]) == 2
+    assert "is answered (a): a new answer is a change (--change)" in capsys.readouterr().err
+    assert bd.items()[1]["answer"]["answer"] == "a"
+    assert bd.main(["answer", "1", "--answer", "b", "--change"]) == 0
+    assert "(relayed by command)" in capsys.readouterr().out
+    got = bd.items()[1]
+    assert got["answer"]["answer"] == "b" and [x["answer"] for x in got["earlier"]] == ["a"]
+    for item, why in ((2, "#2 is withdrawn"), (9, "no item 9")):
+        assert bd.main(["answer", str(item), "--answer", "x", "--change"]) == 2 and why in capsys.readouterr().err
+    lines = (tmp_path / "board" / "board.jsonl").read_text(encoding="utf-8").splitlines()
+    assert [json.loads(x)["type"] for x in lines].count("answer") == 2, "nothing written for a refused answer"
+
+
+def test_a_roles_session_writes_to_the_board_only_as_itself(tmp_path, monkeypatch, capsys):
+    """notes/PLAN-AUDIT-FIXES.md, item 3, by WRITE THE ENUMERATION DOWN (girsa-verifier's question 2 a): every command
+    that writes as --role (board.AS_ROLE) is refused under another role's session and taken under its own; unset - the
+    night run, the reviewer's terminal - it is taken. And every command is classed: a new one in none of the three
+    lists fails here. Placeholder Board."""
+    bd = _scratch_board(tmp_path, monkeypatch)
+    me, other = "ex-builder", "ex-verifier"
+    msg = tmp_path / "text.txt"
+    msg.write_text("placeholder", encoding="utf-8")
+
+    def forms(role):
+        """Each AS_ROLE command as `role`, in an order each can run (the hold before its release, a send to `me` before
+        its done)."""
+        n = len(bd.messages()) + 1
+        return {"ask": ["ask", "--role", role, "--title", "placeholder"],
+                "status": ["status", "--role", role, "--now", "placeholder"],
+                "plan": ["plan", "--role", role, "--effort", "placeholder", "--step", "now=placeholder"],
+                "hold": ["hold", "--role", role, "--why", "placeholder"],
+                "release": ["release", "--role", role],
+                "finished": ["finished", "--role", role, "--summary", "- placeholder", "--session", "s-" + role],
+                "qa": ["qa", "--role", role, "--question", "placeholder?", "--answer", "placeholder"],
+                "qa-more": ["qa-more", "1", "--role", role, "--answer", "placeholder"],
+                "send": ["send", "--role", role, "--to", other if role == me else me, "--text-file", str(msg)],
+                "done": ["done", str(n - 1), "--role", role]}
+    assert set(forms(me)) == set(bd.AS_ROLE), "one form per writing command"
+    choices = bd.parser()._subparsers._group_actions[0].choices
+    assert sorted(choices) == sorted(bd.AS_ROLE + bd.READS + bd.NO_ROLE) and \
+        len(set(bd.AS_ROLE + bd.READS + bd.NO_ROLE)) == len(choices), "every command classed, once"
+    bd.main(["qa", "--role", other, "--question", "seed?", "--answer", "seed"])     # the Q&A qa-more follows up
+    monkeypatch.setenv("CLAUDE_CODE_AGENT", me)
+    for cmd in bd.AS_ROLE:
+        before = len(bd.read_events())
+        assert bd.main(forms(other)[cmd]) == 2, cmd
+        assert f"this session is {me}: it writes to the Board as itself, not as '{other}'" in capsys.readouterr().err
+        assert len(bd.read_events()) == before, f"{cmd}: nothing written"
+    for cmd in bd.AS_ROLE:
+        if cmd == "done":
+            monkeypatch.delenv("CLAUDE_CODE_AGENT")
+            bd.main(["send", "--role", other, "--to", me, "--text", "for done"])
+            monkeypatch.setenv("CLAUDE_CODE_AGENT", me)
+        assert bd.main(forms(me)[cmd]) == 0, (cmd, capsys.readouterr().err)
+    monkeypatch.delenv("CLAUDE_CODE_AGENT")
+    assert bd.main(["status", "--role", other, "--now", "unset: taken"]) == 0
+
+
 def test_the_reviewer_can_change_an_answer_on_the_board(tmp_path, monkeypatch):
     """The reviewer, 2026-10-11: "change #13 answer to B. no option to do that on the board". An answered item takes a
     new answer from the page only when the page asks for a change; the earlier answer is kept and said; a withdrawn item
@@ -953,11 +1030,13 @@ def test_a_landing_shows_on_its_corner_until_the_next_session_and_stays_in_the_h
     assert 'id="landtoggle"' in page and "landed-sum" in page and '["landed", "Finished"]' in page
     assert "Finished sessions (${lands.length})" in page and "<span>finished ${esc(when(l.ts))}</span>" in page
     assert "Landings (" not in page and '"Landed' not in page and "<span>landed " not in page
-    # THE COMMAND: `board.py finished` posts; `landed`, its old name, still does (the first project's command file
-    # calls it until its pin moves)
-    for cmd in ("finished", "landed"):
-        assert bd.main([cmd, "--role", "ex-verifier", "--summary", f"- by {cmd}", "--session", "v-" + cmd]) == 0
-    assert [l["summary"] for l in bs.board_view()["landings"] if l["role"] == "ex-verifier"] == ["- by finished", "- by landed"]
+    # THE COMMAND: `board.py finished` posts; `landed`, its old name, is no longer taken (notes/PLAN-AUDIT-FIXES.md,
+    # item 7: no caller runs it on a pin with this code)
+    assert bd.main(["finished", "--role", "ex-verifier", "--summary", "- by finished", "--session", "v-1"]) == 0
+    with pytest.raises(SystemExit) as gone:
+        bd.main(["landed", "--role", "ex-verifier", "--summary", "- by landed", "--session", "v-2"])
+    assert gone.value.code == 2
+    assert [l["summary"] for l in bs.board_view()["landings"] if l["role"] == "ex-verifier"] == ["- by finished"]
 
 
 def test_the_board_shows_a_role_idle_once_its_turn_ended_and_a_keepalive_refreshes_its_corner(tmp_path, monkeypatch):

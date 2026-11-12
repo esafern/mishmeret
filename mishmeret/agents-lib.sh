@@ -67,6 +67,12 @@ run_going() {   # a night run's lock folder -> success unless the run that wrote
   kill -0 "$p" 2>/dev/null
 }
 
+alert() {   # text title -> a notification on the Mac: both as osascript's arguments, never spliced into its script; and
+            # no quote escaped inside a quote, for the role guard reads these scripts (agents.sh's tell and the night
+            # run's notify, two copies merged: notes/PLAN-AUDIT-FIXES.md, item 4)
+  osascript -e 'on run a' -e 'display notification (item 1 of a) with title (item 2 of a)' -e 'end run' "$1" "$2" >/dev/null 2>&1
+}
+
 going_run() {   # -> the lock of a night run that is going (<state_dir>/night/<its date>/.running), or nothing
   local l
   for l in "$MM_STATE_DIR"/night/*/.running; do

@@ -93,9 +93,7 @@ if [ "$MODE" = "--next" ]; then
   role="${2:-}"; pane="${3:-}"; how="${4:-}"
   mkdir -p "$MM_STATE_DIR"
   say() { echo "$(date '+%F %H:%M:%S') $role: $*" >> "$MM_STATE_DIR/next.log"; }
-  # the words as arguments, no quote escaped inside a quote: the role guard reads this script for its kill-session,
-  # and an escaped quote here hid every line after it from that reader
-  tell() { say "told you: $*"; osascript -e 'on run a' -e 'display notification (item 1 of a) with title (item 2 of a)' -e 'end run' "$role: $*" "$MM_PROJECT: a finished session" >/dev/null 2>&1; }
+  tell() { say "told you: $*"; alert "$role: $*" "$MM_PROJECT: a finished session"; }   # agents-lib.sh
   at_shell() { case "$(tmux display-message -p -t "$pane" '#{pane_current_command}' 2>/dev/null)" in zsh|-zsh|bash|-bash|sh|-sh) return 0 ;; esac; return 1; }
   [ -n "$role" ] && [ -n "$pane" ] && [ "$(tmux show-options -pv -t "$pane" @role 2>/dev/null)" = "$role" ] \
     || { say "pane $pane was not given to it by agents.sh - nothing typed"; exit 0; }

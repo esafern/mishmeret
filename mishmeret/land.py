@@ -8,14 +8,15 @@ written in five places and done by hand, or by three scripts each with its own f
 steps, each a git or tool call whose return code is read, and the Board's hold released on every exit - a stop's
 SIGTERM, or SIGHUP, included (M07 item 6; notes/PLAN-LAND-SIGNAL.md).
 
-  ./venv/bin/python tools/land.py commit ROLE notes|code -F MESSAGE NAME... [--tests "PYTEST ARGS"] [--because "WORDS"]
+  ./venv/bin/python tools/land.py commit ROLE notes|code -F MESSAGE NAME... [--tests "PYTEST ARGS"|none] [--because "WORDS"]
   ./venv/bin/python tools/land.py land ROLE notes|code [--plan PLAN] [--accept FILE::NAME...] [--because WORDS]
   ./venv/bin/python tools/land.py check-conflict FILE... [--accept NAME...]
   ./venv/bin/python tools/land.py gate [--set landing|rebuild|after-apply] [--tree DIR]
 
-`commit`: the index empty first; the NAMEs staged and compared; the lane check (`--doc-only` for notes); on a branch,
-the tests `--tests` names; in the main tree (girsa-operator's alone) the landing gate under the Board's hold; the
-message's times checked by the role guard's own function; HEAD unmoved; `git commit -F`.
+`commit`: the index empty first; the NAMEs staged and compared; the lane check (`--doc-only` for notes), the message
+handed to it; on a branch, a code commit's tests, `--tests` (required: `none` runs none and the message says so); in the
+main tree (girsa-operator's alone) the landing gate under the Board's hold, `--tests` not read; the message's times
+checked by the role guard's own function; HEAD unmoved; `git commit -F`.
 `land` (in a worktree): a code landing of girsa-builder names its plan (`--plan`, committed); the hold (code); the
 rebase as its own step - stopped, the rule printed; every commit the rebase replayed checked against the three versions
 git merged it from, however the rebase was continued; the base on main's tip; the range's lane check, with the plan
@@ -85,11 +86,15 @@ def said(cwd, *args):
 
 # THE TOOLS IT CALLS, one function each - the tests replace these, so what the script does with their answers is what
 # they test
-def lane_check(repo, role, doc_only=False, rng=None, because=None, plan=None):
+def lane_check(repo, role, doc_only=False, rng=None, because=None, plan=None, message=None):
     cmd = [sys.executable, os.path.join(repo, LANE_CHECK), role]
     cmd += ["--doc-only"] * doc_only + (["--range", rng] if rng else []) + (["--because", because] if because else [])
     cmd += ["--plan", plan] if plan else []
-    run = subprocess.run(cmd, cwd=repo, capture_output=True, text=True)
+    # THE COMMIT'S MESSAGE, to the lane check's run alone (notes/PLAN-AUDIT-FIXES.md, item 2: a PUBLIC repository's scan
+    # for personal details never read it): a variable, not an argument - a project's check that does not read it, or
+    # parses its arguments strictly (the first project's), is unchanged
+    env = dict(os.environ, MISHMERET_COMMIT_MESSAGE=message) if message else None
+    run = subprocess.run(cmd, cwd=repo, capture_output=True, text=True, env=env)
     return run.returncode, (run.stdout + run.stderr).strip()
 
 
@@ -177,32 +182,43 @@ def commit(role, kind, message, names, tests=None, because=None, cwd="."):
     refusal = session_refusal(role, where, "commit")
     if refusal:
         raise Refused(refusal)
+    # A CODE COMMIT ON A BRANCH NAMES ITS TESTS (notes/PLAN-AUDIT-FIXES.md, item 5: none ran without --tests, and where no
+    # landing follows - this repository - no gate did either). `none` where no test can name the change
+    # (girsa-architect, the first project's f6f25c9c), said in the message. In the main tree the gate runs instead.
+    untested = kind == "code" and not where.in_main and tests == "none"
+    if kind == "code" and not where.in_main and not tests:
+        raise Refused('a code commit on a branch names the tests its change touches: --tests "tests/..." - or '
+                      '--tests none where no test can, which the message then says')
     if _staged(where.top):
         raise Refused(f"the index already holds {', '.join(_staged(where.top))} - stage nothing by hand: name the "
                       f"files here, and nothing of another's is swept in")
     head = said(where.top, "rev-parse", "HEAD")
     with open(message, encoding="utf-8") as fh:
         text = fh.read().strip()
+    if untested:
+        text = f"{text}\n\nNo test was run (--tests none)."
     if because:
         text = f"{text}\n\nThe reviewer's words: {because}"
     refusal = time_refusal(text)
     if refusal:
         raise Refused(refusal)
-    added = git(where.top, "add", "--", *names)
+    with tempfile.NamedTemporaryFile("w", encoding="utf-8", newline="\n", suffix=".txt", delete=False) as fh:
+        fh.write(text + "\n")
     try:
+        added = git(where.top, "add", "--", *names)
         if added.returncode != 0:
             raise Refused(f"git add: {added.stderr.strip()}")
         staged = _staged(where.top)
         if staged != sorted(set(names)):
             raise Refused(f"staged {staged}, named {sorted(set(names))} - a name that is ignored, unchanged or "
                           f"misspelt stages nothing")
-        rc, output = lane_check(where.top, role, doc_only=kind == "notes", because=because)
+        rc, output = lane_check(where.top, role, doc_only=kind == "notes", because=because, message=fh.name)
         print(output)
         if rc:
             raise Refused("the lane check refused")
         if kind == "code" and where.in_main:
             _held(where.main_tree, role, "a code commit in the main tree", lambda: _gated(where.top))
-        elif kind == "code" and tests:
+        elif kind == "code" and not untested:
             run = subprocess.run([sys.executable, "-m", "pytest", *shlex.split(tests), "-q", "-p", "no:cacheprovider"],
                                  cwd=where.top)
             if run.returncode == 5:                 # pytest's "no tests collected" (found by the plan's rehearsal)
@@ -211,17 +227,14 @@ def commit(role, kind, message, names, tests=None, because=None, cwd="."):
                 raise Red(f"the tests named exited {run.returncode}")
         if said(where.top, "rev-parse", "HEAD") != head or _staged(where.top) != staged:
             raise Refused("HEAD or the staged names moved while the checks ran")
-        with tempfile.NamedTemporaryFile("w", encoding="utf-8", newline="\n", suffix=".txt", delete=False) as fh:
-            fh.write(text + "\n")
-        try:
-            done = git(where.top, "commit", "-q", "-F", fh.name)
-        finally:
-            os.unlink(fh.name)
+        done = git(where.top, "commit", "-q", "-F", fh.name)
         if done.returncode != 0:
             raise Refused(f"git commit: {(done.stderr or done.stdout).strip()}")
     except BaseException:
         git(where.top, "reset", "-q")                     # the index was empty before: nothing of another's unstaged
         raise
+    finally:
+        os.unlink(fh.name)                                # the message file, on every exit
     print(f"  committed {said(where.top, 'log', '--oneline', '-1')}")
 
 
@@ -641,7 +654,8 @@ def main(argv=None):
     c.add_argument("kind", choices=("notes", "code"))
     c.add_argument("-F", dest="message", required=True, help="the commit message's file")
     c.add_argument("names", nargs="+")
-    c.add_argument("--tests", help="on a branch, the tests the change touches (pytest's arguments)")
+    c.add_argument("--tests", help="a code commit on a branch: the tests the change touches (pytest's arguments), or "
+                                   "`none` where no test can (said in the message); not read in the main tree")
     c.add_argument("--because", help="the reviewer's words giving this work to ROLE outside its lane")
     lnd = sub.add_parser("land")
     lnd.add_argument("role")
