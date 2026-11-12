@@ -29,19 +29,33 @@ Rewritten in place when a piece lands and at the end of a session; the log is `n
 
 ## Now
 
-- No piece is open. The lessons file is merged and pushed (main 8818221 = origin/main).
+- THE SEVEN AUDIT FIXES (notes/PLAN-AUDIT-FIXES.md; the log's M09; the reviewer's "fix 1 through 7"): branch
+  `builder-audit-fixes` from 96454a1 (main 8818221 + my state commit). Plan reviewed (girsa-verifier, the first
+  project's 3a321c10; girsa-architect's f6f25c9c). BUILT at 8426667, 146 passed, 9 of 9 rules red without them.
+  Waiting: girsa-verifier's check at the branch's final commit; girsa-operator's own commit of the lane check's half
+  (notes/PLAN-AUDIT-FIXES-LANE-CHECK.md, the diff and its apply command), then its merge and the pin. At the first
+  project's pin bump (girsa-builder's): the demo operator's and steward's briefs gain `--tests` and `none`; the
+  operator's the relay with `--change`.
 - `builder-lessons` and `builder-background-state-unsplit` (a backup before a split) are merged or done with; they
-  can be deleted.
-- To resume: `git -C ~/work/mishmeret log --oneline -3`; `git -C ~/work/mishmeret-builder status -sb`; the Board.
+  can be deleted. `builder-state-after-lessons` (96454a1) is inside `builder-audit-fixes`.
+- To resume: `git -C ~/work/mishmeret log --oneline -3`; `git -C ~/work/mishmeret-builder status -sb`; the Board;
+  girsa-verifier's and girsa-operator's answers, live; the log's M09.
 
 ## Next, in order
 
-Nothing more is given. Not given: the code's citations of the first project's lesson numbers; M07's smaller items;
-role_guard.py's header sentence on subagents (girsa-verifier's LOW, for its next touch).
+1. girsa-demo-operator's REQUEST, the reviewer's words: track tokens, secrets and other things that expire, and set
+   calendar alerts - the items from the project's config, never Girsa's names in code. Its cases (the log's M09):
+   the hosting MCP token (its JWT's `exp`, now 2026-11-17 13:49 UTC; the alert follows each renewal), the Board
+   stats fetch's Claude login (2026-12-07), two TLS certificates (2027-01-15), the domain (not known). The
+   reviewer's to decide: which calendar, how far ahead.
+2. girsa-operator's REQUEST (the night directive): `_frozen_gate` red while an Apply is uncommitted in the main tree
+   (the first project's Board #495).
+3. girsa-operator's REQUEST: the Board's hold kept by role name, so a second session of one role ends the first's.
+
+Not given: the code's citations of the first project's lesson numbers; M07's smaller items; role_guard.py's header
+sentence on subagents (girsa-verifier's LOW, for its next touch).
 
 ## Open
-
-- `board.py landed`, the old name, is still taken: the first project's tracked files no longer call it (M07).
 - Not run live: the night run and the morning run as changed (behind stubs only); the hook under the first project's
   shim. Mishmeret's own config names neither finish command and its settings no Stop hook - it has no role in tmux.
 - Not run on Linux: `agents.sh --next` (osascript, BSD `find -mmin`, tmux) - the sessions' scripts are macOS-only.
@@ -50,11 +64,8 @@ role_guard.py's header sentence on subagents (girsa-verifier's LOW, for its next
 - The guard, not in M07 items 1 and 4 (their plans' "Not in this piece"): two `-C`s, `cd -`, a bare `cd`, a cd or
   git option through a variable, a force from git's config or an alias, a `case` pattern's `)`. A `!` command the
   reviewer types bypasses the hook (the reviewer's own run, 2026-11-12), so a delete refused to the operator runs that way.
-- A required config key cannot be added or renamed: Mishmeret pins itself (the log's M05). The README still says
-  every field is required; seven are optional since A2 and two more since M05 - not corrected.
+- A required config key cannot be added or renamed: Mishmeret pins itself (the log's M05).
 - Not pinned by a test (A2): `land()`'s restart line and ledger copy with the field absent.
 - The 5 s refresh redraws the corners, so a focused pill loses its focus then (page-wide; girsa-ui-steward: leave it).
 - Copy-on-select measured in headless Chromium alone; the page's new words too.
 - The first project's older worktree of this work (`...-mishmeret`) is finished with; its removal is the reviewer's.
-
-The session is ready to clear.

@@ -36,7 +36,21 @@ M09. **[2026-11-12, the seven fixes of my audit (notes/PLAN-AUDIT-FIXES.md)]**
       tree (the first project's Board #495); (2) the Board's hold is kept by role name, so a second session of one
       role ends the first's hold. Each with its plan and girsa-verifier's check; the merge and the pin are
       girsa-operator's. Queued: this piece, then the expiring items, then these two. Sent, live: an ANSWER with
-      that order.
+      that order; a NOTE to girsa-verifier that the plan is revised at 20c527c.
+    * girsa-verifier's ANSWER, live: its review, the first project's
+      design-study/step5-verification/mishmeret-audit-fixes-plan-2026-11-13/REVIEW.md at 3a321c10 (read there). Ready
+      for items 1, 2, 3, 5, 6, 7, with four LOWs and two tests to add; `.claude/lane_check.py` is girsa-operator's own
+      commit (the edit is the check, which judges the commit that brings it). MEDIUM 1: item 4's case did not occur.
+      MY SLIP, IN THE AUDIT: I wrote that Claude Code's API error notices hold JSON quotes, and "measured" it on a
+      string I made up; girsa-verifier read every such notice on this machine, 0 of 255 hold a `"` or `\`. Item 4 is
+      now the merge of two copies, its case line saying so. All taken: the plan rewritten (each case from the record).
+    * **[00:36]** BUILT, 8426667 (`--tests "tests/"`, 146 passed): each new rule's test red with the rule taken out,
+      on a scratch copy of mishmeret/ and tests/ - 9 of 9. The lane check's half, written and tested here, is for
+      girsa-operator: notes/PLAN-AUDIT-FIXES-LANE-CHECK.md (the diff and its apply command, which reproduces both
+      files byte for byte; on a scratch copy the whole suite 147 passed, its test red over today's lane check). MY
+      SLIP: a stray `mkdir` made an empty `handover` folder in Mishmeret's Board folder; removed at once (it held
+      nothing). To send at the notes commit, live: the build's HANDOFF to girsa-verifier; the diff's REQUEST to
+      girsa-operator.
 M08. **[2026-11-12, the next work after the review]**
     * **[09:19]** Started at main 158993f: girsa-operator moved Mishmeret's own pin to dd3bcdb (M07's item 3, settled).
       No piece in work. Sent, live: a QUESTION to girsa-operator - the next work, with M07's open items (1, 2, 4, 5,
