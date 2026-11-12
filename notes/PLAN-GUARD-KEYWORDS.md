@@ -6,6 +6,8 @@ from 21cb9ba, not main: it changes the same two files, and 21cb9ba waits for gir
 on main once that lands. The log and the state file record it once `builder-lessons` is merged; until then the
 messages are recorded here. Sent, live, at 46b378b: the plan's HANDOFF to girsa-verifier, the QUESTION to
 girsa-architect, and a NOTE to girsa-operator of the path and the merge order (builder-push-forms first).
+12:20: girsa-architect's ANSWER (under "The behaviour"), taken. Sent, live, at 2324302: a NOTE to girsa-verifier
+of the revision.
 
 ## The case
 

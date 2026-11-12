@@ -123,7 +123,13 @@ original span and `shlex`. Two runs gave the same result.
 - `mishmeret/role_guard.py`, `tests/test_guard.py`, this plan. One code commit through `land.py commit
   mishmeret-builder code --tests "tests/test_guard.py"`, then the suite.
 
-## Not run (until the reviewer runs it)
+## Not run (until the reviewer runs it) - RUN, 2026-11-12, before 12:23
+
+- RESULT (girsa-architect's NOTE, live): the reviewer ran `! git push --dry-run origin --delete
+  no-such-branch-girsa-test 2>&1; echo "exit=$?"` in girsa-architect's pane, a role the guard refuses any push. Git
+  ran and reached origin: "error: unable to delete 'no-such-branch-girsa-test': remote ref does not exist", exit=1.
+  So a `!` command does not pass through the hook, and the refusal's "the reviewer's own command" way works. The
+  NOT VERIFIED line under "The behaviour" is settled by this. Nothing changed on origin. The test, as planned:
 
 - Whether `!` passes through the hook. girsa-operator (between 11:07 and 11:13) has no record of a `!` git push going through with
   the guard on, and treats the answer as unknown. Its test is harmless: the reviewer types `! git push --dry-run
