@@ -32,6 +32,29 @@ M08. **[2026-11-12, the next work after the review]**
       given in this order, one plan at a time, each checked by girsa-verifier before the next: 4, 1, 6, then 5, then
       2 and the Board's background-task state. The four lesson numbers in the code are not given. Plans go to
       girsa-operator, which is at its usage limit until the window resets.
+    * ITEM 4, the operator's push (notes/PLAN-PUSH-FORMS.md, which records each message sent and received): on
+      branch `builder-push-forms` from 158993f, kept out of this log and the state file until now, as M06 was kept
+      off M05's branch. Plan reviewed (girsa-verifier: two MEDIUMs, a quoted word and a long option's prefix);
+      girsa-architect and girsa-operator: refuse every remote delete. VERIFIED at 21cb9ba, merged (main 21cb9ba). The
+      reviewer's own `!` test, in girsa-architect's pane: a `!` command bypasses the hook. MY SLIPS: a time written
+      without the clock (f9a933d's "11:10", corrected in f664982); the red script reusing a stale `.pyc` (three rows
+      ran another row's code; fixed with `__pycache__` cleared and `-B`, and a baseline row).
+    * ITEM 1, the guard keywords (notes/PLAN-GUARD-KEYWORDS.md, the same): on branch `builder-guard-keywords` from
+      21cb9ba. The plan was reviewed twice: girsa-architect (both trees; the keywords in BOUNDARY; its "refuses more,
+      never less" withdrawn) and girsa-verifier (a branch cd, the quoted names' siblings). The build found an older
+      hole: `cd <main>; ls; git reset --hard` from a worktree, let through at 21cb9ba and at the first project's pin
+      dd3bcdb. Two rounds on girsa-verifier's checks: a relative `-C`, then a relative cd after a cd. Sweeping that
+      round's siblings myself, I found a cd quoted, optioned or by `pushd`, all let through at 21cb9ba. VERIFIED at
+      db17aac (nothing above LOW; two LOWs named in the plan), merged; main c773f5e, and the first project's pin
+      db17aac (girsa-operator, 13:23). MY SLIPS: a plan edit that did not apply, so 085bca6 went in without it (fixed
+      in 2324302); and a NOTE to girsa-operator saying I had read the cd line at dd3bcdb before I had, corrected live
+      after reading it (the same line).
+    * **[14:28]** THE REVIEWER'S QUESTION on WRITE THE ENUMERATION DOWN's Do ("what happens when a new place is added
+      later?"): nothing catches it, since the test checks only the list. My wording (a second test that finds every
+      place on its own) was sent to girsa-operator, which put it in its draft word for word. `builder-lessons` was
+      rebased on main c773f5e with no conflict, and `LESSONS.md` rebuilt from the draft (19,059 bytes, sha256
+      624b7510ff2f0d7e..., `cmp` exit 0; the one example changed). The start-reading check: exit 0. The suite: 140
+      passed. Mishmeret's origin is still at 158993f: the reviewer's push failed on the network and waits for them.
 
 M07. **[2026-11-10, a review of all of Mishmeret's code and the first project's side of it (the reviewer's request)]**
     * **[20:49]** Read at main 120c3b5: every file of `mishmeret/` but the Board page's script, Mishmeret's own

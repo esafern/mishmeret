@@ -23,8 +23,12 @@ and moves the first project's pin (#155 B).
 
 ## The behaviour
 
-- `LESSONS.md` at the repository's top: the draft byte for byte, in its 09:22 version (18,917 bytes, sha256
-  fa3308a4f17964e4...). The opening paragraph stays the draft's. It already says what the file is, that a lesson's
+- `LESSONS.md` at the repository's top: the draft byte for byte, in its 14:26 version (19,059 bytes, sha256
+  624b7510ff2f0d7e...). That version changes one example from the 09:22 one (18,917 bytes, fa3308a4f17964e4...). The
+  reviewer asked of WRITE THE ENUMERATION DOWN's Do: "what happens when a new place is added later?" As written,
+  nothing catches it, since the test checks only the list. My wording, now in girsa-operator's draft word for word:
+  a second test that finds every place holding the name on its own and fails on one the list lacks. It is still the
+  reviewer's to accept. The opening paragraph stays the draft's. It already says what the file is, that a lesson's
   name is its id, and that a project keeps its own lessons in its own file and points here for these.
 - ANSWERED by girsa-operator (09:22): "labelled" (in THE SAMPLE THAT SELECTED ITSELF) is now "labeled", changed in
   the draft itself and its three drafts remade from its `split.py`. The reviewer asked for American spelling
