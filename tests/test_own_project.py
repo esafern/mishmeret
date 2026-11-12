@@ -80,3 +80,24 @@ def test_every_commit_is_scanned_for_an_address_a_roster_name_and_the_home_folde
     stage("notes/named.md", "as placeholder.person said\n")
     rc, out = check("mishmeret-builder")
     assert rc == 1 and "notes/named.md: 1 added line" in out and "no name was checked" not in out, out
+
+
+def test_the_commit_message_is_scanned_as_the_added_lines_are(staged, monkeypatch, tmp_path_factory):
+    """notes/PLAN-AUDIT-FIXES.md, item 2: land.py hands the lane check the commit's message (MISHMERET_COMMIT_MESSAGE),
+    which it scans as it scans the added lines - a line holding this machine's home folder fails, the text not shown;
+    a clean message passes; unset, no message is read."""
+    stage, check, _ = staged
+    stage("notes/ok.md")
+    folder = tmp_path_factory.mktemp("message")
+    bad, good = folder / "bad.txt", folder / "good.txt"
+    bad.write_text("Placeholder change\n\nran in " + os.path.expanduser("~") + "/x\n", encoding="utf-8")
+    good.write_text("Placeholder change\n", encoding="utf-8")
+    monkeypatch.setenv("MISHMERET_COMMIT_MESSAGE", str(bad))
+    rc, out = check("mishmeret-builder")
+    assert rc == 1 and "the commit message: 1 line carries" in out and os.path.expanduser("~") not in out, out
+    monkeypatch.setenv("MISHMERET_COMMIT_MESSAGE", str(good))
+    rc, out = check("mishmeret-builder")
+    assert rc == 0 and "the commit message" not in out, out
+    monkeypatch.delenv("MISHMERET_COMMIT_MESSAGE")
+    rc, out = check("mishmeret-builder")
+    assert rc == 0 and "the commit message" not in out, out

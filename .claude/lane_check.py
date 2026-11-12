@@ -6,7 +6,9 @@
 Fails (exit 1) on a staged path outside ROLE's lane in `.claude/lanes.txt` - reported, not failed, under `--because`,
 the reviewer's words the commit message then carries; on a path not a `.md` under `--doc-only`; and, on every commit,
 whatever its paths (this repository is PUBLIC), on an added line holding a personal address, a name or address from
-the local roster, or this machine's home folder - counted by file, the text never shown. The roster is
+the local roster, or this machine's home folder - counted by file, the text never shown - and on a line of the commit's
+message so holding one, the file land.py names in MISHMERET_COMMIT_MESSAGE (notes/PLAN-AUDIT-FIXES.md, item 2; unset,
+no message is read). The roster is
 `.claude/roster.local.json` in the MAIN clone, untracked ({"reviewers": {id: {"display", "email"}}}, a Girsa roster's
 shape); without it the names go unchecked and the report says so. `--range` and `--plan` are refused (exit 2): no one
 runs `land.py land` here; the operator merges."""
@@ -69,17 +71,25 @@ def main(argv):
             out.append(f"  NOT A DOCUMENT (--doc-only): {p}")
             failed = True
     pattern, why = forbidden()
+    carries = lambda line: [a for a in PERSONAL_ADDRESS.findall(line) if not NOT_PERSONAL.search(a)] or pattern.search(line)
     added, path = {}, None
     for line in git("diff", "--cached", "-U0", "--no-color", "--no-renames").splitlines():
         if line.startswith("+++ "):
             path = line[6:]
         elif line.startswith("+") and path:
-            if [a for a in PERSONAL_ADDRESS.findall(line) if not NOT_PERSONAL.search(a)] or pattern.search(line):
+            if carries(line):
                 added[path] = added.get(path, 0) + 1
     for p, n in sorted(added.items()):
         out.append(f"  {p}: {n} added line{' carries' if n == 1 else 's carry'} a personal address, a roster name or "
                    "this machine's home folder (the text is not shown here)")
         failed = True
+    if os.environ.get("MISHMERET_COMMIT_MESSAGE"):
+        with open(os.environ["MISHMERET_COMMIT_MESSAGE"], encoding="utf-8") as fh:
+            n = sum(1 for line in fh if carries(line))
+        if n:
+            out.append(f"  the commit message: {n} line{' carries' if n == 1 else 's carry'} a personal address, a roster "
+                       "name or this machine's home folder (the text is not shown here)")
+            failed = True
     out += [f"  {why}"] if why else []
     print("\n".join(out + ["FAIL" if failed else "PASS"]))
     return 1 if failed else 0
