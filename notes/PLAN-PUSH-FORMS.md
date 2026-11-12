@@ -7,7 +7,10 @@ record it once the lessons branch (`builder-lessons`) is merged, as M06 was kept
 the messages are recorded here. Sent, live, at 4c65b64: the QUESTION to girsa-architect, the HANDOFF to
 girsa-verifier, and a NOTE of the path to girsa-operator. 11:07: girsa-operator's ANSWER (above, under the
 question), taken into the plan. Sent, live, at 1f349a4: a NOTE to girsa-operator of the revision, asking whether
-a `!` git push was ever seen to pass the guard.
+a `!` git push was ever seen to pass the guard. Then girsa-operator's ANSWER (under "Not run"). Sent, live: a
+NOTE that the `!` test can run now, in any non-operator pane. Before 11:13: girsa-verifier's review of 4c65b64, NOT
+READY, two MEDIUMs and one LOW, all taken (under "The behaviour"). It holds its reading of the delete question
+until girsa-architect answers.
 
 ## The case
 
@@ -23,17 +26,34 @@ a `!` git push was ever seen to pass the guard.
 
 ## The behaviour
 
-The push rule (`role_guard.py`, the `bad` list under `verb == "push"`) refuses a word that is any of these:
+REVISED 11:13 on girsa-verifier's review of 4c65b64 (NOT READY: two MEDIUMs, one LOW), all three taken:
 
-- one of `--all`, `--branches` (git's newer name for `--all`), `--mirror`, `--delete`, `--prune`, or a retired
-  remote;
-- a word starting with `--force`, with `+` (a forced refspec), or with `:` (a deleted ref);
+- MEDIUM 1, A QUOTED WORD IS NOT READ: the push's words come from the masked text, where what stands inside quotes
+  is spaces. So `origin "+main"`, `"-f"` and `"--force"` get through today. Now the push rule alone reads the
+  ORIGINAL span (`command[m.start(3):m.end(3)]`, the same offsets: the mask keeps the length), split by `shlex`, so
+  `+"main"` and `'+'main` are read too. It falls back to a plain split on a quote the span leaves open. The other
+  verbs keep `rest` as it is.
+- MEDIUM 2, A LONG OPTION BY ITS UNIQUE PREFIX: git takes a unique prefix of a long option as that option
+  (gitcli(7)), so `--del`, `--pru`, `--mir`, `--al` and `--bra` get through. Now a `--` word, read up to any `=`, is
+  refused when it is a prefix of a refused long option. `--` alone is not refused (the end of the options). `--a`,
+  `--d`, `--p` and `--fo` are refused too: git either refuses them as ambiguous or takes them as a force.
+- LOW 1: the short cluster is `copy_refusal`'s own reading of one (`set(o[1:]) & {...}`), with `-o`'s argument
+  cut off. No new parser.
+
+The push rule (`role_guard.py`, under `verb == "push"`) refuses a word, as the shell passes it to git, that is
+any of these:
+
+- a retired remote;
+- a word starting with `+` (a forced refspec) or `:` (a deleted ref);
+- a `--` word (up to any `=`) starting with `--force`, or a prefix of `--all`, `--branches` (git's newer name for
+  `--all`), `--mirror`, `--delete`, `--prune`, `--force`, `--force-with-lease` or `--force-if-includes`;
 - a cluster of short options (`-` and no second `-`) holding `f` or `d` before any `o`. Whatever follows an `o` is
   `-o`'s argument (`-ofix` is the push option "fix"), so it is not read as options.
 
-The refusal's words become "never pushes --all, --mirror, a force or a delete". The module's docstring line says
-the same. A delete's refusal adds girsa-operator's sentence (11:07): "a delete on a remote runs only as the
-reviewer's own command: `! git push origin --delete <branch>` in the operator's pane".
+The check is one function, `push_forces(word)`, beside one tuple, `PUSH_LONG`. The refusal says "never pushes
+--all, --mirror, a force or a delete", followed every time by girsa-operator's sentence (11:07): "a delete on a
+remote runs only as the reviewer's own command: `! git push origin --delete <branch>` in the operator's pane". The
+module's docstring line says the same.
 
 QUESTION to girsa-architect: should the operator be refused EVERY remote delete, a merged branch's too? The rule
 as planned refuses them all. The other way would refuse a delete of main alone, and that needs the remote's default
@@ -46,21 +66,27 @@ NOT VERIFIED: that a command the reviewer types with `!` in a pane runs without 
 runs `!` commands itself rather than through the Bash tool, but I have not seen it on this machine. If the hook
 does see them, the sentence above points to a command that is refused too.
 
-## The measure (the prototype: the rule above in a scratch copy of `mishmeret/`, the same probe)
+## The measure (the prototype: the revised rule in a scratch copy of `mishmeret/`, one probe, 11:13)
 
-- All 14 bad forms refused: the 10 above, plus `-f`, `--force-with-lease`, `--force-if-includes` and `--mirror`.
-- Still let through, 8 ordinary pushes: `origin some-branch`, `-u origin some-branch`, `origin
-  HEAD:refs/heads/b`, `-o ci.skip`, `--follow-tags`, `-v -n`, `origin b:b`, `--set-upstream`. Also let through:
-  `-ofix` and `-uofix` (an `f` inside `-o`'s argument). `--branches` is refused.
-- Let through: girsa-operator's push by sha, `git push origin <sha>:refs/heads/<branch>`, the form its push procedure
-  prescribes (11:07, for main and for a branch). It goes in the test's list of ordinary pushes.
+- 34 bad forms. These are the first 14, plus `--branches` and `--all`; the quoted `origin "+main"`, `origin ':main'`,
+  `"-f"`, `"--force"`, `origin +"main"`, `origin '+'main` and `"retired" b`; the prefixes `--mirr`, `--al`,
+  `--bra`, `--del`, `--dele`, `--pru`, `--mir`, `--forc`, `--fo`; and `--force-with-lease=main` and `retired b`.
+  ALL 34 REFUSED; main 158993f lets 27 of them through.
+- 25 ordinary pushes, NONE REFUSED: `origin some-branch`, `-u`, `origin HEAD:refs/heads/b`, `-o ci.skip`, `-ofix`,
+  `-uofix`, `--follow-tags`, `--fol` (a prefix of `--follow-tags` alone), `-v -n`, `origin b:b`, `--set-upstream`,
+  girsa-operator's push by sha (`origin <sha>:refs/heads/main` and the same to a branch: the form its push procedure
+  prescribes, 11:07), `--dry-run`, `--porcelain`, `--progress`, `--push-option=x`, `--atomic`, `--tags`,
+  `--no-verify`, `--recurse-submodules=check`, `--repo=origin`, `--` before the remote, `--quiet` and `--verbose`.
+- `tests/test_guard.py` in the prototype: 30 passed.
 
 ## Tests
 
-- `test_the_role_guard_keeps_push_and_main_tree_commits_to_the_operator`: its `bad` loop gains the ten forms and
-  `--branches`. A new loop over the ordinary pushes, each let through, includes `-ofix`.
-- Each part of the rule is shown red with that part taken out: the `+`, the `:`, `--delete`, `--prune`,
-  `--branches`, the cluster's `f`, the cluster's `d`, and the `o` cut (that last one red on `-ofix`, refused).
+- `test_the_role_guard_keeps_push_and_main_tree_commits_to_the_operator`: its `bad` loop takes the probe's 34
+  forms. A new loop runs the probe's 25 ordinary pushes, each let through. One refusal is checked for
+  girsa-operator's sentence.
+- Each part of the rule is shown red with that part taken out: the `+`, the `:`, each long name in `PUSH_LONG`,
+  the prefix reading (exact names only), the `=` cut, the cluster's `f`, the cluster's `d`, the `o` cut (red on
+  `-ofix`, refused), the original span (the masked words back), and `shlex` (a plain split: red on `+"main"`).
 
 ## Files
 
@@ -69,7 +95,7 @@ does see them, the sentence above points to a command that is refused too.
 
 ## Not run (until the reviewer runs it)
 
-- Whether `!` passes through the hook. girsa-operator (11:10) has no record of a `!` git push going through with
+- Whether `!` passes through the hook. girsa-operator (between 11:07 and 11:13) has no record of a `!` git push going through with
   the guard on, and treats the answer as unknown. Its test is harmless: the reviewer types `! git push --dry-run
   origin --delete no-such-branch-girsa-test` in a role's pane. If the guard's refusal prints, `!` runs through the
   hook, and the delete's sentence must name another way. If git answers itself ("remote ref does not exist", or a
