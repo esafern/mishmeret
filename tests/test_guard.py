@@ -688,6 +688,109 @@ def test_land_commit_stages_what_it_names_and_refuses_the_rest(tmp_path, monkeyp
     assert calls["board"] == ["hold", "release"] and calls["gate"] == [str(main)]
 
 
+# A driver for a stopped land.py: the placeholder fixture, land.main (so its own signal handler), the Board's calls
+# written to a file as they happen, and a step that waits ("waiting") - the frozen gate of a landing, whose copy's
+# removal then takes 3 s, or a commit's lane check
+_STOP_DRIVER = r'''
+import os, pathlib, sys, time
+import pytest
+tests, tmp, log, what = sys.argv[1], pathlib.Path(sys.argv[2]), sys.argv[3], sys.argv[4]
+sys.path.insert(0, tests)
+import test_guard
+tmp.mkdir(parents=True)
+mp = pytest.MonkeyPatch()
+land, main, tree, git, calls = test_guard._placeholder_clone_and_worktree(tmp, mp)
+
+
+def note(word):
+    with open(log, "a") as fh:
+        fh.write(word + "\n")
+
+
+def wait(*args, **kwargs):
+    note("waiting")
+    time.sleep(30)
+    return 0
+
+
+def board(repo, *args):
+    if args[0] == "release":
+        time.sleep(0.5)                                         # where a second signal lands
+    note(args[0])
+    return 0, "placeholder"
+
+
+mp.setattr(land, "board", board)
+(tree / "placeholder.py").write_text("def kept():\n    return 1\n\n\ndef added():\n    return 2\n", encoding="utf-8")
+os.chdir(tree)
+if what == "land":
+    git(tree, "commit", "-q", "-am", "placeholder: a function added")
+    mp.setattr(land, "run_gate", lambda t, name: wait() if "-land-" in str(t) else 0)
+    removal = land.shutil.rmtree
+
+    def slow(path, **kwargs):
+        note("removing")
+        time.sleep(3)
+        removal(path, **kwargs)
+    mp.setattr(land.shutil, "rmtree", slow)
+    land.main(["land", "ex-builder", "code", "--plan", "plan.md"])
+else:
+    (tmp / "message.txt").write_text("Placeholder change\n", encoding="utf-8")
+    mp.setattr(land, "lane_check", lambda *a, **kw: (wait(), (0, "PASS"))[1])
+    land.main(["commit", "ex-builder", "code", "-F", str(tmp / "message.txt"), "placeholder.py"])
+'''
+
+
+def _stopped(tmp_path, what, sig, kill_after, again=False):
+    """Run the driver; once it waits, `sig` to each of its processes (`again`: once more 0.2 s later, in the release),
+    then (`kill_after` s later) SIGKILL - what Claude Code's stop does (measured: SIGTERM to the command's group,
+    SIGKILL ~1.5 s after). (exit, the Board's calls)."""
+    import signal
+    import subprocess
+    import time
+    driver, log = tmp_path / "driver.py", tmp_path / "board.log"
+    tmp_path.mkdir()
+    driver.write_text(_STOP_DRIVER, encoding="utf-8")
+    p = subprocess.Popen([sys.executable, "-B", str(driver), os.path.dirname(__file__), str(tmp_path / "t"), str(log),
+                          what], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+    deadline = time.time() + 60
+    while not (log.exists() and "waiting" in log.read_text()):
+        assert p.poll() is None and time.time() < deadline, p.communicate()[0][-2000:]
+        time.sleep(0.05)
+
+    def tree_of(pid):
+        kids = subprocess.run(["pgrep", "-P", str(pid)], capture_output=True, text=True).stdout.split()
+        return [pid] + [k for kid in kids for k in tree_of(int(kid))]
+    group = tree_of(p.pid)
+    for sent, then in [(sig, 0.2)] * again + [(sig, kill_after - 0.2 * again)] + [(signal.SIGKILL, 0)] * bool(kill_after):
+        for pid in group:
+            try:
+                os.kill(pid, sent)
+            except ProcessLookupError:
+                pass
+        time.sleep(then)
+    p.communicate(timeout=30)
+    return p.returncode, log.read_text().split()
+
+
+def test_land_py_stopped_releases_the_hold_and_leaves_nothing_staged(tmp_path):
+    """M07 item 6 (notes/PLAN-LAND-SIGNAL.md): a stop's SIGTERM, or SIGHUP, had ended land.py with no `finally` run - a
+    stopped `land.py commit` in the main tree had left the Board's hold and its staged names (girsa-verifier's sweep,
+    2026-11-09). Now: a landing stopped in its frozen gate releases the hold before the copy's slow removal, which
+    SIGKILL then cuts short (girsa-verifier's MEDIUM 1 on the plan); the same under SIGHUP; a commit stopped in its
+    lane check leaves nothing staged. Placeholder repositories, real signals."""
+    import signal
+    import subprocess
+    rc, calls = _stopped(tmp_path / "term", "land", signal.SIGTERM, 1.47, again=True)    # a second one in the release
+    assert "release" in calls and calls.index("release") < calls.index("removing"), (rc, calls)
+    rc, calls = _stopped(tmp_path / "hup", "land", signal.SIGHUP, 0)
+    assert rc == 128 + signal.SIGHUP and "release" in calls, (rc, calls)
+    rc, calls = _stopped(tmp_path / "commit", "commit", signal.SIGTERM, 1.47)
+    staged = subprocess.run(["git", "-C", str(tmp_path / "commit" / "t" / "worktree"), "diff", "--cached", "--name-only"],
+                            capture_output=True, text=True, check=True).stdout
+    assert rc == 128 + signal.SIGTERM and staged == "", (rc, staged)
+
+
 def test_land_lands_on_main_and_releases_the_hold_on_every_exit(tmp_path, monkeypatch, capsys):
     """tools/land.py land: a refused hold merges nothing; a red gate merges nothing and releases the hold; a stopped
     rebase releases the hold; a replayed commit continued with a wrong resolution is refused, after main moves too; taken

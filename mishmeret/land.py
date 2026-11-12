@@ -5,7 +5,8 @@ tools/land.py
 Every commit and every landing, one procedure (Board #85 A, step 2; design-study/STEP-LANDING-SCRIPT-PLAN.md, its
 section 10 the review's list; girsa-architect's answers in STEP-LANDING-SCRIPT-ARCHITECT.md). The rules it follows were
 written in five places and done by hand, or by three scripts each with its own file list (Lesson 60); here they are
-steps, each a git or tool call whose return code is read, and the Board's hold released on every exit.
+steps, each a git or tool call whose return code is read, and the Board's hold released on every exit - a stop's
+SIGTERM, or SIGHUP, included (M07 item 6; notes/PLAN-LAND-SIGNAL.md).
 
   ./venv/bin/python tools/land.py commit ROLE notes|code -F MESSAGE NAME... [--tests "PYTEST ARGS"] [--because "WORDS"]
   ./venv/bin/python tools/land.py land ROLE notes|code [--plan PLAN] [--accept FILE::NAME...] [--because WORDS]
@@ -32,6 +33,7 @@ import json
 import os
 import shlex
 import shutil
+import signal
 import subprocess
 import sys
 import tempfile
@@ -279,12 +281,16 @@ def land(role, kind, cwd=".", accept=(), plan=None, because=None):
     if kind == "code":
         subject = said(where.top, "log", "-1", "--format=%s")[:120]
         named = f" (plan {plan})" if plan else ""            # the plan where every role reads it (girsa-verifier's LOW 1)
-        return _held(where.main_tree, role, f"{branch}{named}: {subject}",
-                     lambda: _landing(role, kind, where, branch, accept, plan, because))
+        copy = tempfile.mkdtemp(prefix=f"{_CFG['project'].lower()}-land-")      # for the frozen gate
+        try:
+            return _held(where.main_tree, role, f"{branch}{named}: {subject}",
+                         lambda: _landing(role, kind, where, branch, accept, plan, because, copy))
+        finally:    # after the release: a stop's grace before SIGKILL is ~1.5 s, a big clone's removal longer
+            shutil.rmtree(copy, ignore_errors=True)
     return _landing(role, kind, where, branch, accept, plan, because)
 
 
-def _landing(role, kind, where, branch, accept=(), plan=None, because=None):
+def _landing(role, kind, where, branch, accept=(), plan=None, because=None, copy=None):
     tip = said(where.main_tree, "rev-parse", where.main_branch)
     # EVERY REPLAY CHECKED, HOWEVER IT WAS CONTINUED (girsa-verifier's MEDIUM 1 on the build: a stamp of the stop's files
     # failed open - a finished rebase onto a main that moved since looked like one taken back, and a second stop met by
@@ -351,7 +357,7 @@ def _landing(role, kind, where, branch, accept=(), plan=None, because=None):
     restart = sorted(p for p in changed if p in loads or (SERVER and p.startswith(SERVER["page"])))
     print(f"  the servers load: {'restart - ' + ', '.join(restart) if restart else 'none of it changed'}")
     if kind == "code":
-        _frozen_gate(where)
+        _frozen_gate(where, copy)
     return head
 
 
@@ -461,29 +467,26 @@ def replay_faults(top, before, onto, accept=None):
     return faults
 
 
-def _frozen_gate(where):
+def _frozen_gate(where, copy):
     """The gate in main after a code landing, on a frozen copy of the main clone with the live rulings file
     (girsa-architect's Q4; girsa-verifier's landing_rerun.sh's learnt rules 8 and 12): nothing written into the main
-    tree, no Save raced. Red: the merge stands, and the fix is the lander's."""
-    copy = tempfile.mkdtemp(prefix=f"{_CFG['project'].lower()}-land-")
+    tree, no Save raced. Red: the merge stands, and the fix is the lander's. `copy`: an empty folder, removed by
+    `land` after the hold is released (girsa-verifier's MEDIUM 1 on PLAN-LAND-SIGNAL.md)."""
     tree = os.path.join(copy, "main")
-    try:
-        if sys.platform == "darwin":
-            subprocess.run(["cp", "-c", "-R", where.main_tree, tree], check=True)        # APFS: a clone, instant
-        else:
-            shutil.copytree(where.main_tree, tree, symlinks=True)                        # untried on Linux (0II)
-        # the copy carries the main clone's INDEX, so a reset to HEAD, not `checkout -- .`; then the live rulings in
-        said(tree, "reset", "-q", "--hard", "HEAD")
-        live = LEDGER and os.path.join(where.main_tree, LEDGER)
-        if live and os.path.exists(live):
-            shutil.copyfile(live, os.path.join(tree, LEDGER))
-            with open(live, "rb") as a, open(os.path.join(tree, LEDGER), "rb") as b:
-                if a.read() != b.read():
-                    raise Refused(f"the live ledger ({LEDGER}) changed while it was copied: gate main again")
-        if run_gate(tree, "landing"):
-            raise Red("LANDED, and the gate on main is red - the fix is yours")
-    finally:
-        shutil.rmtree(copy, ignore_errors=True)
+    if sys.platform == "darwin":
+        subprocess.run(["cp", "-c", "-R", where.main_tree, tree], check=True)        # APFS: a clone, instant
+    else:
+        shutil.copytree(where.main_tree, tree, symlinks=True)                        # untried on Linux (0II)
+    # the copy carries the main clone's INDEX, so a reset to HEAD, not `checkout -- .`; then the live rulings in
+    said(tree, "reset", "-q", "--hard", "HEAD")
+    live = LEDGER and os.path.join(where.main_tree, LEDGER)
+    if live and os.path.exists(live):
+        shutil.copyfile(live, os.path.join(tree, LEDGER))
+        with open(live, "rb") as a, open(os.path.join(tree, LEDGER), "rb") as b:
+            if a.read() != b.read():
+                raise Refused(f"the live ledger ({LEDGER}) changed while it was copied: gate main again")
+    if run_gate(tree, "landing"):
+        raise Red("LANDED, and the gate on main is red - the fix is yours")
 
 
 def _rebasing(where):
@@ -616,6 +619,20 @@ def server_loads(repo):
     return loads
 
 
+def _exit_on_signals():
+    """SIGTERM (a stop: Claude Code's, to the command's group, SIGKILL ~1.5 s after) and SIGHUP end land.py as an exit
+    does, so every `finally` and `except BaseException` runs - the hold released, the index reset. Their default ends
+    the process at once: a stopped `land.py commit` had left the hold and its staged names (M07 item 6)."""
+    signals = [s for s in (signal.SIGTERM, getattr(signal, "SIGHUP", None)) if s]     # no SIGHUP on Windows
+
+    def ended(signum, frame):
+        for s in signals:               # a second signal must not cut the cleanup short (girsa-verifier's LOW 3)
+            signal.signal(s, signal.SIG_IGN)
+        raise SystemExit(128 + signum)
+    for s in signals:
+        signal.signal(s, ended)
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = ap.add_subparsers(dest="verb", required=True)
@@ -641,6 +658,7 @@ def main(argv=None):
     g.add_argument("--set", dest="name", choices=sorted(GATE_SETS), default="landing")
     g.add_argument("--tree", default=".")
     args = ap.parse_args(argv)
+    _exit_on_signals()
     try:
         if args.verb == "commit":
             commit(args.role, args.kind, args.message, args.names, args.tests, args.because)
