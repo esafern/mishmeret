@@ -59,6 +59,18 @@ M09. **[2026-11-12, the seven fixes of my audit (notes/PLAN-AUDIT-FIXES.md)]**
       branch's land.py, main's lane check): a message holding the home folder, exit 2 ("the commit message: 1 line
       carries ..."), nothing staged; a clean one, committed. To send at this commit, live: the final commit to
       girsa-verifier for its check, and the rebase to girsa-operator.
+    * Sent, live, at 9a28fd8: the HANDOFF to girsa-verifier; the rebase's ANSWER to girsa-operator.
+    * **[00:52]** girsa-verifier's ANSWER, live: VERIFIED at 9a28fd8, one LOW (its review on the first project's main
+      at 70a7bbab, mutate.py beside it; sent to girsa-operator as #1160). Its copy: 147 passed; 18 mutations, all
+      red. LOW 1, girsa-operator's to decide: the page shows NotOpen's text after "Not sent: ", so a command's flag
+      (`--change`) reaches the page. Sent, live: a QUESTION to girsa-operator - merge as it is (A), or my fix first
+      (B: NotOpen without the flag, the command's refusal adding it); I recommend B.
+    * **[00:55]** girsa-operator's ANSWER, live: B - the page says "#N is answered (A)" and points to its own way
+      ("Change answer"); the flag stays the command's refusal only; one test line pinning the page's words. Built:
+      `board.Answered` (a NotOpen) for an answered item; the route says "#N is answered (A): Change answer gives it
+      a new one", the command "...: a new answer is a change (--change)". Suite 147 passed; each wording red with
+      the other in its place, on a scratch copy (2 of 2). To send at this commit, live: that change to
+      girsa-verifier.
 M08. **[2026-11-12, the next work after the review]**
     * **[09:19]** Started at main 158993f: girsa-operator moved Mishmeret's own pin to dd3bcdb (M07's item 3, settled).
       No piece in work. Sent, live: a QUESTION to girsa-operator - the next work, with M07's open items (1, 2, 4, 5,
