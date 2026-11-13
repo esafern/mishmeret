@@ -47,6 +47,13 @@ M11. **[2026-11-13, a main-tree commit's failure path undid a landing (notes/PLA
     * **[08:46]** The LOW fixed: a test leg where a real holder (main_lock in a thread) writes its line and the
       waiter says "held by process <pid>: a placeholder step". Suite 153 passed; the holder's write taken out, red. To
       send at this commit: that change to girsa-verifier.
+    * Sent, live, at 668eea0: that HANDOFF to girsa-verifier.
+    * **[08:49]** girsa-verifier's ANSWER, live: VERIFIED through 668eea0 (its archive: 153 passed; the holder's write
+      taken out, red). Sent, live: LANDED-READY to girsa-operator, with from when each part protects. This entry is
+      committed after the merge, so the verified tip stays the branch's last commit.
+    * **[08:52]** girsa-operator's ANSWER, live: MERGED, main 668eea0 (from e1f9195); 153 passed on main; not pushed.
+      The first project's pin bump (the race's fix to its main tree, the audit fixes' brief lines, what expires with
+      no rows first) goes on its Board for the reviewer. Next: its two items.
 M10. **[2026-11-13, what expires, on a calendar feed (notes/PLAN-EXPIRING.md)]**
     * Started at main d35d110 (the audit fixes merged), branch `builder-expiring`. girsa-demo-operator's REQUEST
       (M09). The reviewer, asked in my pane: "Board-served .ics feed", "7 days and 1 day".

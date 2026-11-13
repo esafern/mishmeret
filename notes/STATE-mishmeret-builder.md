@@ -2,7 +2,7 @@
 
 Rewritten in place when a piece lands and at the end of a session; the log is `notes/LOG.md`, by item.
 
-## Built, on main (main e1f9195; origin at 8818221, the reviewer's push pending; each verified by girsa-verifier, merged by girsa-operator)
+## Built, on main (main 668eea0; origin at 8818221, the reviewer's push pending; each verified by girsa-verifier, merged by girsa-operator)
 
 - c1963d1: A (`guard.foreign`), A2 (seven config fields optional) and B (Mishmeret's own `.claude/`, `notes/`, the
   lane check) (notes/PLAN-OWN-CLAUDE.md). The Board on 8451 runs from the main clone.
@@ -34,23 +34,22 @@ Rewritten in place when a piece lands and at the end of a session; the log is `n
 - a24377d, 6039283: what expires - expiring.py and the Board's /expiring.ics (notes/PLAN-EXPIRING.md; the log's M10).
   Main e1f9195. For the first project: its pin bump with no `expiring` rows, the five rows later; the reviewer
   subscribes once to http://127.0.0.1:8450/expiring.ics (On My Mac, alerts kept). The token lapses 2026-11-17 13:49 UTC.
+- fd2178e, 159ea56: the land.py race (notes/PLAN-LAND-RACE.md; the log's M11) - a refused main-tree commit unstages
+  its own names alone; one lock on the main tree for a main-tree commit's and a landing's git steps. Main 668eea0.
 
 ## Now
 
-- THE LAND.PY RACE (notes/PLAN-LAND-RACE.md; the log's M11; girsa-verifier's FINDING: a main-tree commit's failure
-  path undid a landing): branch `builder-land-race` on main e1f9195. Plan reviewed (girsa-verifier; girsa-architect's
-  4cbfa3a3). BUILT at fd2178e, 153 passed, 8 of 8 mutations red; race.py 0 faults on it (the old code 3 + 1).
-  Waiting: girsa-verifier's check at the branch's final commit, then girsa-operator's merge.
-- `builder-lessons`, `builder-background-state-unsplit`, `builder-state-after-lessons`, `builder-audit-fixes` and
-  `builder-expiring` are merged or done with; they can be deleted.
+- THE FROZEN GATE OVER AN UNCOMMITTED APPLY (girsa-operator's REQUEST; the first project's Board message #495,
+  girsa-verifier's, and #1086: `_frozen_gate` pairs the live ledger with HEAD's files): branch `builder-frozen-gate`
+  from main 668eea0. The log's M12.
+- `builder-lessons`, `builder-background-state-unsplit`, `builder-state-after-lessons`, `builder-audit-fixes`,
+  `builder-expiring` and `builder-land-race` are merged or done with; they can be deleted.
 - To resume: `git -C ~/work/mishmeret log --oneline -3`; `git -C ~/work/mishmeret-builder status -sb`; the Board;
   the log's M10.
 
 ## Next, in order
 
-1. girsa-operator's REQUEST (the night directive): `_frozen_gate` red while an Apply is uncommitted in the main tree
-   (the first project's Board #495).
-2. girsa-operator's REQUEST: the Board's hold kept by role name, so a second session of one role ends the first's.
+1. girsa-operator's REQUEST: the Board's hold kept by role name, so a second session of one role ends the first's.
 
 Not given: the code's citations of the first project's lesson numbers; M07's smaller items; role_guard.py's header
 sentence on subagents (girsa-verifier's LOW, for its next touch).
