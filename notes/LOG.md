@@ -30,6 +30,14 @@ M10. **[2026-11-13, what expires, on a calendar feed (notes/PLAN-EXPIRING.md)]**
       certificates 63, the domain not known; the feed 13 events, no part of the token in it or the listing. Not
       measured: macOS Calendar's subscription (the reviewer's step). To send at the notes commit, live: the build's
       HANDOFF to girsa-verifier.
+    * Sent, live, at a717631: the build's HANDOFF to girsa-verifier.
+    * girsa-verifier's ANSWER, live: VERIFIED at a717631, one LOW (its BUILD.md in the first project): the refusal
+      compares the name, the UID a slug of it - "Hosting token" and "hosting-token", or two names with no Latin
+      letter, share UIDs. Its own first mutation of the certificate branch was inert (SSLCertVerificationError is a
+      ValueError) and was rewritten.
+    * **[08:10]** The LOW fixed: the UID from the name itself (`expiring.uid`, a hash of it), one test leg (two
+      such pairs); suite 151 passed; red with the slug put back. To send at this commit: that change to
+      girsa-verifier.
 M09. **[2026-11-12, the seven fixes of my audit (notes/PLAN-AUDIT-FIXES.md)]**
     * **[23:25]** Started at main 8818221 (= origin/main): the lessons file merged and pushed. The state file
       rewritten (96454a1, branch `builder-state-after-lessons`). girsa-verifier's check at f87e3ce is not recorded in
