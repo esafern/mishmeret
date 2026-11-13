@@ -39,10 +39,14 @@ step (below).
    WITH ONE NAME ARE REFUSED (girsa-architect, the first project's design-study/MISHMERET-EXPIRING-ARCHITECT.md,
    2fb0a626): their events' UIDs would be one, and Calendar would keep one - the loader's rule for `roles`.
 2. The feed: for a dated item, an event at its expiry ("EXPIRES: NAME") and an all-day reminder 7 days and 1 day
-   before it, on the local calendar day, each with an alarm at 09:00 (a subscription may drop alarms; the reminder
-   events show either way); for an item not known, one all-day event on today, "Expiry not known: NAME (why)", so the
-   gap is in sight and not read as nothing due. Each description says who acts and how. UIDs fixed per item and kind,
-   so a moved date moves its events.
+   before it, on the local calendar day - the machine's own zone (`astimezone()`), no zone named in the code - each
+   with an alarm at 09:00 (a subscription may drop alarms; the reminder events show either way); for an item not
+   known, one all-day event on today, "Expiry not known: NAME (why)", so the gap is in sight and not read as nothing
+   due; and AN ITEM PAST ITS DATE, one all-day event on today, "EXPIRED: NAME (since DATE)" (girsa-verifier's MEDIUM 2,
+   the first project's review c87fee8f: the 10-31 lapse went "unnoticed for three days", handover/web/README.md:118).
+   Each description says who acts and how. UIDs fixed per item and kind, so a moved date moves its events. A why
+   never holds the token's text (a malformed JWT, another string at the keys, two JWTs); a certificate that fails
+   verification - an expired one does - says so (ssl's `verify_message`).
 3. `board_server.py` serves it at `/expiring.ics` (text/calendar), behind the same Host check as every route, read
    fresh at each request (Calendar polls it).
 4. `python3 expiring.py` lists each item, its date and days left, or why it is not known.
@@ -59,13 +63,24 @@ step (below).
 1. Over every source of SOURCES, placeholders only: a date, a date-time, a null; a JSON file holding one placeholder
    JWT (exp fixed) under the keys, `{root}` among them; none there and two there, "not known"; a missing file, "not
    known"; `tls` with the connection replaced (no network), and failing.
-2. The feed: a dated item's three events and their days (local), an unknown item's one event on today; CRLF, folded
-   lines, unique UIDs; the placeholder token's text nowhere in it, nor in the listing.
+2. The feed: a dated item's three events and their days, under a TZ where the UTC day and the local day differ at the
+   item's hour; an unknown item's one event on today; a past item's "EXPIRED" on today; CRLF, folded lines, unique
+   UIDs; the placeholder token's text nowhere in the feed, the listing or any why (a malformed JWT, a plain string,
+   two JWTs); an expired certificate's why naming the verification's failure.
+   Mutations (girsa-verifier's list, each run alone): the first of two JWTs taken; `{root}` unexpanded; the reminder's
+   day in UTC; the EXPIRED branch removed; the timeout removed (a stub that blocks); the token's text in a why; the
+   repeated-name refusal removed.
 3. The route: 200 and text/calendar; 403 for another Host.
 4. The config: absent, nothing tracked and the feed has no event; an item without its keys, an unknown source, or a
    name given twice, refused by name; the `tls` read's timeout passed to the connection.
 
 ## For the first project (its config, at its pin bump - girsa-builder's and girsa-operator's)
+
+THE PIN BUMP FIRST, WITH NO ROWS; THE ROWS IN A LATER COMMIT, once every one of its trees pins a commit with this
+piece (girsa-verifier's MEDIUM 1: every tree there pins 8818221 or older, whose config.py refuses a key it does not
+know - a row landing with the bump meets old code in each tree that lands after it; 2026-11-02: refused, the hold not
+released). Or the older-worktree landing run on the bump's patch first
+(step5-verification/mishmeret-audit-round-2026-11-02/older_worktree_landing.sh there); girsa-verifier checks it.
 
 The five items above as config rows (girsa-architect: the token's keys run to its server's `headers`,
 `Authorization`; nothing there reads these dates ahead; the token's `how` should carry the stats fetch's own words,

@@ -18,6 +18,18 @@ M10. **[2026-11-13, what expires, on a calendar feed (notes/PLAN-EXPIRING.md)]**
       these dates ahead. Two to add, taken into the plan: a name given twice refused (the UIDs), and a short connect
       timeout on `tls` (the Mac is sometimes offline). The token's `how` to carry the stats fetch's own words. Sent,
       live: a NOTE to girsa-verifier that the plan moved.
+    * girsa-verifier's ANSWER, live, at 158f266: READY TO BUILD once MEDIUM 1 is in the plan (its review in the first
+      project, c87fee8f by its CORRECTION; its file in its worktree until girsa-operator's hold is released). MEDIUM 1:
+      every tree there pins 8818221 or older, whose loader refuses an unknown key - the pin bump first, the rows
+      later. MEDIUM 2: an item past its date silent on today (the 10-31 lapse) - EXPIRED on today. LOWs: the
+      machine's zone, tested under another TZ; an expired certificate's why; the token absent from every why. Its
+      mutations listed. All taken: MEDIUM 1 into the plan, the rest built.
+    * **[07:48]** BUILT, a24377d (`--tests "tests/"`, 151 passed): its mutations and one more (the expired
+      certificate's why), 8 of 8 red, on a scratch copy. LIVE, from a scratch config holding the first project's five
+      items (its own config untouched): the token 4 days out (2026-11-17 15:49 local), the login 24 days, both
+      certificates 63, the domain not known; the feed 13 events, no part of the token in it or the listing. Not
+      measured: macOS Calendar's subscription (the reviewer's step). To send at the notes commit, live: the build's
+      HANDOFF to girsa-verifier.
 M09. **[2026-11-12, the seven fixes of my audit (notes/PLAN-AUDIT-FIXES.md)]**
     * **[23:25]** Started at main 8818221 (= origin/main): the lessons file merged and pushed. The state file
       rewritten (96454a1, branch `builder-state-after-lessons`). girsa-verifier's check at f87e3ce is not recorded in

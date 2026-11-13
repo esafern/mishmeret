@@ -34,11 +34,13 @@ Rewritten in place when a piece lands and at the end of a session; the log is `n
 
 ## Now
 
-- THE EXPIRING ITEMS (girsa-demo-operator's REQUEST, the reviewer's words: track tokens, secrets and other things that
-  expire, and set calendar alerts - the items from the project's config, never Girsa's names in code): branch
-  `builder-expiring` from main d35d110. Its cases (the log's M09): the hosting MCP token (its JWT's `exp`, now
-  2026-11-17 13:49 UTC; the alert follows each renewal), the Board stats fetch's Claude login (2026-12-07), two TLS
-  certificates (2027-01-15), the domain (not known). The reviewer's to decide: which calendar, how far ahead.
+- WHAT EXPIRES (notes/PLAN-EXPIRING.md; the log's M10; girsa-demo-operator's REQUEST on the reviewer's words; the
+  reviewer: "Board-served .ics feed", "7 days and 1 day"): branch `builder-expiring` from main d35d110. Plan reviewed
+  (girsa-verifier, the first project's c87fee8f; girsa-architect's 2fb0a626). BUILT at a24377d, 151 passed, 8 of 8
+  mutations red, the first project's five items read live. Waiting: girsa-verifier's check at the branch's final
+  commit, then girsa-operator's merge. Then, in the first project: its pin bump with no rows, the rows later (MEDIUM
+  1); the reviewer subscribes once to http://127.0.0.1:8450/expiring.ics (On My Mac, alerts kept). The hosting token
+  lapses 2026-11-17 13:49 UTC - before all that, likely.
 - `builder-lessons`, `builder-background-state-unsplit`, `builder-state-after-lessons` and `builder-audit-fixes` are
   merged or done with; they can be deleted.
 - To resume: `git -C ~/work/mishmeret log --oneline -3`; `git -C ~/work/mishmeret-builder status -sb`; the Board;
