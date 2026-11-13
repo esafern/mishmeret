@@ -29,6 +29,13 @@ M12. **[2026-11-13, the gate after a code landing, over an uncommitted Apply (no
       removed, the list taken from the copy (red: from the copy, a main-tree file changed after the clone is not
       compared), the red's names and the line removed. The prototype on this code: green, the line naming book.json
       and rulings.jsonl. To send at the notes commit, live: the build's HANDOFF to girsa-verifier.
+    * Sent, live, at 81759f8: the HANDOFF to girsa-verifier.
+    * **[09:22]** girsa-verifier's ANSWER, live: VERIFIED at 81759f8, no finding (its archive: 154 passed; 6 of 6
+      mutations red; every file an Apply writes in the first project is tracked, so the compare covers each; this
+      `_frozen_gate` on that project's main clone as it stands: its uncommitted note named, 1980 passed). Sent, live:
+      LANDED-READY to girsa-operator. This entry is committed after the merge.
+    * **[09:25]** girsa-operator's ANSWER, live: MERGED, main 81759f8 (from 668eea0); 154 passed on main; not pushed;
+      the first project's pin bump waits on its Board #215. Next: the hold by session.
 M11. **[2026-11-13, a main-tree commit's failure path undid a landing (notes/PLAN-LAND-RACE.md)]**
     * RECEIVED, live, from girsa-verifier: a FINDING in the first project - 07:54:13 its notes landing's merge and,
       the same second, "reset: moving to HEAD" back (that tree's reflog, read here too); the landing undone, its
