@@ -3,6 +3,20 @@
 Findings, decisions and open work, each the moment it is known; a time from `date`. One item per run of work, newest
 first (`M01.`, `M02.` ...); what git records (what each commit did) is not repeated here.
 
+M11. **[2026-11-13, a main-tree commit's failure path undid a landing (notes/PLAN-LAND-RACE.md)]**
+    * RECEIVED, live, from girsa-verifier: a FINDING in the first project - 07:54:13 its notes landing's merge and,
+      the same second, "reset: moving to HEAD" back (that tree's reflog, read here too); the landing undone, its
+      files left in the main tree, then committed under girsa-operator's name. Asked: reproduce before a cause. Then,
+      live: girsa-operator confirmed the trigger (its commit refused on its own check; the failure path's reset ran as
+      the merge moved HEAD). This piece before girsa-operator's two; branch `builder-land-race`, on `builder-expiring`
+      (a717631's successor e1f9195), so the notes do not part.
+    * REPRODUCED, scratch, two processes (each process's role set in the script, as the suite sets it): at git's
+      level, 1 of 300 merges undone by a looping `git reset -q`, 0 with `git reset -q -- <path>`. Through land.py,
+      0 rewinds in 700 trials, but 5 names left staged and 1 landing refused, both on the index lock. MY SLIPS in the
+      harness, found by its own output: a stamp left by an earlier trial refused every landing (200 trials of nothing);
+      its "dirty" count took the operator's own refused file. Both fixed before the counts above.
+    * **[08:12]** The plan written. To send at this commit, live: its HANDOFF to girsa-verifier; a QUESTION to
+      girsa-architect (the lock's scope).
 M10. **[2026-11-13, what expires, on a calendar feed (notes/PLAN-EXPIRING.md)]**
     * Started at main d35d110 (the audit fixes merged), branch `builder-expiring`. girsa-demo-operator's REQUEST
       (M09). The reviewer, asked in my pane: "Board-served .ics feed", "7 days and 1 day".
