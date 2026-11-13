@@ -117,14 +117,18 @@ def test_the_feed_reminds_on_the_local_day_and_shows_what_is_expired_or_not_know
     events = feed.replace("\r\n ", "").split("BEGIN:VEVENT")[1:]
     by_uid = {next(x for x in e.split("\r\n") if x.startswith("UID:")): e for e in events}
     assert len(by_uid) == len(events) == 3 + 3 + 1 + 1, list(by_uid)
-    day = lambda uid: next(x for x in by_uid[f"UID:{uid}@example.mishmeret"].split("\r\n") if x.startswith("DTSTART"))
-    assert day("the-placeholder-token-expires") == "DTSTART:20300102T134916Z"
-    assert day("the-placeholder-token-lead-7") == "DTSTART;VALUE=DATE:20291227", "the local day, not UTC's 12-26"
-    assert day("the-placeholder-token-lead-1") == "DTSTART;VALUE=DATE:20300102"
-    slug = "a-placeholder-login-whose-name-runs-long-enough-to-fold-with-hebrew-in-it"
-    assert day(f"{slug}-expired") == "DTSTART;VALUE=DATE:20300101", "EXPIRED on today"
+    day = lambda name, kind: next(x for x in by_uid[f"UID:{ex.uid(name, kind)}@example.mishmeret"].split("\r\n")
+                                  if x.startswith("DTSTART"))
+    token = "the placeholder token"
+    assert day(token, "expires") == "DTSTART:20300102T134916Z"
+    assert day(token, "lead-7") == "DTSTART;VALUE=DATE:20291227", "the local day, not UTC's 12-26"
+    assert day(token, "lead-1") == "DTSTART;VALUE=DATE:20300102"
+    assert day(long_name, "expired") == "DTSTART;VALUE=DATE:20300101", "EXPIRED on today"
     assert f"SUMMARY:EXPIRED: {long_name.replace(',', chr(92) + ',')} (since 2029-12-25)" in lines
-    assert day("the-placeholder-domain-unknown") == "DTSTART;VALUE=DATE:20300101"
+    assert day("the placeholder domain", "unknown") == "DTSTART;VALUE=DATE:20300101"
+    # the UID is the name's own, as the refusal of a name given twice is (girsa-verifier's LOW 1 on the build)
+    for a, b in (("Hosting token", "hosting-token"), ("משמרת", "שמירה")):
+        assert ex.uid(a, "expires") != ex.uid(b, "expires"), (a, b)
     assert any(x.startswith("SUMMARY:Expiry not known: the placeholder domain") for x in lines)
     assert "DESCRIPTION:Who acts: the reviewer. How: placeholder steps" in lines
     assert all("TRIGGER:" in e for e in events)

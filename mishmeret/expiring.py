@@ -19,6 +19,7 @@ reads as nothing due (girsa-verifier's MEDIUM 2: the first project's 10-31 lapse
 The Board serves the feed at /expiring.ics: subscribe to it once in Calendar, its location "On My Mac". Needs only
 Python's standard library."""
 import base64
+import hashlib
 import json
 import os
 import re
@@ -143,13 +144,19 @@ def _passed(at, now):
     return at <= now if isinstance(at, datetime) else at < _day(now)
 
 
+def uid(name, kind):
+    """An event's UID, from the item's name itself - the name config.py refuses twice (girsa-verifier's LOW 1 on the
+    build: a slug of it had let "Hosting token" and "hosting-token", or any two names with no Latin letter, share one)."""
+    return f"{hashlib.sha256(name.encode('utf-8')).hexdigest()[:16]}-{kind}"
+
+
 def events(items, now):
     """The feed's events, each {uid, summary, description, start (aware datetime) or day (date)}."""
     out, today = [], _day(now)
     for item, at, why in items:
-        slug = re.sub(r"[^a-z0-9]+", "-", item["name"].lower()).strip("-")
         said = f"Who acts: {item['who']}. How: {item['how']}"
-        ev = lambda kind, summary, **when: out.append(dict(uid=f"{slug}-{kind}", summary=summary, description=said, **when))
+        ev = lambda kind, summary, **when: out.append(dict(uid=uid(item["name"], kind), summary=summary,
+                                                           description=said, **when))
         if at is None:
             ev("unknown", f"Expiry not known: {item['name']} ({why})", day=today)
             continue
