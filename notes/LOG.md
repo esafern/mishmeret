@@ -16,7 +16,29 @@ M11. **[2026-11-13, a main-tree commit's failure path undid a landing (notes/PLA
       harness, found by its own output: a stamp left by an earlier trial refused every landing (200 trials of nothing);
       its "dirty" count took the operator's own refused file. Both fixed before the counts above.
     * **[08:12]** The plan written. To send at this commit, live: its HANDOFF to girsa-verifier; a QUESTION to
-      girsa-architect (the lock's scope).
+      girsa-architect (the lock's scope). Sent, both.
+    * **[08:13]** (M10's close, logged here so the verified tip e1f9195 stays builder-expiring's last commit)
+      girsa-verifier's ANSWER, live: what expires VERIFIED through e1f9195 (its archive: 151 passed; uid_sibling.py:
+      no UID shared; the slug put back, red). Sent, live: LANDED-READY to girsa-operator - merge e1f9195 only; the
+      first project's pin bump first with no rows, the rows later; the reviewer's subscription.
+    * girsa-operator's ANSWER, live: what expires MERGED, main e1f9195 (d35d110 fast-forwarded, this branch left out);
+      151 passed; not pushed; the token's lapse told to the reviewer now.
+    * girsa-verifier's ANSWER, live: the race plan READY TO BUILD, three LOWs (the two reproductions committed; from
+      when each part protects; the lock's holder written and said); with girsa-architect's answer folded in (the first
+      project's 4cbfa3a3: the plan's scope, and the landing's span from its check before the merge) - one more mutation
+      for it. b3ea803c's content reached the first project's main as c03c865d after girsa-operator's clean-up.
+    * **[08:22]** BUILT (not yet committed): the reset to its names, its status said; `main_lock` (fcntl, the common
+      dir's mishmeret-land.lock, the holder's process and step written, said to a waiter after 2 s) around a
+      main-tree commit's staging, its commit and its unstaging, and around a landing's check, merge and check after;
+      the moved-back merge said apart. Suite 153 passed; 8 of 8 mutations red (girsa-verifier's five, the span from
+      the merge, and the two sentences). The reproductions committed under notes/land-race/. race.py running on the
+      fix, on the old code and on a copy with the lock taken out, 500 trials each; race_git.py after.
+    * **[08:34]** COMMITTED fd2178e (`--tests "tests/"`, 153 passed). race.py (RACE_STEP 0.0007, 500 trials each):
+      this code 0 moved back, 0 names left staged, 0 landings refused on the index lock; main's old code 0, 3, 1; the
+      copy with the lock taken out (the path reset kept) 0, 3, 0 - the lock is what ends the staged names. race_git.py
+      (300): `git reset -q` 262 resets, 1 moved HEAD back; the path form 0 and 0. MY SLIP: the state file's header
+      line changed with `sed`, not the Edit tool, as my brief asks (the same slip as 4991758's). To send at the notes
+      commit, live: the build's HANDOFF to girsa-verifier.
 M10. **[2026-11-13, what expires, on a calendar feed (notes/PLAN-EXPIRING.md)]**
     * Started at main d35d110 (the audit fixes merged), branch `builder-expiring`. girsa-demo-operator's REQUEST
       (M09). The reviewer, asked in my pane: "Board-served .ics feed", "7 days and 1 day".

@@ -2,7 +2,7 @@
 
 Rewritten in place when a piece lands and at the end of a session; the log is `notes/LOG.md`, by item.
 
-## Built, on main (main d35d110; origin at 8818221, the reviewer's push pending; each verified by girsa-verifier, merged by girsa-operator)
+## Built, on main (main e1f9195; origin at 8818221, the reviewer's push pending; each verified by girsa-verifier, merged by girsa-operator)
 
 - c1963d1: A (`guard.foreign`), A2 (seven config fields optional) and B (Mishmeret's own `.claude/`, `notes/`, the
   lane check) (notes/PLAN-OWN-CLAUDE.md). The Board on 8451 runs from the main clone.
@@ -31,18 +31,18 @@ Rewritten in place when a piece lands and at the end of a session; the log is `n
   alert function; a code commit names its tests (or `none`); the config docs; `landed` gone (notes/PLAN-AUDIT-FIXES.md;
   the log's M09). Suite 147 passed. At the first project's pin bump (girsa-builder's; girsa-operator keeps the
   notes): its briefs gain `--tests`/`none` and the relay's `--change`.
+- a24377d, 6039283: what expires - expiring.py and the Board's /expiring.ics (notes/PLAN-EXPIRING.md; the log's M10).
+  Main e1f9195. For the first project: its pin bump with no `expiring` rows, the five rows later; the reviewer
+  subscribes once to http://127.0.0.1:8450/expiring.ics (On My Mac, alerts kept). The token lapses 2026-11-17 13:49 UTC.
 
 ## Now
 
-- WHAT EXPIRES (notes/PLAN-EXPIRING.md; the log's M10; girsa-demo-operator's REQUEST on the reviewer's words; the
-  reviewer: "Board-served .ics feed", "7 days and 1 day"): branch `builder-expiring` from main d35d110. Plan reviewed
-  (girsa-verifier, the first project's c87fee8f; girsa-architect's 2fb0a626). BUILT at a24377d, 151 passed, 8 of 8
-  mutations red, the first project's five items read live. Waiting: girsa-verifier's check at the branch's final
-  commit, then girsa-operator's merge. Then, in the first project: its pin bump with no rows, the rows later (MEDIUM
-  1); the reviewer subscribes once to http://127.0.0.1:8450/expiring.ics (On My Mac, alerts kept). The hosting token
-  lapses 2026-11-17 13:49 UTC - before all that, likely.
-- `builder-lessons`, `builder-background-state-unsplit`, `builder-state-after-lessons` and `builder-audit-fixes` are
-  merged or done with; they can be deleted.
+- THE LAND.PY RACE (notes/PLAN-LAND-RACE.md; the log's M11; girsa-verifier's FINDING: a main-tree commit's failure
+  path undid a landing): branch `builder-land-race` on main e1f9195. Plan reviewed (girsa-verifier; girsa-architect's
+  4cbfa3a3). BUILT at fd2178e, 153 passed, 8 of 8 mutations red; race.py 0 faults on it (the old code 3 + 1).
+  Waiting: girsa-verifier's check at the branch's final commit, then girsa-operator's merge.
+- `builder-lessons`, `builder-background-state-unsplit`, `builder-state-after-lessons`, `builder-audit-fixes` and
+  `builder-expiring` are merged or done with; they can be deleted.
 - To resume: `git -C ~/work/mishmeret log --oneline -3`; `git -C ~/work/mishmeret-builder status -sb`; the Board;
   the log's M10.
 

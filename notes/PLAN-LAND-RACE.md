@@ -34,6 +34,13 @@ REPRODUCED, two processes, scratch repositories:
    so a wait is a fraction of a second. The two can then not interleave, which (1) alone does not stop: the index-lock
    faults above. Not the Board's hold: it is kept by role name (girsa-operator's queued item), notes paths take none,
    and a stale one needs a hand to release.
+   THE LANDING'S SPAN STARTS AT ITS CHECK BEFORE THE MERGE (girsa-architect, the first project's 4cbfa3a3): the check,
+   the merge and the check after it one step, as a commit's last check and its commit are. The holder's process id
+   and step are written into the lock file, and a waiter says once, after two seconds, whom it waits for
+   (girsa-verifier's LOW 3, its review in the first project's step5-verification/mishmeret-land-race-plan-2026-11-13).
+   FROM WHEN EACH PART PROTECTS (its LOW 2): (1) from the pin bump of the tree whose commit fails - a main-tree commit
+   runs the main tree's code, so the main tree's bump is enough; (2) only between two processes that both run it - a
+   landing from a worktree on an older pin takes no lock, until every tree's pin passes this piece.
 3. The landing's check after the merge says what happened: the merge refused (its own words, as now), or "the merge
    ran and main no longer holds it - another command moved main back; the main tree may hold this branch's files,
    unstaged: tell the operator, whose tree it is".
@@ -41,6 +48,8 @@ REPRODUCED, two processes, scratch repositories:
 ## Files
 
 - mishmeret/land.py, tests/test_guard.py
+- notes/land-race/race.py, notes/land-race/race_git.py (the two reproductions, committed so they are re-run by their
+  own command: girsa-verifier's LOW 1)
 - notes/PLAN-LAND-RACE.md, notes/LOG.md, notes/STATE-mishmeret-builder.md
 
 ## Tests (each rule's test shown red with the rule taken out)
