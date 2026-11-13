@@ -8,6 +8,42 @@ on this branch's code (main f031698) with probe scripts on the guard's own funct
 worktree `/work/book-builder` of the main tree `/work/book`, role ex-builder unless named), or read in the first
 project's Board folder. A NEW FINDING made while measuring is item 1, and it is the worst one.
 
+THE REVIEW (girsa-verifier, on 59e042a; the first project's
+design-study/step5-verification/mishmeret-known-gaps-plan-2026-11-13/REVIEW.md):
+- READY TO BUILD: items 1, 2, 7, 8, 11, 12, 13, 14. Item 1's HIGH was confirmed.
+- HELD until the reviewer answers that project's Board #223: items 3, 4, 5, 6, 9, 10, 15. Each has no case on any
+  record: girsa-verifier ran f031698's own mask and GIT on every Bash command in every transcript (118,551). Its
+  recommendation: leave them. Items 9, 10 and 15 were built before the review. They are taken out of this branch and
+  kept, whole, outside it until #223 is answered.
+- Item 6: girsa-architect answers B (the first project's design-study/MISHMERET-ALIAS-CONFIG-ARCHITECT.md, d721b739).
+  It also names the wider hole on #223: any role may WRITE the main clone's git config (`git config alias.p push`,
+  `git remote add --mirror=push`), a file the Edit tool is refused.
+- MEDIUM 1, taken into item 1: `_expand` substituted the command's assignments once, so `R=<main>; S="$R"; cd "$S"`
+  was let through. It now follows them until the path stops changing, for cd and -C alike. To keep item 3 held, -C
+  still reads its first one only.
+- LOW 1 (item 13): a 204 to a forced refresh still draws from the answer held. LOW 2 (item 12): the log moves before
+  the --detach open, so the server never writes into server.log.1.
+- FOR THE BUILD (its rule 45): the built guard and f031698's, each on every Bash command in the transcripts at its
+  record's cwd, as a non-operator role and as the operator; every changed decision listed and read.
+
+THE BUILD'S RUN OF RULE 45 (828 transcripts, 101,201 distinct command-and-cwd pairs; each judged by every rule the hook
+runs, under its own project's config; the first project's as girsa-builder and girsa-operator, Mishmeret's as
+mishmeret-builder and mishmeret-operator; git's tree lookups memoized, the same answers):
+- FIRST RUN: 20 newly refused for girsa-builder, 1 newly let through, 0 faults. Five of the refusals were false: a
+  pipe inside a check's quoted argument (`pytest -k "$(echo $t | sed ...)"`, or a pytest run inside
+  `echo "...$(cd X && pytest | tail -1)"`) read as the check's pipe. Fixed: the piped-check rule masks a closed
+  "$(...)" as words (`mask(runs=False)`), as it did before. Item 2 stands for the rules that judge what runs.
+- SECOND RUN, on this build: the first project's 100,219 judged. girsa-builder: 15 newly refused, 1 newly let
+  through, 0 faults; girsa-operator: 14, 1, 0. Mishmeret's 982: no change for either role. Every change read:
+  - 9: a git commit or merge in that project's trees hidden by a quoted `-C "$W"` or by a prefix that ran over `;`
+    (`M=<main>; git -C $M merge --ff-only ...`). Each is refused as its literal form was on f031698 (measured: the
+    operator's `git -C <main> merge --ff-only` refused there, the `M=...; git -C $M` form let through).
+  - 3: `PATH="$S:$PATH" bash agents.sh` - the tmux check now reads the script, as it did for the unquoted prefix.
+  - 2: a real `pytest ... | tail` after a "$(...)" holding nested quotes, which the old mask had closed early.
+  - 1, girsa-builder only: a push in another repository, refused as every role's push is.
+  - LET THROUGH, 1: `f=$(ls agents.sh ...)` with no script run. The old prefix read `f=$(ls` as an assignment and
+    `agents.sh` as a script it ran, a false refusal; correct now.
+
 Not in this piece, and why:
 - The night run and the morning run live. A live run types into the first project's live role panes. It is the
   reviewer's to schedule; the code is tested behind stubs.
@@ -37,7 +73,9 @@ Not in this piece, and why:
    path is then read like an unquoted one, `$VAR` expanded from the environment as a cd's already is.
    Measured: `git -C "$MAINTREE" reset --hard` let through while `cd "$MAINTREE"` is refused - the same fix.
 2. A COMMAND INSIDE "$(...)" OR "`...`" IS READ AS WORDS. `echo "$(git push origin main)"` and
-   ``echo "`git push origin main`"`` are let through, and so is `echo "$(pytest x | tail)"`. The shell runs them.
+   ``echo "`git push origin main`"`` are let through, and the shell runs them. (Corrected while building: the plan had
+   counted `echo "$(pytest x | tail)"` here. The piped-check rule does not read a check inside a substitution after
+   another word, quoted or not - `echo $(pytest x | tail)` is let through on f031698 too - so that is not this item.)
    Fix in `mask`: inside "...", a `$(` (not `$((`) or a backtick opens a stretch of commands that closes at its own `)`
    or backtick. Quotes inside it are their own, and the "..." resumes after it.
 3. TWO -C. `git -C /work -C book reset --hard` from a worktree is let through. git takes each -C from where the one
@@ -89,9 +127,15 @@ Not in this piece, and why:
     - Lesson 60: DON'T REINVENT THE WHEEL (land.py:7)
 15. THE FROZEN GATE'S NARROWER GAP (girsa-verifier, M12: "a file torn at the clone and unchanged after"). Suppose a
     tracked file is mid-write at the clone and still in that state at the compare. The copy and the main tree then hold
-    the same torn bytes and the compare passes, so the gate runs on a half-written file. Fix: after the gate, the same
-    compare runs again. A file changed since then is refused ("changed in the main tree during the gate: gate main
-    again"), the merge standing, as the first compare's refusal does.
+    the same torn bytes and the compare passes, so the gate runs on a half-written file. Such a write ends during the
+    gate. Fix: on a red gate, each file the compare read is read again in the main tree. If one has changed since, the
+    red names it first: "X changed in the main tree during the gate: gate main again before the red is yours". A green
+    is left alone, and so is the copy: the gate's own tests may write in the copy, and an operator's edit to another
+    file is not the gate's to judge. (Revised while building: the first version refused on any change, which would
+    refuse a green over an operator still editing its own uncommitted note.)
+16. THE BOARD SERVER READS ITS CONFIG ONCE (girsa-operator's finding, 2026-11-13, after its expiry rows: the feed stayed
+    empty until it restarted the server). Fix: the README says so beside the feed. A doc line, as asked; a reload is
+    not in this piece.
 
 ## Files
 
@@ -114,7 +158,8 @@ Not in this piece, and why:
 - Items 10 and 11: the stub-driven agents.sh tests - no bare `--effort`, and no `role_sessions.py` run for `--next`.
 - Item 12: an old record removed and a new one kept; a large log moved.
 - Item 13: the second ask with the first answer's hash gets 204, and a changed record gets 200.
-- Item 15: a gate stub that finishes a main-tree write while it runs is refused.
+- Item 15: a red gate stub that finishes a torn main-tree write while it runs: its red names the file. With nothing
+  moved, the red reads as before.
 
 ## For the first project
 

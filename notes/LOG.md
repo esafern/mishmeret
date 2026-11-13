@@ -26,7 +26,41 @@ M14. **[2026-11-13, the known gaps (notes/PLAN-KNOWN-GAPS.md)]**
     * **[15:46]** The plan written. Not in it: the live night and morning runs, Linux, the `!` bypass. MY SLIP: the
       plan's first write gave a time with its last minute digit as a letter, refused by the guard; written "after
       15:39". To send at this commit, live: the plan's HANDOFF to girsa-verifier; item 6's design QUESTION to
-      girsa-architect.
+      girsa-architect. Sent, both, at 59e042a. MY DEPARTURE, said in the HANDOFF: I built the mechanical items while
+      the review ran.
+    * girsa-operator's ANSWER, live, to the FINDINGS:
+      - every tree of the first project that lands now pins f031698;
+      - the five `expiring` rows are in (607e871a; the feed serves 13 events);
+      - the token's renewal is told to the reviewer;
+      - finish.md's words are fixed.
+      Its finding, the Board server reads its config once at its start, became the plan's item 16, a README line.
+    * girsa-verifier's REVIEW, live (the plan's head records it):
+      - READY TO BUILD: items 1, 2, 7, 8, 11-14. Item 1's HIGH confirmed.
+      - HELD on the first project's Board #223 (first posted as #222): items 3-6, 9, 10 and 15, no case on any record.
+      - MEDIUM 1, a chained variable. LOW 1 and LOW 2.
+      - Rule 45: the guard run old against new on the transcripts.
+      girsa-architect's ANSWER on item 6 (d721b739 there): B, with the config-write hole. Sent, live: an ANSWER to
+      girsa-verifier - all of it taken, the seven held. Items 9, 10 and 15, built, were taken out of the branch; their
+      whole files are kept in this session's scratch folder.
+    * BUILT, READY items:
+      - item 1 (one shell WORD; `_word`; the MEDIUM's `_expand` to a fixed point);
+      - item 2 (the mask's substitutions inside "...");
+      - item 7's pins, item 8, item 11;
+      - item 12 (`prune_sessions`, LOG_LIMIT);
+      - item 13 (`?have=`, 204);
+      - item 14, and item 16's README line.
+      While building, item 1's WORD first ran over `;`, so `R=x; S=y; git` read as one prefix; it now ends at a
+      separator. Item 2's plan sentence on a piped check was corrected: that limit predates this branch.
+      Suite 158 passed. Each rule's test was red with it taken out: the WORD, the substitutions, the fixed point, the
+      cd's `_word`, the separator, the 204, the prune, the log move, `--next`.
+    * RULE 45, run old against new on every transcript's Bash commands (the plan's head records it). The first run
+      found five false refusals of item 2's (a pipe inside a check's quoted argument). Fixed: `mask(runs=False)` for the
+      piped-check rule, red with it taken out. The second run: 15 newly refused and 1 newly let through for
+      girsa-builder (14 and 1 for girsa-operator), 0 faults, Mishmeret's 982 unchanged. Each one read; each is the
+      literal form's decision, or a false refusal fixed. Suite 158 passed.
+    * COMMITTED b01f7d0, the READY items' code; land.py ran the suite: 158 passed. MY SLIP: its first try named
+      `--tests "tests/ (158 passed)"`. land.py ran that as a test path, which collected nothing (exit 4), and refused;
+      nothing was committed or left staged. To send at the notes commit, live: the build's HANDOFF to girsa-verifier.
 
 M13. **[2026-11-13, the Board's hold, by session (notes/PLAN-HOLD-SESSION.md)]**
     * Started at main 81759f8, branch `builder-hold-session`. girsa-operator's REQUEST (M09). Read in the first
