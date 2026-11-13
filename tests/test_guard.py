@@ -701,6 +701,113 @@ def test_land_commit_stages_what_it_names_and_refuses_the_rest(tmp_path, monkeyp
     assert calls["board"] == ["hold", "release"] and calls["gate"] == [str(main)]
 
 
+def test_a_refused_main_tree_commit_unstages_its_own_names_and_never_writes_head(tmp_path, monkeypatch, capsys):
+    """notes/PLAN-LAND-RACE.md, change 1 (girsa-verifier's FINDING, the first project, 2026-11-13 07:54:13): the failure
+    path's `git reset -q` resolved HEAD at its start and wrote it at its end, undoing a landing's merge made between
+    the two. Now it is `git reset -q -- NAME...` - the index alone - and a name it could not unstage is said.
+    Placeholder repository."""
+    land, main, tree, git, calls = _placeholder_clone_and_worktree(tmp_path, monkeypatch)
+    monkeypatch.setenv("CLAUDE_CODE_AGENT", "ex-operator")
+    monkeypatch.setattr(land, "lane_check", lambda repo, role, **kw: (1, "FAIL placeholder"))
+    message = tmp_path / "message.txt"
+    message.write_text("Placeholder change\n", encoding="utf-8")
+    (main / "plan.md").write_text("# A placeholder plan, changed\n", encoding="utf-8")
+    ran, real = [], land.git
+    monkeypatch.setattr(land, "git", lambda cwd, *a: ran.append(a) or real(cwd, *a))
+    with pytest.raises(land.Refused, match="the lane check refused"):
+        land.commit("ex-operator", "notes", str(message), ["plan.md"], cwd=str(main))
+    resets = [a for a in ran if a[0] == "reset"]
+    assert resets == [("reset", "-q", "--", "plan.md")], resets
+    assert git(main, "diff", "--cached", "--name-only") == "" and "plan.md" in git(main, "status", "--porcelain")
+    failed = lambda cwd, *a: __import__("types").SimpleNamespace(returncode=1, stdout="", stderr="placeholder lock") \
+        if a[0] == "reset" else real(cwd, *a)
+    monkeypatch.setattr(land, "git", failed)
+    with pytest.raises(land.Refused):
+        land.commit("ex-operator", "notes", str(message), ["plan.md"], cwd=str(main))
+    assert "NOT UNSTAGED: plan.md (placeholder lock) - unstage them: git reset -q -- plan.md" in capsys.readouterr().out
+
+
+def test_the_main_trees_lock_holds_a_landing_and_a_main_tree_commit_back_and_says_whom_they_wait_for(
+        tmp_path, monkeypatch, capsys):
+    """notes/PLAN-LAND-RACE.md, change 2: every git write land.py makes to the main tree is under one lock - a main-tree
+    commit's staging and commit, a landing's check, merge and the check after it - so the two never interleave (the
+    plan's race.py: 5 names left staged, 1 landing refused, both on the index lock). Held here by the test: each waits
+    until it is released, and says once whom it waits for (girsa-verifier's LOW 3); a worktree commit takes no lock.
+    And a merge that ran and was moved back is said as such (change 3). Placeholder repository."""
+    import fcntl
+    import threading
+    land, main, tree, git, calls = _placeholder_clone_and_worktree(tmp_path, monkeypatch)
+    monkeypatch.setattr(land, "LOCK_SAID_AFTER", 0.1)
+    message = tmp_path / "message.txt"
+    message.write_text("Placeholder change\n", encoding="utf-8")
+    lock = open(main / ".git" / land.LOCK, "a+", encoding="utf-8")
+    lock.write("process 0: the test's placeholder hold\n")
+    lock.flush()
+
+    def waits(step):
+        """`step` in a thread while the test holds the lock: (still waiting after 0.6 s, done once released)."""
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        errors = []
+        t = threading.Thread(target=_try, args=(step, errors))
+        t.start()
+        t.join(0.6)
+        waited = t.is_alive()
+        fcntl.flock(lock, fcntl.LOCK_UN)
+        t.join(10)
+        assert not errors, errors
+        return waited, not t.is_alive()
+    monkeypatch.setenv("CLAUDE_CODE_AGENT", "ex-operator")
+    (main / "plan.md").write_text("# A placeholder plan, by the operator\n", encoding="utf-8")
+    assert waits(lambda: land.commit("ex-operator", "notes", str(message), ["plan.md"], cwd=str(main))) == (True, True)
+    assert git(main, "log", "-1", "--format=%s").strip() == "Placeholder change"
+    said = capsys.readouterr().out
+    assert said.count("waiting for the main tree's lock (mishmeret-land.lock), held by process 0: the test's "
+                      "placeholder hold") == 1, said
+    monkeypatch.setenv("CLAUDE_CODE_AGENT", "ex-builder")
+    git(tree, "reset", "-q", "--hard", "main")
+    (tree / "placeholder.py").write_text("def kept():\n    return 4\n", encoding="utf-8")
+    land.commit("ex-builder", "code", str(message), ["placeholder.py"], tests="none", cwd=str(tree))  # no lock here
+    assert waits(lambda: land.land("ex-builder", "notes", cwd=str(tree))) == (True, True)
+    assert git(main, "log", "-1", "--format=%s").strip() == "Placeholder change"
+    assert git(main, "rev-parse", "main") == git(tree, "rev-parse", "HEAD")
+    # the check after the merge is made under the lock, and a merge moved back after it is said as such
+    git(tree, "commit", "-q", "--allow-empty", "-m", "placeholder: one more")
+    tip, real, held = git(main, "rev-parse", "main").strip(), land.git, []
+    lock_of = land.main_lock
+
+    @__import__("contextlib").contextmanager
+    def spied(where, step):
+        with lock_of(where, step):
+            held.append(True)
+            yield
+            held.append(False)
+    monkeypatch.setattr(land, "main_lock", spied)
+
+    trace = []
+
+    def moved_back(cwd, *a):
+        trace.append((a[:2], bool(held and held[-1])))
+        run = real(cwd, *a)
+        if a[:2] == ("merge", "--ff-only"):
+            real(cwd, "update-ref", "refs/heads/main", tip)      # another command moves main back
+        return run
+    monkeypatch.setattr(land, "git", moved_back)
+    with pytest.raises(land.Refused, match="the merge ran and main no longer holds it - another command moved it back"):
+        land.land("ex-builder", "notes", cwd=str(tree))
+    # the check before the merge, the merge and the check after it, each under the lock (girsa-architect's refinement)
+    at = next(k for k, (call, _) in enumerate(trace) if call == ("merge", "--ff-only"))
+    before = max(k for k, (call, _) in enumerate(trace[:at]) if call == ("rev-parse", "main"))
+    after = next(k for k, (call, _) in enumerate(trace) if call == ("merge-base", "--is-ancestor"))
+    assert trace[before][1] and trace[at][1] and trace[after][1], trace
+
+
+def _try(run, errors):
+    try:
+        run()
+    except BaseException as e:      # a thread's failure, said by the test that started it
+        errors.append(repr(e))
+
+
 def test_land_commit_names_its_tests_and_hands_the_lane_check_its_message(tmp_path, monkeypatch):
     """notes/PLAN-AUDIT-FIXES.md, items 5 and 2. A code commit on a branch with no --tests is refused, nothing staged;
     `--tests none` (girsa-architect's way out) commits with no test run, and its message says so; in the main tree

@@ -30,6 +30,8 @@ must not depend on the code it lands. Exit 0 done, 1 a red gate, 2 refused.
 """
 import argparse
 import ast
+import contextlib
+import fcntl
 import json
 import os
 import shlex
@@ -38,6 +40,7 @@ import signal
 import subprocess
 import sys
 import tempfile
+import time
 
 import config
 
@@ -153,6 +156,7 @@ class Where:
         self.git_dir = os.path.realpath(said(cwd, "rev-parse", "--absolute-git-dir"))
         common = said(cwd, "rev-parse", "--git-common-dir")
         common = os.path.realpath(common if os.path.isabs(common) else os.path.join(self.top, common))
+        self.common = common
         self.main_tree = os.path.dirname(common)
         self.in_main = self.top == self.main_tree
         self.main_branch = said(self.main_tree, "symbolic-ref", "--short", "HEAD")
@@ -175,6 +179,41 @@ def session_refusal(role, where, verb):
 
 def _staged(cwd):
     return sorted(filter(None, said(cwd, "diff", "--cached", "--name-only", "--no-renames").split("\n")))
+
+
+# THE MAIN TREE'S ONE LOCK (notes/PLAN-LAND-RACE.md; girsa-verifier's FINDING, the first project, 2026-11-13 07:54:13:
+# a main-tree commit's failure path reset HEAD in the second a notes landing's merge moved it, and the landing was
+# undone): every git write land.py makes to the main tree - a commit's staging, its commit and its unstaging, a
+# landing's merge and the check after it - is made under it, so no two interleave. Held for git's steps alone, never
+# across a gate, so a wait is short; the kernel's (flock), so any exit releases it, SIGKILL too. It protects only
+# between two processes that both run it: a tree on an older pin takes none until every tree's pin passes this piece.
+LOCK = "mishmeret-land.lock"
+LOCK_SAID_AFTER = 2         # seconds: then the waiter says, once, whom it waits for (girsa-verifier's LOW 3)
+
+
+@contextlib.contextmanager
+def main_lock(where, step):
+    """The main tree's lock for `step` (its holder's process id and step written into the lock file)."""
+    with open(os.path.join(where.common, LOCK), "a+", encoding="utf-8") as fh:
+        start = time.time()
+        while True:
+            try:
+                fcntl.flock(fh, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                break
+            except BlockingIOError:
+                if time.time() - start < LOCK_SAID_AFTER:
+                    time.sleep(0.05)
+                    continue
+                fh.seek(0)
+                print(f"  waiting for the main tree's lock ({LOCK}), held by {fh.read().strip() or 'a process'}",
+                      flush=True)
+                fcntl.flock(fh, fcntl.LOCK_EX)
+                break
+        fh.seek(0)
+        fh.truncate()
+        fh.write(f"process {os.getpid()}: {step}\n")
+        fh.flush()
+        yield
 
 
 def commit(role, kind, message, names, tests=None, because=None, cwd="."):
@@ -204,11 +243,14 @@ def commit(role, kind, message, names, tests=None, because=None, cwd="."):
         raise Refused(refusal)
     with tempfile.NamedTemporaryFile("w", encoding="utf-8", newline="\n", suffix=".txt", delete=False) as fh:
         fh.write(text + "\n")
+    locked = (lambda step: main_lock(where, f"{role}'s commit, {step}")) if where.in_main else (
+        lambda step: contextlib.nullcontext())
     try:
-        added = git(where.top, "add", "--", *names)
+        with locked("staging"):
+            added = git(where.top, "add", "--", *names)
+            staged = _staged(where.top) if added.returncode == 0 else []
         if added.returncode != 0:
             raise Refused(f"git add: {added.stderr.strip()}")
-        staged = _staged(where.top)
         if staged != sorted(set(names)):
             raise Refused(f"staged {staged}, named {sorted(set(names))} - a name that is ignored, unchanged or "
                           f"misspelt stages nothing")
@@ -225,13 +267,20 @@ def commit(role, kind, message, names, tests=None, because=None, cwd="."):
                 raise Refused(f"--tests {tests!r} collected no test: name the tests the change touches")
             if run.returncode:
                 raise Red(f"the tests named exited {run.returncode}")
-        if said(where.top, "rev-parse", "HEAD") != head or _staged(where.top) != staged:
-            raise Refused("HEAD or the staged names moved while the checks ran")
-        done = git(where.top, "commit", "-q", "-F", fh.name)
+        with locked("committing"):
+            if said(where.top, "rev-parse", "HEAD") != head or _staged(where.top) != staged:
+                raise Refused("HEAD or the staged names moved while the checks ran")
+            done = git(where.top, "commit", "-q", "-F", fh.name)
         if done.returncode != 0:
             raise Refused(f"git commit: {(done.stderr or done.stdout).strip()}")
     except BaseException:
-        git(where.top, "reset", "-q")                     # the index was empty before: nothing of another's unstaged
+        # ITS OWN NAMES ALONE (notes/PLAN-LAND-RACE.md): a path reset writes the index and never HEAD - `git reset -q`
+        # resolved HEAD at its start and wrote it at its end, undoing a merge made between the two
+        with locked("unstaging"):
+            unstaged = git(where.top, "reset", "-q", "--", *names)
+        if unstaged.returncode != 0:
+            print(f"  NOT UNSTAGED: {' '.join(names)} ({(unstaged.stderr or unstaged.stdout).strip()}) - unstage them: "
+                  f"git reset -q -- {' '.join(shlex.quote(n) for n in names)}")
         raise
     finally:
         os.unlink(fh.name)                                # the message file, on every exit
@@ -356,12 +405,19 @@ def _landing(role, kind, where, branch, accept=(), plan=None, because=None, copy
     head = said(where.top, "rev-parse", "HEAD")
     if kind == "code":
         _gated(where.top)
-    if said(where.top, "rev-parse", "HEAD") != head or said(where.main_tree, "rev-parse", where.main_branch) != tip:
-        raise Refused(f"HEAD or {where.main_branch} moved while the gate ran: land again")
-    merged = git(where.main_tree, "merge", "--ff-only", branch)
-    if merged.returncode != 0 or git(where.main_tree, "merge-base", "--is-ancestor", head,
-                                     where.main_branch).returncode != 0:
+    # the check, the merge and the check after it one step under the main tree's lock (girsa-architect, the first
+    # project's 4cbfa3a3: from the check before the merge, as a commit's last check and its commit are one)
+    with main_lock(where, f"{role}'s landing of {branch}"):
+        if said(where.top, "rev-parse", "HEAD") != head or said(where.main_tree, "rev-parse", where.main_branch) != tip:
+            raise Refused(f"HEAD or {where.main_branch} moved while the gate ran: land again")
+        merged = git(where.main_tree, "merge", "--ff-only", branch)
+        holds = merged.returncode == 0 and git(where.main_tree, "merge-base", "--is-ancestor", head,
+                                               where.main_branch).returncode == 0
+    if merged.returncode != 0:
         raise Refused(f"git merge --ff-only refused: {(merged.stderr or merged.stdout).strip()}")
+    if not holds:       # the merge ran, and main was moved back after it (2026-11-13 07:54:13, the first project)
+        raise Refused(f"the merge ran and {where.main_branch} no longer holds it - another command moved it back; the "
+                      f"main tree may hold this branch's files, unstaged: tell {OPERATOR}, whose tree it is")
     os.unlink(os.path.join(where.git_dir, STAMP))       # landed: nothing of this branch's rebases is left to check
     print(f"  LANDED {tip[:8]}..{head[:8]} on {where.main_branch}:")
     print("".join(f"    {line}\n" for line in said(where.top, "log", "--oneline", f"{tip}..{head}").split("\n")), end="")
