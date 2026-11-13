@@ -59,7 +59,10 @@ operator holding under the operator's name, ended 8 s later by the operator's ow
 ## For the first project
 
 Nothing in its config. land.py's hold and release run with the session's own variables, so a landing holds as its
-session; a hold taken before the pin bump has no session and is judged by role, as today.
+session; a hold taken before the pin bump has no session and is judged by role, as today. AND THE OTHER WAY
+(girsa-verifier's LOW 1 on the build): a tree still on an older pin runs the older board.py, which takes over or
+frees a new session's live hold by role, as before - so the rule protects fully only once every tree's pin has passed
+this piece, as the race's lock does.
 
 ## Not in this piece
 

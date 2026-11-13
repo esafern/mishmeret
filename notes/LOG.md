@@ -28,6 +28,13 @@ M13. **[2026-11-13, the Board's hold, by session (notes/PLAN-HOLD-SESSION.md)]**
       11-08 order; A's own; A gone, B takes over; B gone, a no-session release frees it; the id reused; no session at
       all). Suite 155 passed; 5 of 5 mutations red (girsa-verifier's four and the start not recorded). The prototype
       now: B's hold, B's release and a no-session release each rc 2; the record A's hold alone.
+    * Sent, live, at da35ad0: the build's HANDOFF to girsa-verifier.
+    * **[09:40]** girsa-verifier's ANSWER, live: VERIFIED at da35ad0, one LOW - the plan's words (its archive: 155
+      passed; 5 of 5 mutations red; in a real session: the record's session, pid and start; a no-session release and
+      a second session's hold refused; its own release passes). The LOW: a tree on an older pin frees a new session's
+      hold by role, so the rule protects fully only once every tree passes this piece - one sentence, written into the
+      plan's "For the first project". Code unchanged. To send at this commit, live: LANDED-READY to girsa-operator; a
+      NOTE of the sentence to girsa-verifier.
 M12. **[2026-11-13, the gate after a code landing, over an uncommitted Apply (notes/PLAN-FROZEN-GATE.md)]**
     * Started at main 668eea0, branch `builder-frozen-gate`. girsa-operator's REQUEST (M09). Read in the first project
       (read only): its Board messages #495 and #1086 (girsa-verifier's: `_frozen_gate` pairs the live ledger with
