@@ -12,7 +12,12 @@ M10. **[2026-11-13, what expires, on a calendar feed (notes/PLAN-EXPIRING.md)]**
       A prototype feed of the five: 13 events, its form checked, the token absent; it found a by-hand date printed
       "00:00 UTC" and the reminders dated in UTC.
     * **[07:33]** The plan written. To send at this commit, live: its HANDOFF to girsa-verifier; a QUESTION to
-      girsa-architect (the config's shape for the sources).
+      girsa-architect (the config's shape for the sources). Sent, both (each to a session new since its last).
+    * **[07:38]** girsa-architect's ANSWER, live: the first project's design-study/MISHMERET-EXPIRING-ARCHITECT.md,
+      2fb0a626 (read there). The shape fits all five items; top-level and OPTIONAL is the home; nothing there reads
+      these dates ahead. Two to add, taken into the plan: a name given twice refused (the UIDs), and a short connect
+      timeout on `tls` (the Mac is sometimes offline). The token's `how` to carry the stats fetch's own words. Sent,
+      live: a NOTE to girsa-verifier that the plan moved.
 M09. **[2026-11-12, the seven fixes of my audit (notes/PLAN-AUDIT-FIXES.md)]**
     * **[23:25]** Started at main 8818221 (= origin/main): the lessons file merged and pushed. The state file
       rewritten (96454a1, branch `builder-state-after-lessons`). girsa-verifier's check at f87e3ce is not recorded in

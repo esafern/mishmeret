@@ -33,8 +33,11 @@ step (below).
    - `{"jwt": [FILE, KEY, ...]}` - the `exp` of the one JWT in that JSON file under those keys (`{root}`: the project's
      root); zero or several there is "not known", never a guess. The token is read, decoded and dropped: never
      printed, kept or put in the feed;
-   - `{"tls": HOST}` - the certificate's `notAfter` on HOST:443.
-   Read at each ask, so a renewal moves the date. A source that cannot be read is "not known", with why.
+   - `{"tls": HOST}` - the certificate's `notAfter` on HOST:443, with a 5-second connect timeout (girsa-architect: this
+     Mac is sometimes offline - the certificates then read "not known" and the poll stays quick).
+   Read at each ask, so a renewal moves the date. A source that cannot be read is "not known", with why. TWO ITEMS
+   WITH ONE NAME ARE REFUSED (girsa-architect, the first project's design-study/MISHMERET-EXPIRING-ARCHITECT.md,
+   2fb0a626): their events' UIDs would be one, and Calendar would keep one - the loader's rule for `roles`.
 2. The feed: for a dated item, an event at its expiry ("EXPIRES: NAME") and an all-day reminder 7 days and 1 day
    before it, on the local calendar day, each with an alarm at 09:00 (a subscription may drop alarms; the reminder
    events show either way); for an item not known, one all-day event on today, "Expiry not known: NAME (why)", so the
@@ -59,12 +62,16 @@ step (below).
 2. The feed: a dated item's three events and their days (local), an unknown item's one event on today; CRLF, folded
    lines, unique UIDs; the placeholder token's text nowhere in it, nor in the listing.
 3. The route: 200 and text/calendar; 403 for another Host.
-4. The config: absent, nothing tracked and the feed has no event; an item without its keys, or an unknown source,
-   refused by name.
+4. The config: absent, nothing tracked and the feed has no event; an item without its keys, an unknown source, or a
+   name given twice, refused by name; the `tls` read's timeout passed to the connection.
 
 ## For the first project (its config, at its pin bump - girsa-builder's and girsa-operator's)
 
-The five items above as config rows; then the reviewer subscribes once: Calendar, File, New Calendar Subscription,
+The five items above as config rows (girsa-architect: the token's keys run to its server's `headers`,
+`Authorization`; nothing there reads these dates ahead; the token's `how` should carry the stats fetch's own words,
+`.claude/board/fetch_traffic.py:159`, "renew it in Spaceship's Hosting Manager, Manage, Access"; a run with no
+`MISHMERET_CONFIG` or `CLAUDE_PROJECT_DIR` from a worktree finds no token there and says "not known"); then the
+reviewer subscribes once: Calendar, File, New Calendar Subscription,
 `http://127.0.0.1:8450/expiring.ics`, Location "On My Mac" (iCloud cannot reach 127.0.0.1), refresh every hour, and
 "Remove: Alerts" unticked to keep the alarms. Only on that Mac: the phone sees none of it.
 
