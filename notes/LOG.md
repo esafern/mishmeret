@@ -19,6 +19,16 @@ M12. **[2026-11-13, the gate after a code landing, over an uncommitted Apply (no
       ledger alone; the line naming nothing on a clean tree. Measured by it in A's form on that project's main clone:
       1978 passed. All taken into the plan. MY SLIP: a stray `cat >> /dev/null` in a command waited on its input until
       it was stopped (nothing written).
+    * girsa-verifier's COMBINED VERDICT, live: READY TO BUILD WITH A, both its LOWs and girsa-architect's two changes;
+      a file torn at the clone and unchanged after is the narrower gap left, known.
+    * **[09:09]** BUILT (to commit): `_frozen_gate` takes the copy whole - no reset, no ledger copied over it; after
+      the clone every tracked file that differs from HEAD in either tree, and the ledger, compared with the main tree
+      (a difference refuses); the line and a red's sentence name the main tree's uncommitted files, a clean tree none.
+      One test (the Apply green, the red naming, the clean tree, the book and the ledger moved after the clone).
+      Suite 154 passed; 6 of 6 mutations red - the old steps put back, the compare limited to the ledger, the compare
+      removed, the list taken from the copy (red: from the copy, a main-tree file changed after the clone is not
+      compared), the red's names and the line removed. The prototype on this code: green, the line naming book.json
+      and rulings.jsonl. To send at the notes commit, live: the build's HANDOFF to girsa-verifier.
 M11. **[2026-11-13, a main-tree commit's failure path undid a landing (notes/PLAN-LAND-RACE.md)]**
     * RECEIVED, live, from girsa-verifier: a FINDING in the first project - 07:54:13 its notes landing's merge and,
       the same second, "reset: moving to HEAD" back (that tree's reflog, read here too); the landing undone, its
