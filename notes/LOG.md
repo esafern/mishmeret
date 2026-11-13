@@ -3,6 +3,31 @@
 Findings, decisions and open work, each the moment it is known; a time from `date`. One item per run of work, newest
 first (`M01.`, `M02.` ...); what git records (what each commit did) is not repeated here.
 
+M14. **[2026-11-13, the known gaps (notes/PLAN-KNOWN-GAPS.md)]**
+    * Two messages sent after M13's state commit (f031698) that M13 does not hold. A NOTE to girsa-operator at the
+      session's end. At 13:12, the reviewer's "push" relayed to girsa-operator. Its ANSWER, live: pushed on the
+      reviewer's own word in its pane ("push mish push girsa"); origin f031698; the first project pins f031698
+      (f00c256a, its Board #216 A).
+    * **[15:39]** The reviewer, in this session: "fix the known gaps now. tell girsa operator your findings and ask to
+      fix". Sent, live: FINDINGS to girsa-operator, four on the first project's side:
+      - its trees' old pins (-architect and -builder at 8818221; -ui, -verifier and -web at 668eea0);
+      - the expiry rows, which wait on those trees;
+      - the token's lapse on 2026-11-17;
+      - finish.md:51's "Landed".
+    * Branch `builder-known-gaps` from main f031698. Measured, probe scripts on the guard's functions (scratch):
+      - The escaped-quote forms hold, piped checks included.
+      - Six holes found: "$(...)" and "`...`" inside double quotes; two -C; `cd -`; a `case` pattern's `)`; an alias.
+      - NEW, while measuring `-C "$VAR"`: any quoted word in git's options, or in a prefix before git
+        (`git -C "." push`, `X="a b" git push`, `GIT_DIR="..." git reset --hard`, the tmux kill), hides the
+        command from every rule.
+      - Read in the first project's Board folder: server.log 5,539,679 bytes; sessions/ 800 files, 1.6 MB;
+        /api/board 1,504,177 bytes, 0.14 s.
+      The four lesson numbers mapped from its LESSONS.md.
+    * **[15:46]** The plan written. Not in it: the live night and morning runs, Linux, the `!` bypass. MY SLIP: the
+      plan's first write gave a time with its last minute digit as a letter, refused by the guard; written "after
+      15:39". To send at this commit, live: the plan's HANDOFF to girsa-verifier; item 6's design QUESTION to
+      girsa-architect.
+
 M13. **[2026-11-13, the Board's hold, by session (notes/PLAN-HOLD-SESSION.md)]**
     * Started at main 81759f8, branch `builder-hold-session`. girsa-operator's REQUEST (M09). Read in the first
       project (read only): its night queue's line names it; no instance found in its Board's messages - to ask.
