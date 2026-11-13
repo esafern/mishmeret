@@ -187,8 +187,8 @@ def _when(ts):
 
 def shown_state(st, live, open_ids, last_prompt=None):
     """What the corner says, as (key, words). The running session's own state decides first - a reported state is a
-    claim, and a stale one would say the wrong thing (Lesson 59): busy is Working, a question in its pane or on the
-    Board is the reviewer's; only an IDLE role shows what it reported, and only if nothing was put to it since (a new
+    claim, and a stale one would say the wrong thing (A WRONG VALUE IS WORSE THAN A "?"): busy is Working, a question
+    in its pane or on the Board is the reviewer's; only an IDLE role shows what it reported, and only if nothing was put to it since (a new
     prompt after the report means it moved on)."""
     if live is None:
         return "not-running", "Not running"
@@ -224,7 +224,8 @@ def also_waiting(st, live, last_prompt=None):
 def behind_its_work(st, live, last_prompt=None):
     """True when a WORKING role's corner was reported before the prompt it is working on (the reviewer, 2026-10-26: "ver
     says Working - but on nothing" - the title Working, the body its last report, "Nothing running", from before it was
-    given its current task): its text is then marked as earlier than the work, not passed off as it (Lesson 59)."""
+    given its current task): its text is then marked as earlier than the work, not passed off as it (A WRONG VALUE IS
+    WORSE THAN A "?")."""
     if live != "busy":
         return False
     reported, prompt = _when(st.get("ts")), _when(last_prompt)
@@ -787,6 +788,26 @@ def record_session(session_id, **fields):
             json.dump(rec, f)
         os.replace(tmp, path)
     return rec
+
+
+SESSION_DAYS = 30
+
+
+def prune_sessions(now=None):
+    """Remove the session records, their locks and leftovers not written in SESSION_DAYS - at the server's start (M07's
+    smaller items; notes/PLAN-KNOWN-GAPS.md, item 12: 800 files in the first project, kept for ever). `started_since`
+    reads only records written after a landing, so only a landing older than that loses one. Returns how many."""
+    folder = os.path.join(board_dir(), "sessions")
+    cut = (now or time.time()) - SESSION_DAYS * 86400
+    gone = 0
+    for name in (os.listdir(folder) if os.path.isdir(folder) else ()):
+        try:
+            if os.path.getmtime(os.path.join(folder, name)) < cut:
+                os.remove(os.path.join(folder, name))
+                gone += 1
+        except OSError:
+            pass
+    return gone
 
 
 # EVERY COMMAND, CLASSED (notes/PLAN-AUDIT-FIXES.md, item 3; girsa-verifier: WRITE THE ENUMERATION DOWN): those that

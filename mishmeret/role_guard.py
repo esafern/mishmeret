@@ -24,8 +24,8 @@ commit message saying "never git push --all" are words, not commands (the builde
 is a guard on the ordinary forms, not a sandbox: `bash -c "..."`'s argument and git behind env, time, command, exec,
 nice, sudo or xargs, or by a path, are read; git hidden in a variable, another interpreter or a deeper script is not. Anything it cannot judge runs.
 
-WHO: the hook input's `agent_type` - the agent a session was started as (`claude --agent girsa-builder`). A session
-started without one is guarded like any role other than the operator (the reviewer, 2026-10-04, "do a and b to prevent
+WHO: the hook input's `agent_type` - the agent a session was started as (`claude --agent girsa-builder`). A SUBAGENT
+(the input carries an `agent_id`) is no role, whatever its type (`role_of`; M07 item 2). A session started without one is guarded like any role other than the operator (the reviewer, 2026-10-04, "do a and b to prevent
 future misuse": an external session told to work on a branch checked it out in the main clone, blocking every landing
 and putting its page under the running servers) - the main clone and the corpus roots are the operator's alone; a one-off
 session works in a worktree, where nothing is refused. Hooks in an agent file's own frontmatter
@@ -64,19 +64,25 @@ NAMES = ("git", "tmux", "pkill", "killall", "cp", "cd", "bash", "sh", "zsh", "da
 _NAME = "(?:" + "|".join(NAMES) + ")"
 NAME_WORD = re.compile(r"""(?<![\w"'\\])(?:\\""" + _NAME + r"""|(["'])(?:[\w.~/-]*/)?""" + _NAME + r"""\1)(?![\w"'-])""")
 SHELL = r"""(?:\\|["'])?(?:\S*/)?(?:bash|sh|zsh|dash|ksh)["']?"""     # for the patterns that read the original text
+# ONE SHELL WORD in the masked text, its quoted parts kept as quotes around spaces (notes/PLAN-KNOWN-GAPS.md, item 1):
+# with `\S+` a quoted word ended at its first space, so `git -C "." push`, `X="a b" git push` and the like matched
+# nothing and every rule let them through. It ends at an unquoted separator, as the shell's does (else `R=x; S=y; git`
+# read as one prefix and lost the assignments), and holds a $(...) or `...` (`X=$(pwd) git push`)
+WORD = r"""(?:"[^"]*"|'[^']*'|\$\([^()]*\)|`[^`]*`|[^\s"';&|()<>`])+"""
 # what may stand before git and still run it (girsa-verifier's probe of 78b8088): assignments, and the prefixes env,
 # time, command, exec, nice, sudo and xargs with their options; and git by a path (/usr/bin/git)
-PREFIX = (r"(?:(?:[A-Za-z_]\w*=\S*|env(?:\s+-\S+)*|time|command|exec|nice(?:\s+-n\s*\S+|\s+-\d+)?"
-          r"|sudo(?:\s+-[A-Za-z]+(?:\s+[\w.-]+)?)*|xargs(?:\s+-\S+(?:\s+\S+)?)*)\s+)*")
+PREFIX = (r"(?:(?:[A-Za-z_]\w*=(?:" + WORD + r")?|env(?:\s+-" + WORD + r")*|time|command|exec"
+          r"|nice(?:\s+-n\s*" + WORD + r"|\s+-\d+)?|sudo(?:\s+-[A-Za-z]+(?:\s+(?:[\w.-]+|\"[^\"]*\"|'[^']*'))?)*"
+          r"|xargs(?:\s+-" + WORD + r"(?:\s+" + WORD + r")?)*)\s+)*")
 # git's own options before the verb: those with a spaced argument, then any other word starting with `-`
 GIT = re.compile(BOUNDARY + PREFIX + r"(?:\S*/)?git"
-                 r"((?:\s+-[Cc]\s+\S+|\s+--(?:git-dir|work-tree|namespace|config-env|attr-source)\s+\S+|\s+-\S+)*)"
-                 r"\s+([a-z][\w-]*)([^;&|\n]*)", re.M)
+                 r"((?:\s+-[Cc]\s+" + WORD + r"|\s+--(?:git-dir|work-tree|namespace|config-env|attr-source)\s+" + WORD
+                 + r"|\s+-" + WORD + r")*)\s+([a-z][\w-]*)([^;&|\n]*)", re.M)
 SHELL_C = re.compile(r"(?<![\w-])" + SHELL + r"\s+(?:-\w+\s+)*-c\s+(\"(?:[^\"\\]|\\.)*\"|'[^']*')"
                      r"|(?<![\w-])" + SHELL + r"(?:\s+-\w+)*\s*<<<\s*(\"(?:[^\"\\]|\\.)*\"|'[^']*')")
 # a heredoc that a shell reads as its script (girsa-verifier, 2026-10-11): `bash <<'EOF'`, `sh -s <<EOF`, `. /dev/stdin
 # <<EOF`, or `cat <<EOF | bash` - its body is commands, not words
-STDIN_SHELL = re.compile(r"^\s*(?:[A-Za-z_]\w*=\S*\s+|env(?:\s+-\S+)*\s+|exec\s+|command\s+)*"
+STDIN_SHELL = re.compile(r"^\s*(?:[A-Za-z_]\w*=(?:" + WORD + r")?\s+|env(?:\s+-" + WORD + r")*\s+|exec\s+|command\s+)*"
                          r"(?:" + SHELL + r"(?:\s+-\w+)*|(?:source|\.)\s+/dev/stdin)\s*$")
 PIPED_TO_SHELL = re.compile(r"\|\s*" + SHELL + r"(?:\s+-\w+)*\s*(?:$|[;&|)])")
 
@@ -99,8 +105,9 @@ def shell_c(command, masked):
 # (CD, on today's boundary), only where git may (KEYWORD_CD, read by _git_trees beside it). The path (found while
 # building M07 item 1, each let through from a worktree into the main tree): it ends at a separator (`cd <main>; ls;
 # git reset --hard` had been judged at `<main>;`), it may be quoted (in the masked text a quoted path had read as a
-# lone quote), it comes after cd's options (`cd -P <main>`, `cd -- <main>`), and `pushd` goes there too
-CD_TO = r"""(?:cd|pushd)(?:\s+(?:-[LPe@]+|--))*\s+("[^"]*"|'[^']*'|[^\s;&|)`]+)"""
+# lone quote), it comes after cd's options (`cd -P <main>`, `cd -- <main>`), and `pushd` goes there too; one word of
+# quoted and plain parts (`cd "$R"/book`: item 1 of notes/PLAN-KNOWN-GAPS.md)
+CD_TO = r"""(?:cd|pushd)(?:\s+(?:-[LPe@]+|--))*\s+((?:"[^"]*"|'[^']*'|[^\s;&|)`"'])+)"""
 CD = re.compile(BASE_BOUNDARY + CD_TO, re.M)
 KEYWORD_CD = re.compile(BASE_BOUNDARY + KEYWORD + "+" + CD_TO, re.M)
 SCRIPT = re.compile(BOUNDARY + r"(?:(?:bash|sh|zsh)\s+(?:-\w+\s+)*)?(\S+\.sh)(?![\w.])", re.M)
@@ -146,7 +153,7 @@ def push_forces(word):
             or (word[:1] == "-" and word[1:2] != "-" and bool({"f", "d"} & set(word[1:].split("o", 1)[0]))))
 
 
-def mask(text):
+def mask(text, runs=True):
     """`text` with what stands inside quotes and every heredoc body turned to spaces, its length kept - so a span
     found in the mask reads the same span of the original. One pass, the quotes and the heredocs together: a heredoc
     opened outside quotes masks its body from the next line to the line that is its tag alone. Until 2026-10-11 the
@@ -155,8 +162,12 @@ def mask(text):
     word's start, outside quotes - is masked to its line's end: an apostrophe in a script's comment ("the role's")
     had opened a quote that hid or showed the lines after it, by the count of apostrophes above them; a `#` after an
     escaped character (`a\\ #b`) is not a word's start. A heredoc that a shell reads as its script (STDIN_SHELL,
-    PIPED_TO_SHELL) is NOT masked: its body is commands (girsa-verifier's MEDIUM on bba1587e)."""
+    PIPED_TO_SHELL) is NOT masked: its body is commands (girsa-verifier's MEDIUM on bba1587e). A "$(...)" or "`...`"
+    inside "..." is commands too (item 2 of notes/PLAN-KNOWN-GAPS.md) - but with `runs=False`, for the rules that read
+    a pipeline's status, its body is masked once it is closed: a pipe in a check's argument (`pytest -k "$(echo $t |
+    sed x)"`) is not the check's pipe (the guard run on the transcripts, girsa-verifier's rule 45)."""
     out, quote, i, n, pending, escaped = list(text), None, 0, len(text), [], -1
+    subs = []           # each "$(...)" or "`...`" opened inside "...": [its closer, its open parentheses]
     while i < n:
         c = text[i]
         if quote:
@@ -170,10 +181,27 @@ def mask(text):
                     out[i + 1] = " "
                 i += 2
                 continue
+            # A COMMAND INSIDE "$(...)" OR "`...`" RUNS (notes/PLAN-KNOWN-GAPS.md, item 2): `echo "$(git push origin
+            # main)"` had been masked as words. Its body is read as commands to its own `)` or backtick, and the "..."
+            # goes on after it; `$((` is arithmetic, still words
+            if quote == '"' and (c == "`" or (text.startswith("$(", i) and not text.startswith("$((", i))):
+                subs.append(["`" if c == "`" else ")", 0, i])
+                quote = None
+                i += 1 if c == "`" else 2
+                continue
             if c == quote[-1]:
                 quote = None
             elif c != "\n":
                 out[i] = " "
+        elif subs and (subs[-1][0] == c == "`" or (subs[-1][0] == ")" and c == ")" and not subs[-1][1])):
+            start = subs.pop()[2]
+            quote = '"'
+            if not runs and not subs:           # the outermost one closed: its body words, for the pipe rules
+                for k in range(start, i + 1):
+                    if text[k] != "\n":
+                        out[k] = " "
+        elif subs and subs[-1][0] == ")" and c in "()":
+            subs[-1][1] += 1 if c == "(" else -1
         elif c == "#" and (i == 0 or (text[i - 1] in " \t\n;&|()" and i - 1 != escaped)):
             while i < n and text[i] != "\n":
                 out[i] = " "
@@ -226,11 +254,26 @@ def _unquote(s):
     return s[1:-1] if len(s) > 1 and s[0] == s[-1] and s[0] in "\"'" else s
 
 
+def _word(s):
+    """A shell word as the shell reads it, its quotes taken off whatever their mix (`"$X"/sub`, `'a b'`)."""
+    try:
+        parts = shlex.split(s)
+    except ValueError:
+        return _unquote(s)
+    return parts[0] if len(parts) == 1 else _unquote(s)
+
+
 def _expand(path, text):
     """`path` with ~ and the shell variables the same command sets before it (`S=...; bash $S/x.sh`), then the
-    environment's."""
-    for name, value in ASSIGN.findall(text):
-        path = path.replace("${%s}" % name, _unquote(value)).replace("$" + name, _unquote(value))
+    environment's. UNTIL IT STOPS CHANGING (girsa-verifier's MEDIUM 1 on notes/PLAN-KNOWN-GAPS.md): a value naming an
+    earlier variable (`R=<main>; S="$R"; cd "$S"`) had stayed a name, and the cd was let through."""
+    assigned = ASSIGN.findall(text)
+    for _ in range(8):                      # each round follows one more link; a loop of names stops here
+        was = path
+        for name, value in assigned:
+            path = path.replace("${%s}" % name, _unquote(value)).replace("$" + name, _unquote(value))
+        if path == was:
+            break
     return os.path.expanduser(os.path.expandvars(path))
 
 
@@ -360,7 +403,7 @@ def _places_before(text, masked, at, base, keyword_cds=True):
                  + [(c, True) for c in KEYWORD_CD.finditer(masked[:at])] * keyword_cds, key=lambda cd: cd[0].start())
     places = [base]
     for c, maybe in cds:
-        moved = [os.path.join(p, _expand(_unquote(text[c.start(1):c.end(1)]), text[:at])) for p in places]
+        moved = [os.path.join(p, _expand(_word(text[c.start(1):c.end(1)]), text[:at])) for p in places]
         places = list(dict.fromkeys(places + moved if maybe else moved))
     return places
 
@@ -377,17 +420,23 @@ def _git_trees(command, masked, m, cwd):
     taken from it. The work tree: `--work-tree` or
     GIT_WORK_TREE= before git, else the place; the repository's: `--git-dir` or GIT_DIR= (its parent if it ends in
     .git), else the place."""
-    opts, lead, before = command[m.start(1):m.end(1)], command[m.start():m.start(1)], command[:m.start()]
-    c = re.search(r"-C\s+(\S+)", opts)
+    # each argument found in the masked text as one WORD (item 1: a quoted one, `-C "<main>"`, had hidden the command),
+    # then read in the original as the shell reads it
+    a, before = m.start(1), command[:m.start()]
+    opts, lead = masked[a:m.end(1)], masked[m.start():a]
+    said = lambda at, g: _expand(_word(command[at + g.start(1):at + g.end(1)]), before)
+    c = re.search(r"-C\s+(" + WORD + ")", opts)
     places = _places_before(command, masked, m.start(), cwd)
     if c:                                   # a relative -C from where the cd went (girsa-verifier's MEDIUM on db7b0ff)
-        places = [os.path.join(place, _expand(_unquote(c.group(1)), before)) for place in places]
-    named = {flag: re.search(flag + r"(?:=|\s+)(\S+)", opts) or re.search(r"(?<![\w$])" + var + r"=(\S+)", lead)
-             for flag, var in (("--work-tree", "GIT_WORK_TREE"), ("--git-dir", "GIT_DIR"))}
+        places = [os.path.join(place, said(a, c)) for place in places]
+    named = {}
+    for flag, var in (("--work-tree", "GIT_WORK_TREE"), ("--git-dir", "GIT_DIR")):
+        f = re.search(flag + r"(?:=|\s+)(" + WORD + ")", opts)
+        v = re.search(r"(?<![\w$])" + var + r"=(" + WORD + ")", lead)
+        named[flag] = said(a, f) if f else said(m.start(), v) if v else None
     trees = []
     for place in places:
-        work, repo = (named[f] and os.path.join(place, _expand(_unquote(named[f].group(1)), before)).rstrip("/")
-                      for f in ("--work-tree", "--git-dir"))
+        work, repo = (named[f] and os.path.join(place, named[f]).rstrip("/") for f in ("--work-tree", "--git-dir"))
         trees += [work or place, (os.path.dirname(repo) if os.path.basename(repo) == ".git" else repo) if repo else place]
     return tuple(dict.fromkeys(trees))
 
@@ -531,9 +580,10 @@ def copy_refusal(command, cwd, is_worktree=lambda p: os.path.isfile(os.path.join
 # (kill-serv, kill-sess), kill-pane (one role's pane); a target is read as another session only when it names one outright
 # (not %N, @N, $N or ":1", which point into the server the command reaches). `pkill` / `killall` naming tmux is refused
 # outright. Not covered: tmux behind a variable or another interpreter, or `kill <pid>` of the server.
-TMUX_PREFIX = (r"(?:(?:[A-Za-z_]\w*=\S*|env(?:\s+-u\s*\w+|\s+-\S+)*|time|command|exec|nice(?:\s+-n\s*\S+|\s+-\d+)?"
-               r"|sudo(?:\s+-[A-Za-z]+(?:\s+[\w.-]+)?)*|xargs(?:\s+-\S+(?:\s+\S+)?)*)\s+)*")
-TMUX_KILL = re.compile(BOUNDARY + "(" + TMUX_PREFIX + r")(?:\S*/)?tmux((?:\s+-(?:[2CDlNuvV]+|[cfLST]\s*\S+))*)\s+"
+TMUX_PREFIX = (r"(?:(?:[A-Za-z_]\w*=(?:" + WORD + r")?|env(?:\s+-u\s*\w+|\s+-" + WORD + r")*|time|command|exec"
+               r"|nice(?:\s+-n\s*" + WORD + r"|\s+-\d+)?|sudo(?:\s+-[A-Za-z]+(?:\s+(?:[\w.-]+|\"[^\"]*\"|'[^']*'))?)*"
+               r"|xargs(?:\s+-" + WORD + r"(?:\s+" + WORD + r")?)*)\s+)*")      # item 1's WORD, as PREFIX
+TMUX_KILL = re.compile(BOUNDARY + "(" + TMUX_PREFIX + r")(?:\S*/)?tmux((?:\s+-(?:[2CDlNuvV]+|[cfLST]\s*" + WORD + r"))*)\s+"
                        r"(kill[\w-]*)(?![\w-])([^;&|\n]*)", re.M)
 KILL_VERBS = ("kill-server", "kill-session", "kill-window", "kill-pane")
 KILL_ALIASES = {"killw": "kill-window", "killp": "kill-pane"}
@@ -812,7 +862,7 @@ def _script_in(stmt):
 
 def piped_check_refusal(command, cwd, read=_read, depth=0):
     """None to let `command` run, or the reason to refuse it: a check or a script whose status a pipe hides."""
-    masked = mask(command)
+    masked = mask(command, runs=False)          # a pipe inside "$(...)" is its own, not the check's
     if depth == 0:
         for m in SCRIPT.finditer(masked):
             a, b = m.span(1)
@@ -823,7 +873,8 @@ def piped_check_refusal(command, cwd, read=_read, depth=0):
                 why = piped_check_refusal(body, here, read, depth + 1)
                 if why:
                     return f"{why} (in the script {path})"
-    runs = lambda text: next((c for p, _ in _pipelines(text, mask(text))[0] for c in map(_check_in, p) if c), None)
+    runs = lambda text: next((c for p, _ in _pipelines(text, mask(text, runs=False))[0] for c in map(_check_in, p) if c),
+                             None)
     for m in shell_c(command, masked):
         why = piped_check_refusal(shell_arg(m), _dir_before(command, masked, m.start(), cwd), read, depth)
         if why:

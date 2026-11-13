@@ -9,6 +9,7 @@ from its own page (Origin and Host checked), as the review server takes rulings.
     python3 board_server.py --detach [--port PORT]      # its output to <board_dir>/server.log
 Needs only Python's standard library."""
 import argparse
+import hashlib
 import json
 import os
 import sys
@@ -373,7 +374,7 @@ function visitorsTable() {
   if (v.missing) return '<p class="empty">No report yet: traffic.json in the Board\'s folder is written twice a day from the host\'s access logs.</p>';
   if (v.error) return `<p class="empty">${esc(v.error)}</p>`;
   const hours = v.made ? (Date.now() - new Date(v.made)) / 3600000 : null;
-  // A NUMBER THE REPORT DOES NOT HAVE IS "?", NEVER 0 (Lesson 59; girsa-demo-operator on bea05539: its cron run has no
+  // A NUMBER THE REPORT DOES NOT HAVE IS "?", NEVER 0 (A WRONG VALUE IS WORSE THAN A "?"; girsa-demo-operator on bea05539: its cron run has no
   // --own, since the home address changes, so every day's "ours" is null and our visits are among the visits)
   const n = x => x == null ? "?" : Number(x).toLocaleString(), m = x => x == null ? "?" : Number(x).toFixed(1);
   const apart = (v.sites || []).every(s => (s.days || []).every(d => d.ours != null));
@@ -390,9 +391,9 @@ function visitorsTable() {
 document.addEventListener("change", e => { if (e.target.id === "tokenday") { tokenDay = e.target.value; loadTokens(); } });
 async function refresh(force) {
   const typing = document.activeElement && document.activeElement.tagName === "TEXTAREA" && document.activeElement.value;
-  const r = await fetch("/api/board"); const got = await r.json(); const key = JSON.stringify(got);
-  if (!force && key === last) return;
-  last = key; data = got;
+  const r = await fetch("/api/board?have=" + last);      // 204: the answer held is still the Board's
+  if (r.status === 204) { if (!force) return; }
+  else { last = r.headers.get("X-Board-Hash") || ""; data = await r.json(); }
   if (typing) { document.getElementById("roles").innerHTML = ROLES.map(corner).join(""); fitCorners(); drawHeld(); drawUsage(); drawNoCorner(); return; }   // keep a draft answer
   draw();
 }
@@ -758,12 +759,14 @@ class Handler(BaseHTTPRequestHandler):
         host = (self.headers.get("Host") or "").rsplit(":", 1)[0]
         return host in self.ALLOWED_HOSTS
 
-    def _send(self, code, body, ctype="application/json; charset=utf-8"):
+    def _send(self, code, body, ctype="application/json; charset=utf-8", headers=()):
         data = body.encode("utf-8") if isinstance(body, str) else body
         self.send_response(code)
         self.send_header("Content-Type", ctype)
         self.send_header("Content-Length", str(len(data)))
         self.send_header("Cache-Control", "no-store")
+        for name, value in headers:
+            self.send_header(name, value)
         self.end_headers()
         self.wfile.write(data)
 
@@ -798,8 +801,14 @@ class Handler(BaseHTTPRequestHandler):
                 return self._send(400, "day is YYYY-MM-DD", "text/plain; charset=utf-8")
             with USAGE_LOCK:
                 return self._send(200, json.dumps(role_usage.role_usage(day), ensure_ascii=False))
-        if self.path == "/api/board":
-            return self._send(200, json.dumps(board_view(), ensure_ascii=False))
+        if self.path.split("?")[0] == "/api/board":
+            # THE SAME ANSWER IS NOT SENT AGAIN (M07; notes/PLAN-KNOWN-GAPS.md, item 13): 1.5 MB every 5 s in the first
+            # project, parsed and compared whole by the page; it sends the hash of the answer it holds
+            body = json.dumps(board_view(), ensure_ascii=False).encode("utf-8")
+            tag = hashlib.sha1(body).hexdigest()
+            if self.path.partition("have=")[2] == tag:
+                return self._send(204, b"")
+            return self._send(200, body, headers=[("X-Board-Hash", tag)])
         if self.path.startswith(("/mockups/", "/api/mockups/")):
             try:
                 it = board.items()[int(self.path.rstrip("/").split("/")[-1].split("#")[0])]
@@ -852,6 +861,9 @@ class Handler(BaseHTTPRequestHandler):
         sys.stderr.write("board: " + (fmt % args) + "\n")
 
 
+LOG_LIMIT = 5 * 1024 * 1024       # bytes: the first project's server.log held 5.5 MB on 2026-11-13
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     ap.add_argument("--port", type=int, default=config.load()["board_port"])
@@ -859,6 +871,9 @@ def main(argv=None):
     args = ap.parse_args(argv)
     log = os.path.join(board.board_dir(), "server.log")
     server = ThreadingHTTPServer(("127.0.0.1", args.port), Handler)      # bound before detaching: a busy port fails here
+    board.prune_sessions()
+    if os.path.isfile(log) and os.path.getsize(log) > LOG_LIMIT:         # one old log kept (PLAN-KNOWN-GAPS, item 12)
+        os.replace(log, log + ".1")
     if args.detach:                          # as scratch/serve_detached.py starts the review servers
         if os.fork() > 0:
             print(f"the Board on http://127.0.0.1:{args.port}/ (log {log})")

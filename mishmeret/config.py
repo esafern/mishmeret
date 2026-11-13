@@ -10,8 +10,8 @@ project's `.claude/mishmeret.json`, read here and nowhere else:
     MISHMERET_NIGHT_<KEY> one key of `night` - no other table's key has a variable
 
 A field missing from the file, but one OPTIONAL names (its reader takes it as off), or one the file has that FIELDS
-does not list, is an error (ConfigError) - never a default (Lesson 21 in Girsa: a loader that raises over one that
-returns nothing). The project's shim runs the one
+does not list, is an error (ConfigError) - never a default (LESSONS.md, FLAT COORDINATE KEYS: a loader that raises
+over one that returns nothing). The project's shim runs the one
 pinned commit its config names, so the code and the config it reads change together, in one commit of the project.
 
     python3 config.py --shell    prints the fields the shell scripts read, as `NAME=value` lines for `eval`
@@ -23,7 +23,7 @@ import shlex
 import subprocess
 import sys
 
-# EVERY FIELD, AND WHO READS IT (a test fails on a field no module reads: Lesson 47). `repository` and
+# EVERY FIELD, AND WHO READS IT (a test fails on a field no module reads: WIRED TO NOTHING). `repository` and
 # `mishmeret_commit` are the project's shim's, which finds this code by them.
 FIELDS = {
     "repository": str,          # the shim: where to clone Mishmeret from, said in its refusal

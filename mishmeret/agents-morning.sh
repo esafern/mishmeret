@@ -126,7 +126,7 @@ POLL=$MM_NIGHT_POLL                    # while a role finishes
 # transcript. Over this many tokens it lands and is closed; UNDER IT, IT LANDS BUT IS NOT CLEARED (the reviewer, the
 # Board #31, 2026-10-13: "c lower the limit to 200k so most times roles will be closed. if less than that - just land
 # but not clear" - at 500,000 the operator was kept at 486,593 tokens, unlanded). A context that cannot be read is
-# finished and kept too (Lesson 59: never closed on a guess).
+# finished and kept too (A WRONG VALUE IS WORSE THAN A "?": never closed on a guess).
 CONTEXT_LIMIT=$MM_NIGHT_CONTEXT_LIMIT
 GAP=$MM_NIGHT_GAP                       # between /clear and /exit
 DRY="${MISHMERET_NIGHT_DRY_RUN:-}"

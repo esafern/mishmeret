@@ -4,9 +4,9 @@ tools/land.py
 
 Every commit and every landing, one procedure (Board #85 A, step 2; design-study/STEP-LANDING-SCRIPT-PLAN.md, its
 section 10 the review's list; girsa-architect's answers in STEP-LANDING-SCRIPT-ARCHITECT.md). The rules it follows were
-written in five places and done by hand, or by three scripts each with its own file list (Lesson 60); here they are
-steps, each a git or tool call whose return code is read, and the Board's hold released on every exit - a stop's
-SIGTERM, or SIGHUP, included (M07 item 6; notes/PLAN-LAND-SIGNAL.md).
+written in five places and done by hand, or by three scripts each with its own file list (DON'T REINVENT THE WHEEL);
+here they are steps, each a git or tool call whose return code is read, and the Board's hold released on every
+exit - a stop's SIGTERM, or SIGHUP, included (M07 item 6; notes/PLAN-LAND-SIGNAL.md).
 
   ./venv/bin/python tools/land.py commit ROLE notes|code -F MESSAGE NAME... [--tests "PYTEST ARGS"|none] [--because "WORDS"]
   ./venv/bin/python tools/land.py land ROLE notes|code [--plan PLAN] [--accept FILE::NAME...] [--because WORDS]

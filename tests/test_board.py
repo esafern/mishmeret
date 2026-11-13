@@ -240,6 +240,78 @@ def test_the_reviewer_can_change_an_answer_on_the_board(tmp_path, monkeypatch):
     assert "data-change=" in page and "body.change = true" in page and "Changed from" in page
 
 
+def test_the_board_answer_is_not_sent_again_while_it_is_the_same(tmp_path, monkeypatch):
+    """M07's smaller items (notes/PLAN-KNOWN-GAPS.md, item 13): /api/board sent the whole record every 5 s - 1.5 MB in
+    the first project - for the page to parse and compare whole. The page sends the hash of the answer it holds; the
+    same answer is a 204 with no body, a changed one the answer and its new hash. Placeholder Board."""
+    import importlib.util
+    import threading
+    import urllib.request
+    monkeypatch.setenv("MISHMERET_BOARD_DIR", str(tmp_path / "board"))
+    monkeypatch.syspath_prepend(PKG)
+    spec = importlib.util.spec_from_file_location("board_server", os.path.join(PKG, "board_server.py"))
+    bs = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(bs)
+    bs.board.ask("ex-builder", "Placeholder question")
+    srv = bs.ThreadingHTTPServer(("127.0.0.1", 0), bs.Handler)
+    threading.Thread(target=srv.serve_forever, daemon=True).start()
+    get = lambda have: urllib.request.urlopen(f"http://127.0.0.1:{srv.server_address[1]}/api/board?have={have}",
+                                              timeout=10)
+    try:
+        first = get("")
+        tag, body = first.headers["X-Board-Hash"], first.read()
+        assert first.status == 200 and json.loads(body)["items"] and len(tag) == 40, (first.status, tag)
+        again = get(tag)
+        assert again.status == 204 and again.read() == b"", "the same answer: nothing sent"
+        bs.board.ask("ex-verifier", "A second placeholder question")
+        changed = get(tag)
+        assert changed.status == 200 and changed.headers["X-Board-Hash"] != tag and len(json.loads(changed.read())["items"]) == 2
+    finally:
+        srv.shutdown()
+    page = open(os.path.join(PKG, "board_server.py"), encoding="utf-8").read()
+    assert 'fetch("/api/board?have=" + last)' in page, "the page asks with its hash"
+    # a forced refresh (an answer, a defer, the load) draws on a 204 from what it holds (girsa-verifier's LOW 1)
+    assert "if (r.status === 204) { if (!force) return; }" in page
+
+
+def test_the_board_folder_keeps_one_old_log_and_a_months_session_records(tmp_path, monkeypatch):
+    """M07's smaller items (notes/PLAN-KNOWN-GAPS.md, item 12): server.log and sessions/ only grew - 5.5 MB and 800
+    files in the first project. At the server's start: a log over LOG_LIMIT moves to server.log.1 (one kept); a
+    record, its lock or a leftover not written in SESSION_DAYS is removed, a newer one kept. Placeholder Board."""
+    import importlib.util
+    import time
+    monkeypatch.setenv("MISHMERET_BOARD_DIR", str(tmp_path / "board"))
+    monkeypatch.syspath_prepend(PKG)
+    spec = importlib.util.spec_from_file_location("board_server", os.path.join(PKG, "board_server.py"))
+    bs = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(bs)
+    sessions = tmp_path / "board" / "sessions"
+    sessions.mkdir(parents=True)
+    old = time.time() - (bs.board.SESSION_DAYS + 1) * 86400
+    for name, when in (("old.json", old), ("old.json.lock", old), ("old.json.9.tmp", old), ("new.json", None),
+                       ("new.json.lock", None)):
+        (sessions / name).write_text("{}", encoding="utf-8")
+        if when:
+            os.utime(sessions / name, (when, when))
+    log = tmp_path / "board" / "server.log"
+    log.write_bytes(b"x" * (bs.LOG_LIMIT + 1))
+    (tmp_path / "board" / "server.log.1").write_bytes(b"older")
+
+    class Stub:
+        def __init__(self, *a):
+            pass
+
+        def serve_forever(self):
+            pass
+    monkeypatch.setattr(bs, "ThreadingHTTPServer", Stub)
+    bs.main(["--port", "0"])
+    assert sorted(os.listdir(sessions)) == ["new.json", "new.json.lock"]
+    assert not log.exists() and (tmp_path / "board" / "server.log.1").stat().st_size == bs.LOG_LIMIT + 1
+    log.write_bytes(b"small")
+    bs.main(["--port", "0"])
+    assert log.read_bytes() == b"small", "a log under the limit stays"
+
+
 def test_the_board_takes_answers_only_from_its_own_page_and_only_as_a_json_object(tmp_path, monkeypatch):
     """The Mishmeret audit's items 8 and 18 (2026-11-01): the guard that keeps another website the reviewer visits from
     answering a role's question had no test - switched off, every test passed; and a JSON list sent to either route
@@ -813,7 +885,7 @@ def test_the_board_shows_the_visitors_report(tmp_path, monkeypatch):
     assert 'id="visittoggle"' in page and 'fetch("/api/visitors")' in page and "visitorsTable()" in page
     assert 'self.path == "/api/visitors"' in page
     view = page[page.index("function visitorsTable()"):page.index("document.addEventListener(\"change\"")]
-    assert 'x == null ? "?"' in view and "|| 0" not in view, "a number the report lacks is drawn ?, never 0 (Lesson 59)"
+    assert 'x == null ? "?"' in view and "|| 0" not in view, "a number the report lacks is drawn ?, never 0 (A WRONG VALUE IS WORSE THAN A \"?\")"
 
 
 def test_the_board_says_when_nothing_is_moving(tmp_path, monkeypatch, capsys):
@@ -1109,7 +1181,7 @@ def test_the_board_shows_a_role_idle_once_its_turn_ended_and_a_keepalive_refresh
     """The reviewer, 2026-10-26: "ui says working in the title bar but idle in the body" - `claude agents` calls a
     session busy while a background task of its own runs (a `board.py wait`, a watcher loop), so the corner said
     Working over a role whose turn had ended. role_usage.turn_ended reads the transcript: the turn's closing record
-    with nothing after it is idle; a prompt or an answer after it, or no transcript, is not (Lesson 59). And "keepalive
+    with nothing after it is idle; a prompt or an answer after it, or no transcript, is not (A WRONG VALUE IS WORSE THAN A "?"). And "keepalive
     is a good opp. for a session to report to the board that it is still idle": `status --still` reports the corner
     again as it stands. Placeholder transcripts and sessions."""
     import importlib.util

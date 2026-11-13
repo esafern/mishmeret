@@ -307,6 +307,68 @@ def test_an_escaped_quote_inside_a_string_does_not_turn_the_guard_off():
         assert len(rg.mask(text)) == len(text) and rg.mask(text).count("\n") == text.count("\n"), text
 
 
+def test_a_quoted_word_before_git_or_a_command_inside_a_string_does_not_hide_it(monkeypatch):
+    """notes/PLAN-KNOWN-GAPS.md. ITEM 1 (found measuring it, HIGH): in the masked text a quoted word is its quotes around
+    spaces, and the patterns' `\\S+` ended at the first - so `git -C "." push`, `X="a b" git push`, `GIT_DIR="<main>/.git"
+    git reset --hard` and `X="a b" tmux kill-server` matched nothing, and every rule let them through. With it,
+    girsa-verifier's MEDIUM 1: a value naming an earlier variable (`R=<main>; S="$R"; cd "$S"`) is followed to its end.
+    ITEM 2: a command inside "$(...)" or "`...`" runs, and had been masked as words. ITEM 7: the escaped-quote forms
+    of $"..." and a backtick string, and the piped-check rule after each, held already - pinned here. Placeholder paths:
+    the main tree /work/book, a worktree /work/book-builder."""
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("role_guard", os.path.join(PKG, "role_guard.py"))
+    rg = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(rg)
+    main, wt = "/work/book", "/work/book-builder"
+    is_main = lambda p: (os.path.normpath(p) + "/").startswith("/work/book/") and "/work/book/.git" not in p
+    no = lambda role, cmd, cwd: rg.refusal(role, cmd, cwd, main_tree=is_main, read={}.get)
+    monkeypatch.setenv("PLACEHOLDER_MAIN", main)
+    for role, cmd, cwd in (
+            # item 1: a quoted option argument, a quoted prefix word
+            ("ex-builder", 'git -C "." push origin main', wt), ("ex-builder", "git -c 'user.name=x' push origin main", wt),
+            ("ex-builder", 'git --git-dir=".git" push origin main', wt), ("ex-operator", 'git -C "." push --force origin main', main),
+            ("ex-builder", 'git -C "/work/book" commit -m x', main), ("ex-builder", 'X="a b" git push origin main', wt),
+            ("ex-builder", "X='a' git push origin main", wt), ("ex-builder", 'env X="a b" git push origin main', wt),
+            ("ex-builder", 'sudo -u "me" git push origin main', wt), ("ex-builder", 'if true; then X="a b" git push origin main; fi', wt),
+            ("ex-builder", "X=$(pwd) git push origin main", wt), ("ex-builder", "X=`pwd` git push origin main", wt),
+            ("ex-builder", 'GIT_DIR="/work/book/.git" git reset --hard', wt), ("ex-builder", 'git -C "/work/book" reset --hard', wt),
+            ("ex-builder", "git -C '/work/book' reset --hard", wt), ("ex-builder", 'git --git-dir="/work/book/.git" reset --hard', wt),
+            ("ex-builder", 'git -C "$PLACEHOLDER_MAIN" reset --hard', wt), ("ex-builder", 'cd "/work"/book && git reset --hard', wt),
+            # its MEDIUM 1: one variable naming another, for a cd and a -C alike
+            ("ex-builder", 'R=/work/book; S="$R"; cd "$S"; git reset --hard', wt),
+            ("ex-builder", 'R=/work; S="$R/book"; git -C "$S" reset --hard', wt),
+            # item 2: inside "$(...)" or "`...`", nested too
+            ("ex-builder", 'echo "$(git push origin main)"', wt), ("ex-builder", 'echo "`git push origin main`"', wt),
+            ("ex-builder", 'echo "a $(echo "b $(git push origin main)") c"', wt),
+            ("ex-builder", 'x="$(git -C /work/book reset --hard)"', wt),
+            # item 7: held already
+            ("ex-builder", 'echo $"a \\" b"; git push origin main', wt),
+            ("ex-builder", 'echo `echo "a \\" b"`; git push origin main', wt)):
+        assert no(role, cmd, cwd), cmd
+    for cmd in ('X="a b" tmux kill-server', 'echo "$(tmux kill-server)"', "env X='a' tmux kill-server"):
+        assert rg.tmux_refusal(cmd, wt, read={}.get), cmd
+    for role, cmd, cwd in (("ex-builder", 'git log --format="%h %s"', main), ("ex-builder", 'X="a b" git status', main),
+                           ("ex-builder", 'git -C "/work/book-builder" reset --hard', wt),
+                           ("ex-builder", 'git -c "core.pager=less -R" log', main), ("ex-builder", 'echo "$(date)"', main),
+                           ("ex-builder", 'echo "cost: $(git log -1 --format=%h)"', main),
+                           ("ex-builder", 'echo "$((1 + 2)) git push origin main"', wt),
+                           ("ex-builder", 'echo "`date` git push origin main"', wt),
+                           ("ex-builder", 'R=/work; S="$R/book-builder"; git -C "$S" reset --hard', wt),
+                           ("ex-operator", 'git -C "." push origin main', main)):
+        assert no(role, cmd, cwd) is None, cmd
+    for s in ('echo "a \\" b"', "echo $'it\\'s'", 'echo $"a \\" b"', 'echo `echo "a \\" b"`',
+              # the guard run on the transcripts (rule 45): a quote inside "$(...)" had closed the outer one, and a real
+              # pipe after it was masked - the first project's records, in placeholder words
+              "sed -n \"$(grep -n 'a \"b\" c' f.md | cut -d: -f1),+4p\" f.md"):
+        assert rg.piped_check_refusal(f"{s}; python3 -m pytest tests | tail -3", wt, read={}.get), s
+    # and the other way: a pipe inside a check's argument is not the check's (its body words for the pipe rules)
+    for fine in ('python3 -m pytest tests -k "$(echo $t | sed \'s/ / or /g\')" > log 2>&1; tail -1 log',
+                 'python3 -m pytest tests -k "$(sed \'s/$/ or/\' n.txt | tr \'\\n\' \' \')" > log 2>&1'):
+        assert rg.piped_check_refusal(fine, wt, read={}.get) is None, fine
+    for text in ('echo "a $(echo "b $(git push)") c"', 'echo "`date`"', 'echo "$((1+2))"', 'echo "$(echo ")")"'):
+        assert len(rg.mask(text)) == len(text), text
+
+
 def test_the_role_guard_lets_a_role_land_through_land_py_only_as_itself():
     """The reviewer, 2026-10-26, Board #86 A (girsa-verifier's MEDIUM 1 on the landing script's plan): tools/land.py runs
     git add, commit and merge as Python subprocesses the guard never sees, and takes the role as its second word. So
@@ -1400,7 +1462,7 @@ def test_the_role_guard_keeps_the_file_tools_out_of_the_main_tree(tmp_path):
 
 
 def test_the_role_guards_corpus_roots_are_the_books_homes_list(tmp_path):
-    """STEP5-TEST-COPY-NOTICE-PLAN.md revision 2 item 6 (Lesson 60): the role guard reads its corpus roots from the one
+    """STEP5-TEST-COPY-NOTICE-PLAN.md revision 2 item 6 (DON'T REINVENT THE WHEEL): the role guard reads its corpus roots from the one
     list of homes, pipeline/book_homes.json - a root added there is guarded with no second edit. A missing, unreadable
     or misshapen list leaves the fallback guarded, never nothing; a home with no root adds the fallback beside the good
     roots (girsa-verifier's LOW on 71175b1d). Placeholder roots."""

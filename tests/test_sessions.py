@@ -722,7 +722,7 @@ def test_agents_sh_next_clears_exits_and_starts_the_role_again_in_its_own_pane(t
                      f" capture-pane) {capture} ;;\n"
                      f" send-keys) echo \"$*\" >> '{typed}'; case \"$*\" in *' /exit '*) {begun} ;; esac ;;\n"
                      "esac",
-             "sleep": "exit 0", "claude": "echo '[]'",
+             "sleep": "exit 0", "claude": f"echo \"$*\" >> '{tmp_path / 'claude.txt'}'; echo '[]'",
              "osascript": f"for a in \"$@\"; do printf '%s\\n' \"$a\"; done >> '{shown}'"}     # an argument a line
     (tmp_path / "bin").mkdir()
     for name, body in stubs.items():
@@ -732,6 +732,8 @@ def test_agents_sh_next_clears_exits_and_starts_the_role_again_in_its_own_pane(t
     out = subprocess.run(["bash", os.path.join(PKG, "agents.sh"), "--next", "ex-builder", "%3"] + ["exit"] * (case == "exit"),
                          env=env, stdin=subprocess.DEVNULL, capture_output=True, text=True, timeout=60)
     assert out.returncode == 0, out.stdout + out.stderr
+    # role_sessions.py (which asks `claude agents`) is not run: --next drops its answer (the plan's item 11)
+    assert not (tmp_path / "claude.txt").exists(), (tmp_path / "claude.txt").read_text()
     sent = typed.read_text(encoding="utf-8").splitlines() if typed.exists() else []
     said = shown.read_text(encoding="utf-8") if shown.exists() else ""
     log = (state / "next.log").read_text(encoding="utf-8")

@@ -127,7 +127,8 @@ def said_closing(path, tail=4 * 1024 * 1024):
 
 def turn_ended(session_id, tail=256 * 1024):
     """True when a session's last turn has ended - its transcript's last main-chain record is the turn's closing `system`
-    record (`turn_duration`), with no prompt or answer after it - else False, unknown included (Lesson 59). `claude
+    record (`turn_duration`), with no prompt or answer after it - else False, unknown included (A WRONG VALUE IS
+    WORSE THAN A "?"). `claude
     agents` calls a session busy while a background task of its own runs (a `board.py wait`, a watcher loop), though its
     turn has ended (the reviewer, 2026-10-26: "ui says working in the title bar but idle in the body")."""
     path = transcript(session_id)

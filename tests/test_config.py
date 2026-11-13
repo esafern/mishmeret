@@ -173,7 +173,7 @@ def test_the_shell_form_quotes_every_value(write):
 
 
 def test_every_field_is_read_by_some_module_or_the_projects_shim():
-    """Lesson 47 in Girsa (WIRED TO NOTHING): a field no module reads is refused here, not left in every config."""
+    """WIRED TO NOTHING (LESSONS.md): a field no module reads is refused here, not left in every config."""
     shim = {"repository", "mishmeret_commit"}
     files = [f for f in glob.glob(os.path.join(PKG, "*")) if os.path.isfile(f) and not f.endswith("config.py")]
     py = "".join(open(f, encoding="utf-8").read() for f in files if f.endswith(".py"))
