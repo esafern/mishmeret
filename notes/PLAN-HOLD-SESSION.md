@@ -22,7 +22,13 @@ one) - or any command run with no session, which is what the 11-08 release was. 
 
 ## The change
 
-1. A hold records its session and process (`CLAUDE_CODE_SESSION_ID`, `CLAUDE_PID`) when they are set.
+1. A hold records its session and process (`CLAUDE_CODE_SESSION_ID`, `CLAUDE_PID`) when they are set, AND THAT
+   PROCESS'S START TIME (`ps -o lstart= -p PID`; here "Thu Nov 12 23:25:17 2026" for this session's claude). ALIVE is
+   the same process id with the same start time (girsa-verifier's MEDIUM 1, the first project's
+   step5-verification/mishmeret-hold-session-plan-2026-11-13: this Mac reuses process ids within the hour - its own
+   servers today got 34775, 90418, 40098, 81380 - so a dead session's id taken by another process would read as live,
+   refuse every landing and be freed by no one: the stuck-hold class, 2026-11-02). A start time that cannot be read
+   (no `ps`) records none, and such a hold is judged as gone.
 2. ONE RULE FOR BOTH, `hold` and `release`, on a hold of the same role: a hold whose session's process is ALIVE is
    that session's alone - another session, AND A COMMAND WITH NO SESSION (the 11-08 release), is refused ("main is held
    by ROLE's session SID since TS (WHY), its process alive - release it from that session"); a hold whose session's
@@ -43,7 +49,12 @@ one) - or any command run with no session, which is what the 11-08 release was. 
 3. A's process gone (a process id that runs nothing): B, or a command with no session, takes the hold over or frees
    it, and the line says so.
 4. No session on either side: as today (a hold, a re-hold, a release by role).
-5. A hold's record carries its session and process.
+5. A hold's record carries its session, process and start time; a process id alive but started at another time is a
+   gone session's.
+Mutations (girsa-verifier's): liveness by the id alone; the no-session refusal removed; the session's own match
+removed; a gone session's takeover removed. The 11-08 leg in the record's own order: a hold, then a hold and a release
+with no session. A second case on record, counted by girsa-verifier on that Board: 2026-10-18 20:42:49, the demo
+operator holding under the operator's name, ended 8 s later by the operator's own session's hold and release.
 
 ## For the first project
 

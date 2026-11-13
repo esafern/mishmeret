@@ -18,6 +18,16 @@ M13. **[2026-11-13, the Board's hold, by session (notes/PLAN-HOLD-SESSION.md)]**
       a live session's hold is that session's alone, a no-session command refused too; a gone session's taken over or
       freed; a no-session hold by role. My first draft would have left the 11-08 case open. Sent, live: a NOTE to
       girsa-verifier that the plan moved.
+    * girsa-verifier's ANSWER, live, at 31f7bc6: NOT YET READY, one MEDIUM - "alive" as the recorded id existing,
+      where this Mac reuses process ids within the hour, would leave a dead session's hold live for good; record the
+      process's start time and call it alive only on the same id and start. A second case on record (2026-10-18
+      20:42:49). Its mutations listed. Taken into the plan.
+    * **[09:34]** BUILT (to commit): the hold records session, process and its start (`ps -o lstart=`); `_theirs` one
+      rule for hold and release; a gone session's hold taken over or freed, said in the command's line; conftest
+      clears CLAUDE_CODE_SESSION_ID and CLAUDE_PID. One test (the record; B and a no-session command refused, in the
+      11-08 order; A's own; A gone, B takes over; B gone, a no-session release frees it; the id reused; no session at
+      all). Suite 155 passed; 5 of 5 mutations red (girsa-verifier's four and the start not recorded). The prototype
+      now: B's hold, B's release and a no-session release each rc 2; the record A's hold alone.
 M12. **[2026-11-13, the gate after a code landing, over an uncommitted Apply (notes/PLAN-FROZEN-GATE.md)]**
     * Started at main 668eea0, branch `builder-frozen-gate`. girsa-operator's REQUEST (M09). Read in the first project
       (read only): its Board messages #495 and #1086 (girsa-verifier's: `_frozen_gate` pairs the live ledger with
