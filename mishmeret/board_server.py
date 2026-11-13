@@ -19,6 +19,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import board  # noqa: E402
 import config  # noqa: E402
+import expiring  # noqa: E402
 import role_usage  # noqa: E402
 
 PAGE = r"""<!doctype html>
@@ -782,6 +783,8 @@ class Handler(BaseHTTPRequestHandler):
                 return self._send(404, "not found", "text/plain; charset=utf-8")
             with open(path, "rb") as fh:
                 return self._send(200, fh.read(), {".png": "image/png", ".gif": "image/gif", ".webp": "image/webp"}.get(ext, "image/jpeg"))
+        if self.path == "/expiring.ics":            # what expires, read now: a feed Calendar subscribes to (PLAN-EXPIRING)
+            return self._send(200, expiring.ics(), "text/calendar; charset=utf-8")
         if self.path == "/api/items":
             return self._send(200, json.dumps(list(board.items().values()), ensure_ascii=False))
         if self.path == "/api/visitors":             # the host's traffic report, fetched twice a day (Board #96)

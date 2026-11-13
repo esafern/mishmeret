@@ -41,7 +41,9 @@ def sample():
         "land": {"planned": "ex-builder", "verifier": "ex-operator", "lane_check": "tools/lanes.py",
                  "ledger": "rulings.jsonl", "server": {"entry": "app/server.py", "folders": ["app"], "page": "page/"},
                  "gate_sets": {"landing": ["tests/test_a.py"]}, "gate_env": {}, "hand_run": {}},
-        "budget": {"warn_percent": 70}}
+        "budget": {"warn_percent": 70},
+        "expiring": [{"name": "a placeholder login", "who": "the reviewer", "how": "placeholder steps",
+                      "source": {"date": "2030-01-02"}}]}
 
 
 @pytest.fixture
@@ -129,13 +131,13 @@ def test_a_project_without_the_optional_fields_loads_and_each_reader_takes_them_
     (tmp_path / "draft_x.txt").write_text("BAD", encoding="utf-8")
     probe = (
         "import io, json, sys\n"
-        "import draft_check_hook as d, role_guard as rg, land, time_precommit as t\n"
+        "import draft_check_hook as d, role_guard as rg, land, time_precommit as t, expiring as x\n"
         f"print(d.run({{'tool_input': {{'file_path': {str(tmp_path / 'draft_x.txt')!r}}}}}))\n"
-        "print(rg.CORPUS_ROOTS, land.server_loads('.'), land.LEDGER, land.SERVER_CODE_FOLDERS)\n"
+        "print(rg.CORPUS_ROOTS, land.server_loads('.'), land.LEDGER, land.SERVER_CODE_FOLDERS, x.rows())\n"
         "try:\n    t.install()\nexcept SystemExit as e:\n    print(e)\n")
     out = subprocess.run([sys.executable, "-c", probe], capture_output=True, text=True, env=os.environ, cwd=PKG)
     assert out.returncode == 0, out.stderr
-    assert out.stdout.splitlines() == ["(0, '')", "('~/book',) set() None ()",
+    assert out.stdout.splitlines() == ["(0, '')", "('~/book',) set() None () []",
                                        "the project's config names no guard.precommit - there is no hook to install"]
     shell = subprocess.run([sys.executable, os.path.join(PKG, "config.py"), "--shell"], capture_output=True, text=True,
                            env=os.environ)

@@ -54,6 +54,7 @@ FIELDS = {
     "land": dict,               # land: the role whose code landing names a plan, the verifier a round goes back to, the
                                 # lane check it runs, the live ledger, what a review server loads, the gate's lists
     "budget": dict,             # board, statusline: the plan window's percent at which each session is told once
+    "expiring": list,           # expiring (board_server's feed): what expires - [{name, who, how, source}]
 }
 GUARD = {"homes": str, "fallback_roots": list, "trees": list, "foreign": list, "retired_remotes": list, "checks": list,
          "precommit": str}
@@ -65,7 +66,12 @@ SERVER = {"entry": str, "folders": list, "page": str}
 # project can fill is that project's field in Mishmeret's code), and repositories no role changes (girsa-verifier's
 # review of that plan: a project's config then gains no field at its pin bump). Absent, its reader takes it as off.
 OPTIONAL = {"python", "drafts", "guard.homes", "guard.precommit", "guard.foreign", "land.ledger", "land.server",
-            "night.finish_command", "night.finish_exit_command"}
+            "night.finish_command", "night.finish_exit_command", "expiring"}
+# WHAT EXPIRES (notes/PLAN-EXPIRING.md): each item's keys, and each source's kind with the kinds of its value -
+# expiring.READERS reads one each (a test holds the two to one list); a name given twice is refused (girsa-architect:
+# its events' UIDs would be one)
+EXPIRING = {"name": str, "who": str, "how": str, "source": dict}
+SOURCES = {"date": (str, type(None)), "jwt": (list,), "tls": (str,)}
 # THE PROJECT'S OWN TWO COMMANDS THAT END A SESSION, never a name written in a script (the reviewer, 2026-11-10: a
 # session finishes, "land" is a change reaching main; "add finish-and-exit and have the night run use that"):
 # `finish_command`, after which the role is started again in its pane - the morning run types it; and
@@ -194,7 +200,29 @@ def load(p=None):
         raise ConfigError(f"{p}: budget.warn_percent must be 1 to 100, not {cfg['budget']['warn_percent']}")
     _rows(cfg["sizes"]["files"], (int, str), f"{p}: sizes.files")
     _rows(cfg["effort"], (str, str), f"{p}: effort")
+    _expiring(cfg.get("expiring", []), p)
     return cfg
+
+
+def _expiring(items, p):
+    """Each item its four keys and one source of SOURCES; no name twice."""
+    names = []
+    for i, it in enumerate(items):
+        where = f"{p}: expiring[{i}]"
+        if not isinstance(it, dict):
+            raise ConfigError(f"{where} is not a table")
+        _exact(it, EXPIRING, where)
+        for k, t in EXPIRING.items():
+            _typed(f"expiring[{i}].{k}", t, it[k], p)
+        kind, value = next(iter(it["source"].items())) if len(it["source"]) == 1 else (None, None)
+        if kind not in SOURCES or not isinstance(value, SOURCES[kind]) or (
+                kind == "jwt" and not (len(value) >= 2 and all(isinstance(k, str) for k in value))):
+            raise ConfigError(f"{where}.source must be one of {{\"date\": DATE or null}}, {{\"jwt\": [FILE, KEY, ...]}} "
+                              f"or {{\"tls\": HOST}}, not {it['source']!r}")
+        names.append(it["name"])
+    twice = sorted({n for n in names if names.count(n) > 1})
+    if twice:
+        raise ConfigError(f"{p}: expiring names {', '.join(map(repr, twice))} more than once")
 
 
 def _rows(table, kinds, where):

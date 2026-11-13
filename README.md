@@ -11,7 +11,8 @@ and how one person stays in charge of every decision that is theirs.
 - **Landing** (`land.py`): one procedure for every commit and merge, running the project's checks, with a round back
   to the verifier role.
 - **The Board** (`board.py`, `board_server.py`): a local web page where the roles put their questions and decisions to
-  the person in charge, and wait for the answer.
+  the person in charge, and wait for the answer. It also serves what expires (`expiring.py`: tokens, logins,
+  certificates - the project's list) as a calendar feed, `/expiring.ics`, with reminders 7 days and 1 day ahead.
 - **Sessions and the night run** (`agents.sh`, `agents-morning.sh`, `finish_hook.py`): start the roles in tmux, keep
   them warm, and clear the ones that have finished - by day each is started again in its pane, by night none is.
 - **Reports**: tokens per role, start-up reading sizes, each role's effort setting, and a check of every draft the
