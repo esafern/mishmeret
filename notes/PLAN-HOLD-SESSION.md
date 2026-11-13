@@ -4,8 +4,12 @@
 
 girsa-operator's REQUEST, 2026-11-13, on the reviewer's night directive (the first project's
 design-study/NIGHT-QUEUE-2026-11-12-OPERATOR.md:52-53): "the Board's hold kept by role name, so a second session of one
-role ends the first's hold". The record: no instance found yet in the first project's Board messages (a search for a
-hold ended by another session of its role); asked of girsa-operator. Until it answers, this is a path in the code:
+role ends the first's hold". THE RECORD (girsa-operator's ANSWER; the first project's PROJECT-STATUS-OPEN.md:4456,
+item 0NE, 2026-11-08): "15:34: the Antigravity operator's release ended mine of 15:28 mid-gate" - girsa-operator in
+Claude Code held main for a gate; a second session running as girsa-operator outside Claude Code, with no
+`CLAUDE_CODE_SESSION_ID`, released "its" hold and freed the first's. Board #168 A there since forbids such a session
+any hold, so the same path today needs two Claude Code sessions of one role (a restart, a resumed pane beside a live
+one) - or any command run with no session, which is what the 11-08 release was. The path in the code:
 
 - `board.hold` refuses another ROLE's hold, but takes one over its own role's without a word; `board.release` frees
   main for any session naming that role (board.py:308-327).
@@ -19,12 +23,13 @@ hold ended by another session of its role); asked of girsa-operator. Until it an
 ## The change
 
 1. A hold records its session and process (`CLAUDE_CODE_SESSION_ID`, `CLAUDE_PID`) when they are set.
-2. `hold`: main held by the same role from another session whose process is alive is refused, as another role's is
-   ("main is held by ROLE's other session SID since TS (WHY) - wait for its release"); from a session whose process is
-   gone, taken over and said; from the same session, or with no session on either side (the night run, a terminal),
-   as today.
-3. `release`: the same three cases - another live session's hold refused; a gone session's freed and said; the same
-   session's, or no session known, as today (so the reviewer's own terminal still frees a hold by hand).
+2. ONE RULE FOR BOTH, `hold` and `release`, on a hold of the same role: a hold whose session's process is ALIVE is
+   that session's alone - another session, AND A COMMAND WITH NO SESSION (the 11-08 release), is refused ("main is held
+   by ROLE's session SID since TS (WHY), its process alive - release it from that session"); a hold whose session's
+   process is gone is taken over or freed, and said; a hold with no session (the night run's, a terminal's, one taken
+   before the pin bump) is judged by role, as today; the holding session itself, as today. A live session's hold left
+   behind (a land.py killed outright while its session lives on) is freed from that session - by the reviewer too, as
+   `! python3 .claude/board/board.py release --role ROLE` in its pane, which runs with that session's variables.
 
 ## Files
 
@@ -34,9 +39,11 @@ hold ended by another session of its role); asked of girsa-operator. Until it an
 ## Tests (each rule's test shown red with the rule taken out)
 
 1. Two sessions of one role: B's hold and B's release refused while A's process is alive; A's own release taken.
-2. A's process gone (a process id that runs nothing): B takes the hold over, and the line says so; B may release it.
-3. No session on either side: as today (a hold, a re-hold, a release by role).
-4. A hold's record carries its session and process.
+2. A command with no session against A's live hold: its hold and its release refused (the 11-08 case).
+3. A's process gone (a process id that runs nothing): B, or a command with no session, takes the hold over or frees
+   it, and the line says so.
+4. No session on either side: as today (a hold, a re-hold, a release by role).
+5. A hold's record carries its session and process.
 
 ## For the first project
 

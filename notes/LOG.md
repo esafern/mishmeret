@@ -10,7 +10,14 @@ M13. **[2026-11-13, the Board's hold, by session (notes/PLAN-HOLD-SESSION.md)]**
       in a command's environment. Prototype (scratch Board): a second session of one role took the first's hold over
       and released it, each rc 0.
     * **[09:26]** The plan written. To send at this commit, live: its HANDOFF to girsa-verifier; a QUESTION to
-      girsa-operator (the case on record).
+      girsa-operator (the case on record). Sent, both.
+    * **[09:27]** girsa-operator's ANSWER, live: the case IS on record - the first project's PROJECT-STATUS-OPEN.md
+      item 0NE, 2026-11-08 (read there, :4456): a session running as girsa-operator outside Claude Code, with no
+      session id, released at 15:34 the Claude Code operator's hold of 15:28 mid-gate. Its NOTE: the plan's
+      no-session release judged by role would still free a session's hold. Taken: one rule for hold and release -
+      a live session's hold is that session's alone, a no-session command refused too; a gone session's taken over or
+      freed; a no-session hold by role. My first draft would have left the 11-08 case open. Sent, live: a NOTE to
+      girsa-verifier that the plan moved.
 M12. **[2026-11-13, the gate after a code landing, over an uncommitted Apply (notes/PLAN-FROZEN-GATE.md)]**
     * Started at main 668eea0, branch `builder-frozen-gate`. girsa-operator's REQUEST (M09). Read in the first project
       (read only): its Board messages #495 and #1086 (girsa-verifier's: `_frozen_gate` pairs the live ledger with
