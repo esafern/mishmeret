@@ -3,6 +3,14 @@
 Findings, decisions and open work, each the moment it is known; a time from `date`. One item per run of work, newest
 first (`M01.`, `M02.` ...); what git records (what each commit did) is not repeated here.
 
+M13. **[2026-11-13, the Board's hold, by session (notes/PLAN-HOLD-SESSION.md)]**
+    * Started at main 81759f8, branch `builder-hold-session`. girsa-operator's REQUEST (M09). Read in the first
+      project (read only): its night queue's line names it; no instance found in its Board's messages - to ask.
+    * Measured: `CLAUDE_CODE_SESSION_ID` (this session's id, its transcript's name) and `CLAUDE_PID` (a live claude)
+      in a command's environment. Prototype (scratch Board): a second session of one role took the first's hold over
+      and released it, each rc 0.
+    * **[09:26]** The plan written. To send at this commit, live: its HANDOFF to girsa-verifier; a QUESTION to
+      girsa-operator (the case on record).
 M12. **[2026-11-13, the gate after a code landing, over an uncommitted Apply (notes/PLAN-FROZEN-GATE.md)]**
     * Started at main 668eea0, branch `builder-frozen-gate`. girsa-operator's REQUEST (M09). Read in the first project
       (read only): its Board messages #495 and #1086 (girsa-verifier's: `_frozen_gate` pairs the live ledger with
