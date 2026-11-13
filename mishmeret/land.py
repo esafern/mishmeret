@@ -21,7 +21,7 @@ checked by the role guard's own function; HEAD unmoved; `git commit -F`.
 rebase as its own step - stopped, the rule printed; every commit the rebase replayed checked against the three versions
 git merged it from, however the rebase was continued; the base on main's tip; the range's lane check, with the plan
 (`check_lane.py --plan`: its `## The case`); the landing gate (code); `git merge --ff-only` in the main clone; then the
-gate again on a frozen copy of the main clone with the live rulings file (code); the hold released.
+gate again on a frozen copy of the main clone taken whole, its live rulings file with it (code); the hold released.
 `check-conflict`: at a stopped rebase, each resolved file compared statement by statement with the three versions git
 is merging, before it is continued. `gate`: the one home of the gate's file lists.
 
@@ -47,7 +47,7 @@ import config
 HERE = os.path.dirname(os.path.abspath(__file__))
 # THE PROJECT'S OWN (its .claude/mishmeret.json, `land`): the operator, the role whose code landing names its plan, the
 # verifier a code round goes back to, the lane check run at each commit and landing (the project's path to it), the
-# live rulings file copied into the frozen gate, and what a running review server loads (`server_loads`: its entry,
+# live rulings file the frozen gate's copy is checked for, and what a running review server loads (`server_loads`: its entry,
 # the folders whose modules it may import - the first first - and the page's folder)
 _CFG = config.load()
 _LAND = _CFG["land"]
@@ -55,7 +55,7 @@ OPERATOR = _CFG["operator"]
 BUILDER = _LAND["planned"]
 VERIFIER = _LAND["verifier"]
 LANE_CHECK = _LAND["lane_check"]
-LEDGER = _LAND.get("ledger")        # absent (config.OPTIONAL): no live file is copied into the frozen gate
+LEDGER = _LAND.get("ledger")        # absent (config.OPTIONAL): the frozen copy's check reads the changed files alone
 SERVER = _LAND.get("server")        # absent: a repository with no review server - nothing it loads, nothing to restart
 SERVER_CODE_FOLDERS = tuple(SERVER["folders"]) if SERVER else ()
 
@@ -536,26 +536,45 @@ def replay_faults(top, before, onto, accept=None):
     return faults
 
 
+def _uncommitted(tree):
+    """The tracked files that differ from HEAD in `tree`, staged or not."""
+    return set(filter(None, said(tree, "diff", "--name-only", "--no-renames", "HEAD").split("\n")))
+
+
+def _content(path):
+    try:
+        with open(path, "rb") as fh:
+            return fh.read()
+    except FileNotFoundError:
+        return None
+
+
 def _frozen_gate(where, copy):
-    """The gate in main after a code landing, on a frozen copy of the main clone with the live rulings file
-    (girsa-architect's Q4; girsa-verifier's landing_rerun.sh's learnt rules 8 and 12): nothing written into the main
-    tree, no Save raced. Red: the merge stands, and the fix is the lander's. `copy`: an empty folder, removed by
-    `land` after the hold is released (girsa-verifier's MEDIUM 1 on PLAN-LAND-SIGNAL.md)."""
+    """The gate in main after a code landing, on a frozen copy of the main clone TAKEN WHOLE - the files the review
+    server serves: its live rulings with the book files they were applied to, one pair (notes/PLAN-FROZEN-GATE.md; the
+    first project's Board #495 and #1086: the copy had been reset to HEAD and the live ledger copied over it, so an
+    uncommitted Apply's rows met book files that predate them, and the gate went red for no landing). Nothing written
+    into the main tree; nothing moved while it was copied - every tracked file that differs from HEAD in either tree,
+    and the ledger, the same in both (girsa-verifier's LOW 1: one `cp` copies file by file, beside a running Apply).
+    Red: the merge stands, and the fix is the lander's - unless the copy held the main tree's own uncommitted files,
+    which the red names (girsa-architect, the first project's 76974084). `copy`: an empty folder, removed by `land`
+    after the hold is released (girsa-verifier's MEDIUM 1 on PLAN-LAND-SIGNAL.md)."""
     tree = os.path.join(copy, "main")
     if sys.platform == "darwin":
         subprocess.run(["cp", "-c", "-R", where.main_tree, tree], check=True)        # APFS: a clone, instant
     else:
         shutil.copytree(where.main_tree, tree, symlinks=True)                        # untried on Linux (0II)
-    # the copy carries the main clone's INDEX, so a reset to HEAD, not `checkout -- .`; then the live rulings in
-    said(tree, "reset", "-q", "--hard", "HEAD")
-    live = LEDGER and os.path.join(where.main_tree, LEDGER)
-    if live and os.path.exists(live):
-        shutil.copyfile(live, os.path.join(tree, LEDGER))
-        with open(live, "rb") as a, open(os.path.join(tree, LEDGER), "rb") as b:
-            if a.read() != b.read():
-                raise Refused(f"the live ledger ({LEDGER}) changed while it was copied: gate main again")
+    theirs = _uncommitted(where.main_tree)
+    for rel in sorted(theirs | _uncommitted(tree) | ({LEDGER} if LEDGER else set())):
+        if _content(os.path.join(where.main_tree, rel)) != _content(os.path.join(tree, rel)):
+            raise Refused(f"{rel} changed in the main tree while it was copied: gate main again "
+                          f"(land.py gate --tree <a copy of {where.main_tree}>)")
+    if theirs:
+        print(f"  the copy holds the main tree's uncommitted {', '.join(sorted(theirs))}")
     if run_gate(tree, "landing"):
-        raise Red("LANDED, and the gate on main is red - the fix is yours")
+        raise Red("LANDED, and the gate on main is red - " + (
+            f"read it against {', '.join(sorted(theirs))}, the main tree's own, before it is yours" if theirs
+            else "the fix is yours"))
 
 
 def _rebasing(where):

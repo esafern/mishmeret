@@ -1051,6 +1051,67 @@ def test_land_lands_on_main_and_releases_the_hold_on_every_exit(tmp_path, monkey
     assert not os.path.exists(os.path.join(git_dir, land.STAMP))
 
 
+def test_the_gate_after_a_landing_takes_the_main_tree_whole_with_its_uncommitted_apply(tmp_path, monkeypatch, capsys):
+    """notes/PLAN-FROZEN-GATE.md (the first project's Board #495 and #1086): the copy had been reset to HEAD and the
+    live ledger copied over it, so an uncommitted Apply's rows met book files that predate them - red for no landing.
+    The copy is the main tree whole: the pair the review server serves. Its line, and a red's sentence, name the main
+    tree's uncommitted files (girsa-architect); a clean tree names none (girsa-verifier's LOW 2); a tracked file or the
+    ledger changed between the clone and the check refuses (its LOW 1). The gate is a stand-in that checks the pair.
+    Placeholder repository."""
+    import json
+    land, main, tree, git, calls = _placeholder_clone_and_worktree(tmp_path, monkeypatch)
+    (main / "book.json").write_text('{"applied": []}\n', encoding="utf-8")
+    git(main, "add", "book.json")
+    git(main, "commit", "-q", "-m", "placeholder: a book")
+    with open(main / "rulings.jsonl", "a", encoding="utf-8") as fh:       # THE UNCOMMITTED APPLY: its ledger row ...
+        fh.write('{"apply": 1}\n')
+    (main / "book.json").write_text('{"applied": [1]}\n', encoding="utf-8")   # ... and the book file it wrote
+    red = [0]
+
+    def gate(t, name):          # every applied ruling in the book: the pair, read in the copy; red when the test says
+        rows = [json.loads(line) for line in open(os.path.join(t, "rulings.jsonl"), encoding="utf-8")]
+        paired = [r["apply"] for r in rows if "apply" in r] == json.load(open(os.path.join(t, "book.json")))["applied"]
+        return 0 if paired and not red[0] else 1
+    monkeypatch.setattr(land, "run_gate", gate)
+    where = land.Where(str(main))
+
+    def frozen():
+        copy = tmp_path / f"copy-{len(os.listdir(tmp_path))}"
+        copy.mkdir()
+        land._frozen_gate(where, str(copy))
+    frozen()
+    assert "  the copy holds the main tree's uncommitted book.json, rulings.jsonl\n" in capsys.readouterr().out
+    red[0] = 1
+    with pytest.raises(land.Red, match=r"read it against book.json, rulings.jsonl, the main tree's own, before it is "
+                                       r"yours"):
+        frozen()
+    git(main, "commit", "-q", "-am", "placeholder: the Apply committed")
+    capsys.readouterr()
+    with pytest.raises(land.Red, match=r"the gate on main is red - the fix is yours$"):
+        frozen()
+    assert "the copy holds" not in capsys.readouterr().out, "a clean main tree: the line names nothing"
+    red[0] = 0
+    # a file of the pair changed in the main tree between the clone and the check: refused, the book or the ledger
+    for rel, text in (("book.json", '{"applied": [1, 2]}\n'), ("rulings.jsonl", None)):
+        (main / "book.json").write_text('{"applied": [1]}\n', encoding="utf-8")
+        real, first = land._uncommitted, []
+
+        def moved(t, rel=rel, text=text):
+            if not first:
+                first.append(t)
+                if text:
+                    (main / rel).write_text(text, encoding="utf-8")
+                else:
+                    with open(main / rel, "a", encoding="utf-8") as fh:
+                        fh.write('{"apply": 2}\n')
+            return real(t)
+        monkeypatch.setattr(land, "_uncommitted", moved)
+        with pytest.raises(land.Refused, match=f"{rel} changed in the main tree while it was copied: gate main again"):
+            frozen()
+        monkeypatch.setattr(land, "_uncommitted", real)
+        git(main, "checkout", "-q", "--", "book.json", "rulings.jsonl")
+
+
 def test_land_refuses_a_stop_resolved_against_main_after_main_moves_on(tmp_path, monkeypatch):
     """girsa-verifier's MEDIUM 1 (a) on the landing script's build, as its stamp_probe.py built it: the rebase stops on a
     file, which is resolved by dropping main's change, with no check-conflict, and continued; another commit lands on
