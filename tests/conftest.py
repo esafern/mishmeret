@@ -78,6 +78,9 @@ for k in [k for k in os.environ if k.startswith("MISHMERET_") and k != "MISHMERE
 # the role of the session running the suite: the Board refuses another role's writes under it (notes/PLAN-AUDIT-FIXES.md,
 # item 3), and a test that needs one sets its own
 os.environ.pop("CLAUDE_CODE_AGENT", None)
+# and its session (notes/PLAN-HOLD-SESSION.md): a hold records the session it is taken in; a test that needs one sets it
+os.environ.pop("CLAUDE_CODE_SESSION_ID", None)
+os.environ.pop("CLAUDE_PID", None)
 
 STUBS = os.path.join(REPO, "stub-bin")
 os.makedirs(STUBS)

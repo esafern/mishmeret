@@ -306,25 +306,72 @@ def held(events=None):
     return holding
 
 
+# A HOLD IS ITS SESSION'S (notes/PLAN-HOLD-SESSION.md; the first project, 2026-11-08 15:34: a session running as the
+# operator with no session id released the Claude Code operator's hold of 15:28 mid-gate; 2026-10-18 20:42: one name
+# held by two roles' sessions). A hold records the session it was taken in - its id, its claude process and that
+# process's start time - and while that process runs (the same id, started at the same time: ids are reused within the
+# hour, girsa-verifier's MEDIUM 1) only that session takes it again or frees it; a command with no session is refused
+# too. A gone session's hold is taken over or freed, said; a hold with no session is judged by role, as before.
+def _started(pid):
+    """When process `pid` started, as `ps` says it, or None (no such process, or no `ps`)."""
+    import subprocess
+    try:
+        out = subprocess.run(["ps", "-o", "lstart=", "-p", str(pid)], capture_output=True, text=True, timeout=10)
+    except (OSError, subprocess.SubprocessError):
+        return None
+    return (out.stdout.strip() or None) if out.returncode == 0 else None
+
+
+def _session():
+    """(session id, its claude process id, that process's start) of the command's session - Nones outside one."""
+    pid = os.environ.get("CLAUDE_PID", "")
+    pid = int(pid) if pid.isdigit() else None
+    return os.environ.get("CLAUDE_CODE_SESSION_ID") or None, pid, _started(pid) if pid else None
+
+
+def _theirs(now, session):
+    """Why `session` may not take again or free `now`, a hold of its own role - or None."""
+    if not now.get("session") or now["session"] == session:
+        return None
+    if now.get("pid") and now.get("started") and _started(now["pid"]) == now["started"]:
+        return (f"main is held by {now['role']}'s session {now['session'][:8]} since {now['ts']} ({now['why']}), its "
+                "process alive - release it from that session")
+    return None
+
+
 def hold(role, why):
     _check_role(role)
     if not why.strip():
         raise ValueError("say what the hold is for (--why)")
+    session, pid, started = _session()
 
     def make(events):
         now = held(events)
         if now and now["role"] != role:
             raise ValueError(f"main is held by {now['role']} since {now['ts']} ({now['why']}) - wait for its release")
-        return {"type": "hold", "ts": _now(), "role": role, "why": why.strip()}
+        if now and _theirs(now, session):
+            raise ValueError(_theirs(now, session))
+        event = {"type": "hold", "ts": _now(), "role": role, "why": why.strip()}
+        event.update({k: v for k, v in (("session", session), ("pid", pid), ("started", started)) if v})
+        if now and now.get("session") and now["session"] != session:
+            event["over"] = now["session"]          # a gone session's hold, taken over
+        return event
     return _append(make)
 
 
 def release(role):
+    session = _session()[0]
+
     def make(events):
         now = held(events)
         if not now or now["role"] != role:
             raise ValueError(f"{role} does not hold main" + (f" ({now['role']} does)" if now else ""))
-        return {"type": "release", "ts": _now(), "role": role}
+        if _theirs(now, session):
+            raise ValueError(_theirs(now, session))
+        event = {"type": "release", "ts": _now(), "role": role}
+        if now.get("session") and now["session"] != session:
+            event["gone"] = now["session"]          # a gone session's hold, freed
+        return event
     return _append(make)
 
 
@@ -932,11 +979,14 @@ def main(argv=None):
                 p = set_plan(args.role, args.effort, args.step, args.note)
                 print(f"{args.effort!r}: {len(p['steps'])} steps on the Board ({_url()})")
         elif args.cmd == "hold":
-            hold(args.role, args.why)
-            print(f"main held by {args.role} - release it after the landing: board.py release --role {args.role}")
+            e = hold(args.role, args.why)
+            print(f"main held by {args.role}" + (f" - taken over from session {e['over'][:8]}, whose process is gone"
+                                                 if e.get("over") else "")
+                  + f" - release it after the landing: board.py release --role {args.role}")
         elif args.cmd == "release":
-            release(args.role)
-            print("main released")
+            e = release(args.role)
+            print("main released" + (f" - the hold of session {e['gone'][:8]}, whose process is gone"
+                                     if e.get("gone") else ""))
         elif args.cmd == "withdraw":
             withdraw(args.id, args.why)
             print(f"#{args.id} withdrawn")

@@ -131,6 +131,67 @@ def test_a_roles_session_writes_to_the_board_only_as_itself(tmp_path, monkeypatc
     assert bd.main(["status", "--role", other, "--now", "unset: taken"]) == 0
 
 
+def test_a_hold_is_its_sessions_while_its_process_runs(tmp_path, monkeypatch, capsys):
+    """notes/PLAN-HOLD-SESSION.md (the first project, 2026-11-08 15:34: a session with no session id released the Claude
+    Code operator's hold of 15:28 mid-gate). A hold records its session, its claude process and that process's start;
+    while the process runs - the same id started at the same time (girsa-verifier's MEDIUM 1: ids are reused) - another
+    session of the role, or a command with no session, is refused its hold and its release; the session itself is not.
+    A gone session's hold is taken over or freed, and said; a hold with no session goes by role, as before. Placeholder
+    sessions and processes."""
+    import subprocess
+    bd = _scratch_board(tmp_path, monkeypatch)
+    role, a, b = "ex-operator", "aaaaaaaa-1111", "bbbbbbbb-2222"
+
+    def as_(session, pid):
+        for var, value in (("CLAUDE_CODE_SESSION_ID", session), ("CLAUDE_PID", pid and str(pid))):
+            monkeypatch.setenv(var, value) if value else monkeypatch.delenv(var, raising=False)
+
+    def run(*cmd):
+        rc = bd.main(list(cmd))
+        return rc, capsys.readouterr()
+    hold, release = ("hold", "--role", role, "--why", "a placeholder landing"), ("release", "--role", role)
+    as_(a, os.getpid())
+    got = bd.hold(role, "A's landing")
+    assert (got["session"], got["pid"], got["started"]) == (a, os.getpid(), bd._started(os.getpid())), got
+    assert got["started"], "ps gave this process's start"
+    refused = f"main is held by ex-operator's session aaaaaaaa since {got['ts']} (A's landing), its process alive"
+    for session, pid in ((b, os.getpid()), (None, None)):     # another session; THE 11-08 CASE, no session at all
+        as_(session, pid)
+        for cmd in (hold, release):                            # in the record's own order: a hold, then a release
+            rc, out = run(*cmd)
+            assert rc == 2 and refused in out.err, (session, cmd, out)
+    assert bd.held()["session"] == a
+    as_(a, os.getpid())                                       # the session itself: a hold again, and its release
+    assert run(*hold)[0] == 0 and run(*release)[0] == 0 and bd.held() is None
+    # A's process gone: B takes the hold over, said; B's gone too: a command with no session frees it, said
+    procs = [subprocess.Popen(["sleep", "30"]) for _ in range(2)]
+    as_(a, procs[0].pid)
+    bd.hold(role, "A's landing, again")
+    procs[0].kill()
+    procs[0].wait()
+    as_(b, procs[1].pid)
+    rc, out = run(*hold)
+    assert rc == 0 and "taken over from session aaaaaaaa, whose process is gone" in out.out, out
+    procs[1].kill()
+    procs[1].wait()
+    as_(None, None)
+    rc, out = run(*release)
+    assert rc == 0 and "main released - the hold of session bbbbbbbb, whose process is gone" in out.out, out
+    # THE ID REUSED: alive, but started at another time - a gone session's
+    as_(a, os.getpid())
+    monkeypatch.setattr(bd, "_started", lambda pid: "Mon Jan  1 00:00:00 2001")
+    bd.hold(role, "A's landing, on an id since reused")
+    monkeypatch.undo()
+    bd = _scratch_board(tmp_path, monkeypatch)
+    as_(b, os.getpid())
+    rc, out = run(*hold)
+    assert rc == 0 and "taken over from session aaaaaaaa" in out.out, out
+    assert run(*release)[0] == 0
+    # no session on either side: by role, as before - a hold, a hold again, a release
+    as_(None, None)
+    assert [run(*cmd)[0] for cmd in (hold, hold, release)] == [0, 0, 0]
+
+
 def test_the_reviewer_can_change_an_answer_on_the_board(tmp_path, monkeypatch):
     """The reviewer, 2026-10-11: "change #13 answer to B. no option to do that on the board". An answered item takes a
     new answer from the page only when the page asks for a change; the earlier answer is kept and said; a withdrawn item
