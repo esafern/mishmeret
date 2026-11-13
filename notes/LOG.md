@@ -3,6 +3,15 @@
 Findings, decisions and open work, each the moment it is known; a time from `date`. One item per run of work, newest
 first (`M01.`, `M02.` ...); what git records (what each commit did) is not repeated here.
 
+M12. **[2026-11-13, the gate after a code landing, over an uncommitted Apply (notes/PLAN-FROZEN-GATE.md)]**
+    * Started at main 668eea0, branch `builder-frozen-gate`. girsa-operator's REQUEST (M09). Read in the first project
+      (read only): its Board messages #495 and #1086 (girsa-verifier's: `_frozen_gate` pairs the live ledger with
+      HEAD's files); its main tree now holds one uncommitted `.md`, its ledger as committed.
+    * Prototype (scratch, the placeholder project): an uncommitted Apply in a main clone - its own tests 2 passed;
+      `_frozen_gate` RED; the copy taken whole, 2 passed. MY SLIP: its first run used the system Python, which has no
+      pytest; run again with the project's.
+    * **[08:54]** The plan written: A (the copy taken whole) recommended, B (HEAD's own pair) beside it. To send at
+      this commit, live: its HANDOFF to girsa-verifier; the A-or-B QUESTION to girsa-architect.
 M11. **[2026-11-13, a main-tree commit's failure path undid a landing (notes/PLAN-LAND-RACE.md)]**
     * RECEIVED, live, from girsa-verifier: a FINDING in the first project - 07:54:13 its notes landing's merge and,
       the same second, "reset: moving to HEAD" back (that tree's reflog, read here too); the landing undone, its
