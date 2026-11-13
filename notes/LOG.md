@@ -3,6 +3,16 @@
 Findings, decisions and open work, each the moment it is known; a time from `date`. One item per run of work, newest
 first (`M01.`, `M02.` ...); what git records (what each commit did) is not repeated here.
 
+M10. **[2026-11-13, what expires, on a calendar feed (notes/PLAN-EXPIRING.md)]**
+    * Started at main d35d110 (the audit fixes merged), branch `builder-expiring`. girsa-demo-operator's REQUEST
+      (M09). The reviewer, asked in my pane: "Board-served .ics feed", "7 days and 1 day".
+    * Measured at the sources (scratch, read only; no secret printed): the hosting token, one JWT at
+      `headers.Authorization` of its mcpServers entry, `exp` 2026-11-17T13:49:16Z; both certificates `notAfter`
+      2027-01-15; the login's 2026-12-07 is second-hand (girsa-demo-operator's state file, quoting girsa-operator).
+      A prototype feed of the five: 13 events, its form checked, the token absent; it found a by-hand date printed
+      "00:00 UTC" and the reminders dated in UTC.
+    * **[07:33]** The plan written. To send at this commit, live: its HANDOFF to girsa-verifier; a QUESTION to
+      girsa-architect (the config's shape for the sources).
 M09. **[2026-11-12, the seven fixes of my audit (notes/PLAN-AUDIT-FIXES.md)]**
     * **[23:25]** Started at main 8818221 (= origin/main): the lessons file merged and pushed. The state file
       rewritten (96454a1, branch `builder-state-after-lessons`). girsa-verifier's check at f87e3ce is not recorded in
