@@ -39,6 +39,14 @@ M11. **[2026-11-13, a main-tree commit's failure path undid a landing (notes/PLA
       (300): `git reset -q` 262 resets, 1 moved HEAD back; the path form 0 and 0. MY SLIP: the state file's header
       line changed with `sed`, not the Edit tool, as my brief asks (the same slip as 4991758's). To send at the notes
       commit, live: the build's HANDOFF to girsa-verifier.
+    * Sent, live, at 59c4053: the HANDOFF to girsa-verifier.
+    * girsa-verifier's ANSWER, live: VERIFIED at 59c4053, one LOW (its BUILD.md in the first project): race.py by its
+      committed command - this code 0 of every fault, d35d110's 1 staged and 1 refused; my mutations 7 of 8 red - "the
+      holder not written" green, for the waits read the test's own line (its holder_probe.py: two processes, the
+      sentence then "held by a process").
+    * **[08:46]** The LOW fixed: a test leg where a real holder (main_lock in a thread) writes its line and the
+      waiter says "held by process <pid>: a placeholder step". Suite 153 passed; the holder's write taken out, red. To
+      send at this commit: that change to girsa-verifier.
 M10. **[2026-11-13, what expires, on a calendar feed (notes/PLAN-EXPIRING.md)]**
     * Started at main d35d110 (the audit fixes merged), branch `builder-expiring`. girsa-demo-operator's REQUEST
       (M09). The reviewer, asked in my pane: "Board-served .ics feed", "7 days and 1 day".
