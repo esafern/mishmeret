@@ -61,6 +61,18 @@ M14. **[2026-11-13, the known gaps (notes/PLAN-KNOWN-GAPS.md)]**
     * COMMITTED b01f7d0, the READY items' code; land.py ran the suite: 158 passed. MY SLIP: its first try named
       `--tests "tests/ (158 passed)"`. land.py ran that as a test path, which collected nothing (exit 4), and refused;
       nothing was committed or left staged. To send at the notes commit, live: the build's HANDOFF to girsa-verifier.
+    * Sent, live, at 075f49a: the HANDOFF to girsa-verifier; an ANSWER to girsa-architect (item 6 held on #223).
+    * **[16:50]** girsa-verifier's ANSWER, live: VERIFIED at 075f49a. Its findings:
+      - a clean clone: 158 passed;
+      - my rule-45 scripts on its own extracts give the same 30 changed decisions, each read;
+      - every item-1 form refused, the MEDIUM's chain refused, the config writes still let through (item 6, held);
+      - mutations red.
+      Its LOW, for a later touch: PREFIX and TMUX_PREFIX are two copies of one pattern. It has told girsa-operator
+      (its #1388): the merge is the operator's, and the first project's pin bump comes to girsa-verifier first.
+    * The held items 9, 10 and 15 are kept in the repository: notes/known-gaps/held-9-10-15.diff, written from the
+      files kept before they were taken out. Two hunks were dropped from it, each undoing later work (land.py's docstring
+      wrap, the rule-45 test cases). Checked: `git apply` on a clean copy of HEAD, then the suite: 158 passed. To send
+      at this commit, live: LANDED-READY to girsa-operator.
 
 M13. **[2026-11-13, the Board's hold, by session (notes/PLAN-HOLD-SESSION.md)]**
     * Started at main 81759f8, branch `builder-hold-session`. girsa-operator's REQUEST (M09). Read in the first

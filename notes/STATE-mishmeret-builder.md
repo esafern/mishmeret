@@ -2,71 +2,52 @@
 
 Rewritten in place when a piece lands and at the end of a session; the log is `notes/LOG.md`, by item.
 
-## Built, on main (main b303f6c; origin at 8818221, the reviewer's push pending; each verified by girsa-verifier, merged by girsa-operator)
+## Built, on main (main f031698 = origin; each verified by girsa-verifier, merged by girsa-operator)
 
-- c1963d1 (Mishmeret's own `.claude/`; PLAN-OWN-CLAUDE), 59178bf (open messages), 8f6771d and 31ac716
-  (copy-on-select), 8738b21 (the start scripts with no project named) - each plan in notes/.
-- 51499da, 7b9c6e0: finishing a session, by day and by night (notes/PLAN-FINISH.md; the log's M05) - the two finish
-  commands from the config, `board.py finished`, the night run ending with no Go, the Stop hook `finish_hook.py`
-  and `agents.sh --next`.
-- f33aad3, 529af0a, b8dac60: an escaped quote inside a string no longer turns the role guard off
-  (notes/PLAN-GUARD-MASK.md; the log's M06; girsa-verifier: HIGH).
-- 21cb9ba: the operator's push refused for a force or a delete in any form (M07 item 4; notes/PLAN-PUSH-FORMS.md).
-- db17aac (with db7b0ff, 828abdc): the guard sees git after a shell keyword, behind its own options and written
-  quoted; every tree git may use, every cd in order, a cd quoted, optioned or by pushd (M07 item 1;
-  notes/PLAN-GUARD-KEYWORDS.md). The first project's pin is febf285 (#206 A; girsa-verifier checks the bump).
-- 1137c12: land.py ended by a stop's SIGTERM, or SIGHUP, releases the hold and leaves nothing staged (M07 item 6).
-- d7c97bc: the Board's first answers asked at once parse each landed session once (M07 item 5).
-- 5aa9a0a: a subagent is judged as no role (M07 item 2; the reviewer's "No role (c)").
-- f734ca4 (the look), febf285: the Board draws a role working on its own background task "Working in the background",
-  and keeps a reported wait past a notification (notes/PLAN-BACKGROUND-STATE.md).
-- f87e3ce (girsa-operator's 8818221 adds its `sizes.files` limit, 25,000 bytes): `LESSONS.md`, from girsa-operator's
-  draft of 18:43, byte for byte (notes/PLAN-LESSONS.md; the log's M08; the reviewer's "go then push when done").
-  Merged by girsa-operator; girsa-verifier's check at f87e3ce is not recorded in this repository - ask it if needed.
-- d6a8ce7, 090253c (with girsa-operator's f7c7d1d, the lane check's half): the seven fixes of my audit - a relayed
-  answer keeps the page's rule; the commit message scanned; a role's session writes to the Board as itself; one
-  alert function; a code commit names its tests (or `none`); the config docs; `landed` gone (notes/PLAN-AUDIT-FIXES.md;
-  the log's M09). Suite 147 passed. At the first project's pin bump (girsa-builder's; girsa-operator keeps the
-  notes): its briefs gain `--tests`/`none` and the relay's `--change`.
-- a24377d, 6039283: what expires - expiring.py and the Board's /expiring.ics (notes/PLAN-EXPIRING.md; the log's M10).
-  Main e1f9195. For the first project: its pin bump with no `expiring` rows, the five rows later; the reviewer
-  subscribes once to http://127.0.0.1:8450/expiring.ics (On My Mac, alerts kept). The token lapses 2026-11-17 13:49 UTC.
-- fd2178e, 159ea56: the land.py race (notes/PLAN-LAND-RACE.md; the log's M11) - a refused main-tree commit unstages
-  its own names alone; one lock on the main tree for a main-tree commit's and a landing's git steps. Main 668eea0.
-- e63b4a2: the gate after a code landing takes the main tree whole, a file moved during the copy refused, the main
-  tree's uncommitted files named (notes/PLAN-FROZEN-GATE.md; the log's M12). Main 81759f8.
-- c8af403: the Board's hold is its session's while its process runs (the same id and start); another session and a
-  command with no session refused; a gone session's taken over (notes/PLAN-HOLD-SESSION.md; the log's M13). Main
-  b303f6c. Every piece of this session protects the first project only after its pin bump (its Board #215, with the
-  reviewer); the lock and the hold fully once every tree's pin passes them.
+- c1963d1 (own `.claude/`), 59178bf (open messages), 8f6771d, 31ac716 (copy-on-select), 8738b21 (start scripts).
+- 51499da, 7b9c6e0: finishing a session by day and by night (PLAN-FINISH; M05).
+- f33aad3, 529af0a, b8dac60: an escaped quote no longer turns the guard off (PLAN-GUARD-MASK; M06).
+- 21cb9ba (push forms), db17aac (git after a keyword, behind options, quoted; every cd), 1137c12 (land.py on a
+  signal), d7c97bc (the Board's first answers), 5aa9a0a (a subagent is no role), f734ca4 and febf285 (working in
+  the background) - M07's items (M08).
+- f87e3ce: `LESSONS.md` (PLAN-LESSONS; M08).
+- d6a8ce7, 090253c (with girsa-operator's f7c7d1d): my audit's seven fixes (PLAN-AUDIT-FIXES; M09).
+- a24377d, 6039283: what expires, /expiring.ics (PLAN-EXPIRING; M10). The first project's five rows are in
+  (girsa-operator's 607e871a there); the reviewer subscribes once (On My Mac, alerts kept).
+- fd2178e, 159ea56: the land.py race (PLAN-LAND-RACE; M11). e63b4a2: the gate takes the main tree whole
+  (PLAN-FROZEN-GATE; M12). c8af403: the Board's hold is its session's (PLAN-HOLD-SESSION; M13).
+- The first project pins f031698 (f00c256a there); every tree of it that lands pins it (girsa-operator, 2026-11-13).
 
 ## Now
 
-- No piece is open. Main b303f6c, suite 155 passed; origin at 8818221 - the push is the reviewer's word, through
-  girsa-operator.
-- Done with, to delete: every `builder-*` branch but `builder-state-2026-11-13` (this file's commit, to merge).
-- To resume: `git -C ~/work/mishmeret log --oneline -3`; `git -C ~/work/mishmeret-builder status -sb`; the Board.
+- THE KNOWN GAPS (notes/PLAN-KNOWN-GAPS.md; M14; the reviewer's "fix the known gaps now", 15:39), branch
+  `builder-known-gaps`: VERIFIED at 075f49a by girsa-verifier; LANDED-READY sent to girsa-operator at this file's
+  commit. Built: items 1 (a quoted word hid git from every rule - HIGH, found here), 2, 7, 8, 11-14, 16. Not pushed:
+  the push is the reviewer's word, through girsa-operator. The first project's pin bump to it goes to girsa-verifier
+  first (the older-worktree landing check).
+- HELD, on the first project's Board #223 (girsa-verifier: no case on any record; leave them): items 3, 4, 5, 6, 9,
+  10, 15. My recommendation to the reviewer: build 6 in girsa-architect's form B, with the config write closed
+  (design-study/MISHMERET-ALIAS-CONFIG-ARCHITECT.md there) - any role's `git config` writes the main clone's config;
+  build 9 (a "++ " line skips this public repository's address scan); leave the rest. Items 9, 10 and 15 are built:
+  notes/known-gaps/held-9-10-15.diff applies to 075f49a (`git apply`; the suite then 158 passed).
+- Done with, to delete: every merged `builder-*` branch.
+- To resume: `git -C ~/work/mishmeret log --oneline -3`; `git -C ~/work/mishmeret-builder status -sb`; #223's answer.
 
 ## Next, in order
 
-Nothing more is given.
-
-Not given: the code's citations of the first project's lesson numbers; M07's smaller items; role_guard.py's header
-sentence on subagents (girsa-verifier's LOW, for its next touch).
+1. On girsa-operator's merge: this file's Built list.
+2. On #223's answer: the items given, from the diff or new (item 6 by girsa-architect's answer); a plan revision to
+   girsa-verifier first.
 
 ## Open
-- Not run live: the night run and the morning run as changed (behind stubs only); the hook under the first project's
-  shim. Mishmeret's own config names neither finish command and its settings no Stop hook - it has no role in tmux.
-- Not run on Linux: `agents.sh --next` (osascript, BSD `find -mmin`, tmux) - the sessions' scripts are macOS-only.
-- The guard's mask, not checked: `$"..."` and a backtick string (girsa-verifier's forms hold them, no test here);
-  the piped-check refusals and the Edit and Write side under an escaped quote.
-- The guard, not in M07 items 1 and 4 (their plans' "Not in this piece"): two `-C`s, `cd -`, a bare `cd`, a cd or
-  git option through a variable, a force from git's config or an alias, a `case` pattern's `)`. A `!` command the
-  reviewer types bypasses the hook (the reviewer's own run, 2026-11-12), so a delete refused to the operator runs that way.
-- A required config key cannot be added or renamed: Mishmeret pins itself (the log's M05).
-- Not pinned by a test (A2): `land()`'s restart line and ledger copy with the field absent.
-- The 5 s refresh redraws the corners, so a focused pill loses its focus then (page-wide; girsa-ui-steward: leave it).
-- Copy-on-select measured in headless Chromium alone; the page's new words too.
-- The first project's older worktree of this work (`...-mishmeret`) is finished with; its removal is the reviewer's.
 
-The session is ready to clear.
+- girsa-verifier's LOW on 075f49a: PREFIX and TMUX_PREFIX are two copies of one pattern (they differ by `env -u`).
+- The piped-check rule does not read a check inside a substitution after another word (`echo $(pytest | tail)`),
+  on f031698 too.
+- Not run live: the night and morning runs as changed (stubs only). Not run on Linux: the session scripts (macOS-only).
+- A `!` command the reviewer types bypasses the hook (2026-11-12).
+- A required config key cannot be added or renamed: Mishmeret pins itself (M05).
+- Not pinned by a test (A2): `land()`'s restart line and ledger copy with the field absent.
+- The 5 s refresh redraws the corners, so a focused pill loses focus (girsa-ui-steward: leave it).
+- Copy-on-select measured in headless Chromium alone.
+- The first project's older worktree `...-mishmeret` is finished with; its removal is the reviewer's.

@@ -1,0 +1,178 @@
+--- a/.claude/lane_check.py
++++ b/.claude/lane_check.py
+@@ -72,11 +72,17 @@
+             failed = True
+     pattern, why = forbidden()
+     carries = lambda line: [a for a in PERSONAL_ADDRESS.findall(line) if not NOT_PERSONAL.search(a)] or pattern.search(line)
+-    added, path = {}, None
++    added, path, hunk = {}, None, False
+     for line in git("diff", "--cached", "-U0", "--no-color", "--no-renames").splitlines():
+-        if line.startswith("+++ "):
++        # a "+++ " line is a header only before the file's first @@: an added line "++ x" reads "+++ x" too, and was
++        # left unscanned, the file's next lines filed under it (notes/PLAN-KNOWN-GAPS.md, item 9)
++        if line.startswith("diff --git "):
++            hunk = False
++        elif line.startswith("@@"):
++            hunk = True
++        elif not hunk and line.startswith("+++ "):
+             path = line[6:]
+-        elif line.startswith("+") and path:
++        elif hunk and line.startswith("+") and path:
+             if carries(line):
+                 added[path] = added.get(path, 0) + 1
+     for p, n in sorted(added.items()):
+--- a/mishmeret/time_precommit.py
++++ b/mishmeret/time_precommit.py
+@@ -35,11 +35,16 @@
+     """[(path, line)] for every line the staged changes add to a .md or .txt file."""
+     diff = subprocess.run(["git", "diff", "--cached", "-U0", "--no-color", "--diff-filter=AMR", "--", "*.md", "*.txt"],
+                           cwd=cwd, capture_output=True, text=True, encoding="utf-8", errors="replace").stdout
+-    out, path = [], None
++    out, path, hunk = [], None, False
+     for line in diff.splitlines():
+-        if line.startswith("+++ "):
++        # a "+++ " line is a header only before the file's first @@ - an added line "++ x" reads "+++ x" too
++        if line.startswith("diff --git "):
++            hunk = False
++        elif line.startswith("@@"):
++            hunk = True
++        elif not hunk and line.startswith("+++ "):
+             path = line[6:] if line.startswith("+++ b/") else line[4:]
+-        elif line.startswith("+") and path:
++        elif hunk and line.startswith("+") and path:
+             out.append((path, line[1:]))
+     return out
+ 
+--- a/tests/test_own_project.py
++++ b/tests/test_own_project.py
+@@ -75,6 +75,13 @@
+         rc, out = check("mishmeret-builder")
+         assert rc == 1 and f"notes/bad{i}.md: 1 added line carries" in out and line.strip() not in out, out
+         subprocess.run(["git", "-C", str(root), "rm", "-q", "--cached", f"notes/bad{i}.md"], check=True)
++    # AN ADDED LINE THAT BEGINS "++ " reads "+++ ..." in the diff, as a file's header (notes/PLAN-KNOWN-GAPS.md, item 9):
++    # it went unscanned, and the file's next line was filed under a "path" cut from it - its text in the report
++    address = "pp" + "@" + "mail.co"
++    stage("notes/plus.md", f"++ mail {address}\nmail {address}\n")
++    rc, out = check("mishmeret-builder")
++    assert rc == 1 and "notes/plus.md: 2 added lines carry" in out and address not in out, out
++    subprocess.run(["git", "-C", str(root), "rm", "-q", "--cached", "notes/plus.md"], check=True)
+     (root / ".claude" / "roster.local.json").write_text(json.dumps(
+         {"reviewers": {"r1": {"display": "Placeholder Person", "email": "pp" + "@" + "mail.co"}}}), encoding="utf-8")
+     stage("notes/named.md", "as placeholder.person said\n")
+--- a/mishmeret/agents.sh
++++ b/mishmeret/agents.sh
+@@ -26,9 +26,10 @@
+ . "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/agents-lib.sh"
+ MODE="${1:-}"
+ 
+-effort_of() {   # role -> the effort its agent file names; passed as --effort, since Claude Code does not apply an agent
+-                # file's effort itself - the user settings' would win (the reviewer, 2026-10-06: "go agents.sh")
+-  sed -n 's/^effort: *//p' "$DIR/${MM_AGENT_FILES//\{role\}/$1}" | head -1
++effort_of() {   # role -> "--effort X" for the effort its agent file names, since Claude Code does not apply an agent
++                # file's effort itself - the user settings' would win (the reviewer, 2026-10-06: "go agents.sh");
++                # nothing when it names none: a bare --effort took the next word, at --resume the prompt (M07)
++  sed -n 's/^effort: *\([^ ][^ ]*\).*/--effort \1/p' "$DIR/${MM_AGENT_FILES//\{role\}/$1}" 2>/dev/null | head -1
+ }
+ 
+ # THE AGENTS' TMUX SETTINGS, LOADED EVERY TIME (the reviewer, 2026-10-11: "control-a z doesn't work today for zooming"):
+@@ -64,13 +65,13 @@
+   if [ "$MODE" = "--resume" ]; then
+     case "$sid" in
+       ""|none) ;;                                       # no earlier session: started fresh, below
+-      *) tmux send-keys -t "$1" "cd '$DIR' && $CLEAN claude --resume $sid --agent $2 --name $2 --effort $(effort_of "$2") 'agents.sh --resume: this session stopped without finishing (its tmux pane closed) and is resumed here with its context. A command that was running when it stopped did not finish - check the state of what you were doing before you go on.'" Enter
++      *) tmux send-keys -t "$1" "cd '$DIR' && $CLEAN claude --resume $sid --agent $2 --name $2 $(effort_of "$2") 'agents.sh --resume: this session stopped without finishing (its tmux pane closed) and is resumed here with its context. A command that was running when it stopped did not finish - check the state of what you were doing before you go on.'" Enter
+          return ;;
+     esac
+   fi
+   # NO OPENING PROMPT HERE: the agent file's `initialPrompt` sends the brief's line itself, so typing it too sent it twice
+   # (the reviewer, 2026-10-25: "each command line includes the start prompt as a parameter which is duplicative")
+-  tmux send-keys -t "$1" "cd '$DIR' && $CLEAN claude --agent $2 --name $2 --effort $(effort_of "$2")" Enter
++  tmux send-keys -t "$1" "cd '$DIR' && $CLEAN claude --agent $2 --name $2 $(effort_of "$2")" Enter
+ }
+ 
+ # NEXT - A FINISHED SESSION IS CLEARED, EXITED AND STARTED AGAIN IN ITS PANE (the reviewer, 2026-11-10, the first
+--- a/mishmeret/land.py
++++ b/mishmeret/land.py
+@@ -564,15 +564,22 @@
+         subprocess.run(["cp", "-c", "-R", where.main_tree, tree], check=True)        # APFS: a clone, instant
+     else:
+         shutil.copytree(where.main_tree, tree, symlinks=True)                        # untried on Linux (0II)
+-    theirs = _uncommitted(where.main_tree)
++    theirs, seen = _uncommitted(where.main_tree), {}
+     for rel in sorted(theirs | _uncommitted(tree) | ({LEDGER} if LEDGER else set())):
+-        if _content(os.path.join(where.main_tree, rel)) != _content(os.path.join(tree, rel)):
++        seen[rel] = _content(os.path.join(where.main_tree, rel))
++        if seen[rel] != _content(os.path.join(tree, rel)):
+             raise Refused(f"{rel} changed in the main tree while it was copied: gate main again "
+                           f"(land.py gate --tree <a copy of {where.main_tree}>)")
+     if theirs:
+         print(f"  the copy holds the main tree's uncommitted {', '.join(sorted(theirs))}")
+     if run_gate(tree, "landing"):
++        # A FILE MID-WRITE AT THE COPY, AND STILL AT THE COMPARE, passed it: both trees held the same half-written bytes
++        # (girsa-verifier's gap on M12; notes/PLAN-KNOWN-GAPS.md, item 15). Such a write ends during the gate, so a red
++        # whose compared files moved since is read against that write first
++        moved = sorted(rel for rel in seen if _content(os.path.join(where.main_tree, rel)) != seen[rel])
+         raise Red("LANDED, and the gate on main is red - " + (
++            f"{', '.join(moved)} changed in the main tree during the gate: gate main again before the red is yours "
++            f"(land.py gate --tree <a copy of {where.main_tree}>)" if moved else
+             f"read it against {', '.join(sorted(theirs))}, the main tree's own, before it is yours" if theirs
+             else "the fix is yours"))
+ 
+--- a/tests/test_guard.py
++++ b/tests/test_guard.py
+@@ -602,6 +595,9 @@
+     assert bad.returncode != 0 and "commit refused by the time check" in bad.stderr and "NOTES.md" in bad.stderr
+     git("reset", "-q")
+     assert commit("draft.txt", f"[{past}-{ahead[-5:]}]\n").returncode != 0, "a range's later end"
++    git("reset", "-q")
++    # an added line that begins "++ " reads "+++ ..." in the diff, as a header (notes/PLAN-KNOWN-GAPS.md, item 9)
++    assert commit("draft.txt", f"++ {ahead}\n").returncode != 0, "a line that begins ++"
+     git("reset", "-q")
+     assert commit("data.json", f'"{ahead}"\n').returncode == 0, "only .md and .txt"
+     assert commit("NOTES.md", "entry\n").returncode == 0, "a line removed is not read"
+@@ -1172,6 +1168,21 @@
+             frozen()
+         monkeypatch.setattr(land, "_uncommitted", real)
+         git(main, "checkout", "-q", "--", "book.json", "rulings.jsonl")
++    # A FILE MID-WRITE AT THE COPY AND STILL AT THE COMPARE (notes/PLAN-KNOWN-GAPS.md, item 15): both trees hold the
++    # same half-written book, so the compare passes; the write ends during the gate, and the red names it first
++    (main / "book.json").write_text('{"applied": [1, ', encoding="utf-8")         # torn, in both trees
++
++    def finished_during(t, name):
++        (main / "book.json").write_text('{"applied": [1]}\n', encoding="utf-8")
++        return 1
++    monkeypatch.setattr(land, "run_gate", finished_during)
++    with pytest.raises(land.Red, match=r"is red - book.json changed in the main tree during the gate: gate main again "
++                                       r"before the red is yours"):
++        frozen()
++    git(main, "checkout", "-q", "--", "book.json")
++    monkeypatch.setattr(land, "run_gate", lambda t, name: 1)          # nothing moved: the red reads as before
++    with pytest.raises(land.Red, match=r"the gate on main is red - the fix is yours$"):
++        frozen()
+ 
+ 
+ def test_land_refuses_a_stop_resolved_against_main_after_main_moves_on(tmp_path, monkeypatch):
+--- a/tests/test_sessions.py
++++ b/tests/test_sessions.py
+@@ -362,6 +362,21 @@
+     assert out.returncode == 0 and len(starts) == 5, (out.returncode, out.stderr, starts)
+     assert all("&& env -u MISHMERET_CONFIG -u MISHMERET_CONFIG_BY_SHIM claude --agent ex-" in s for s in starts), starts
+     assert "$CLEAN claude --resume $sid" in open(os.path.join(PKG, "agents.sh"), encoding="utf-8").read(), "the resume too"
++    # AN AGENT FILE THAT NAMES NO EFFORT GIVES NO --effort (notes/PLAN-KNOWN-GAPS.md, item 10): a bare one took the next
++    # word as its value - at --resume, the prompt. ex-builder's names one; the others have no agent file at all.
++    from conftest import write_project
++    cfg = write_project(tmp_path / "p")
++    (tmp_path / "p" / ".claude" / "agents").mkdir()
++    (tmp_path / "p" / ".claude" / "agents" / "ex-builder.md").write_text("---\nname: ex-builder\neffort: high\n---\n",
++                                                                         encoding="utf-8")
++    typed.unlink()
++    out = subprocess.run(["bash", os.path.join(PKG, "agents.sh")], env=dict(env, MISHMERET_CONFIG=cfg), capture_output=True,
++                         text=True, stdin=subprocess.DEVNULL, timeout=60)
++    starts = [line for line in typed.read_text().splitlines() if "claude --agent" in line]
++    assert out.returncode == 0 and len(starts) == 5, (out.returncode, out.stderr, starts)
++    assert [s.split("claude ")[1] for s in starts if "ex-builder" in s] == ["--agent ex-builder --name ex-builder "
++                                                                           "--effort high Enter"], starts
++    assert not [s for s in starts if "--effort" in s and "ex-builder" not in s], starts
+ 
+ 
+ def test_the_agents_scripts_share_one_clone_one_role_list_and_one_pane_lookup():
