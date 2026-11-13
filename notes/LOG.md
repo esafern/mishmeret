@@ -11,7 +11,14 @@ M12. **[2026-11-13, the gate after a code landing, over an uncommitted Apply (no
       `_frozen_gate` RED; the copy taken whole, 2 passed. MY SLIP: its first run used the system Python, which has no
       pytest; run again with the project's.
     * **[08:54]** The plan written: A (the copy taken whole) recommended, B (HEAD's own pair) beside it. To send at
-      this commit, live: its HANDOFF to girsa-verifier; the A-or-B QUESTION to girsa-architect.
+      this commit, live: its HANDOFF to girsa-verifier; the A-or-B QUESTION to girsa-architect. Sent, both.
+    * **[08:59]** girsa-architect's ANSWER, live (the first project's 76974084): A, with two changes - the red names
+      the uncommitted files; the cost as measured (the landing gate there reads the operator's documents in place) -
+      and a known gap (a tracked cache a paid run writes). girsa-verifier's ANSWER, live (its read, 2b7998c1 there):
+      READY TO BUILD WITH A, two LOWs - every tracked file that differs from HEAD compared after the clone, not the
+      ledger alone; the line naming nothing on a clean tree. Measured by it in A's form on that project's main clone:
+      1978 passed. All taken into the plan. MY SLIP: a stray `cat >> /dev/null` in a command waited on its input until
+      it was stopped (nothing written).
 M11. **[2026-11-13, a main-tree commit's failure path undid a landing (notes/PLAN-LAND-RACE.md)]**
     * RECEIVED, live, from girsa-verifier: a FINDING in the first project - 07:54:13 its notes landing's merge and,
       the same second, "reset: moving to HEAD" back (that tree's reflog, read here too); the landing undone, its

@@ -29,8 +29,23 @@ A. THE COPY TAKEN WHOLE: `_frozen_gate` gates the main tree as it stands - the f
    and the ledger's copy go; the check that the ledger did not change while it was copied stays, as the copy's ledger
    compared with the live one after the clone. The gate's line names the tracked files that differ from HEAD (an
    uncommitted Apply, an operator's note), so a red is read against them. Code: about 8 lines less, 3 more.
-   Its cost: an uncommitted code edit in the main tree (the operator's, which it lands as a commit the same day) is
-   gated with the landing; the line names it.
+   CHOSEN (girsa-architect, the first project's design-study/MISHMERET-FROZEN-GATE-ARCHITECT.md, 76974084): A gates
+   what the review servers run; B's trigger is a stand-in (Lesson 41) that would drop the live rulings whenever a ruling
+   is recorded beside any uncommitted note - one such note is in that main tree now. The reset's reason (the copy
+   carries the main clone's index) does not bite: outside a commit in progress the main tree's index is HEAD's, and
+   land.py refuses to start a commit over a staged one. ITS TWO CHANGES, taken: the red's sentence, where the copy
+   held uncommitted tracked files, names them - "read against these, the main tree's own, before it is yours" - in
+   place of "the fix is yours" alone; and the cost as measured: what the landing gate reads in place there is mostly
+   the operator's documents (the status pair, START_HERE.md, WRITING.md, LANE-PATHS.md, LANES.md, the finish
+   commands - its file and lines), not only code. A KNOWN GAP (its own): a tracked file a running job writes, other
+   than the ledger - the first project's vision verdict cache - is copied as it stands, mid-write if a paid run is in
+   flight; the ledger's compare does not cover it (paid runs are rare and announced).
+   girsa-verifier's read (the first project's 2b7998c1, before girsa-architect's): A. Measured there in A's form: a
+   copy of its main clone taken whole at 6d688ffa, `land.py gate --tree <copy>`, exit 0, 1978 passed, 14 xfailed. ITS
+   LOW 1, taken: one `cp -c -R` copies file by file, so an Apply writing during it could leave a book file cloned
+   before its write beside a ledger cloned after its append - so after the clone, EVERY tracked file that differs from
+   HEAD in either tree, and the ledger, is compared between the copy and the main tree; a difference refuses, as the
+   ledger's check does today. Its LOW 2: the line names nothing when the main tree is clean.
 B. HEAD'S OWN PAIR: when the live ledger and another tracked file both differ from HEAD, the copy keeps HEAD's own
    ledger, and the line says the live rulings were not gated. Its cost: the live rulings are not gated whenever main
    holds an uncommitted Apply - the case the live ledger was put in for (girsa-architect's Q4 on the landing script).
@@ -43,8 +58,11 @@ B. HEAD'S OWN PAIR: when the live ledger and another tracked file both differ fr
 ## Tests (each rule's test shown red with the rule taken out)
 
 1. A main clone holding an uncommitted Apply (placeholders): the gate after a landing green, and its line naming the
-   uncommitted file; red as today with the reset put back.
-2. The ledger changed while copied: refused, as today.
+   uncommitted file; red as today with the reset put back. A red over an uncommitted file: its sentence names the file
+   and "read against these, the main tree's own, before it is yours"; a red over none says "the fix is yours", as now.
+2. The ledger, or an uncommitted tracked file, changed between the clone and the check: refused. A clean main tree:
+   the line names nothing. Mutations: the line's list taken from the copy instead of the main tree; the compare
+   limited to the ledger.
 3. The existing landing test (the frozen copy holds the live rulings file) unchanged and green.
 
 ## For the first project
