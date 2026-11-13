@@ -799,6 +799,23 @@ def test_the_main_trees_lock_holds_a_landing_and_a_main_tree_commit_back_and_say
     before = max(k for k, (call, _) in enumerate(trace[:at]) if call == ("rev-parse", "main"))
     after = next(k for k, (call, _) in enumerate(trace) if call == ("merge-base", "--is-ancestor"))
     assert trace[before][1] and trace[at][1] and trace[after][1], trace
+    # the holder writes its own process id and step, which the waiter says (girsa-verifier's LOW 1 on the build: the
+    # waits above read the test's own line, so a holder that wrote nothing stayed green)
+    where, entered, release = land.Where(str(main)), threading.Event(), threading.Event()
+
+    def hold():
+        with lock_of(where, "a placeholder step"):
+            entered.set()
+            release.wait(5)
+    holder = threading.Thread(target=hold)
+    holder.start()
+    assert entered.wait(5)
+    capsys.readouterr()
+    threading.Timer(0.4, release.set).start()
+    with lock_of(where, "the waiter"):
+        pass
+    holder.join(5)
+    assert f"held by process {os.getpid()}: a placeholder step" in capsys.readouterr().out
 
 
 def _try(run, errors):
