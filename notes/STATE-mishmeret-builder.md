@@ -18,26 +18,28 @@ Rewritten in place when a piece lands and at the end of a session; the log is `n
   (PLAN-FROZEN-GATE; M12). c8af403: the Board's hold is its session's (PLAN-HOLD-SESSION; M13).
 - The first project pins f031698 (f00c256a there); every tree of it that lands pins it (girsa-operator, 2026-11-13).
 
+- b01f7d0, 075f49a, f2126a1: the known gaps' first eight (notes/PLAN-KNOWN-GAPS.md; M14). Item 1 (HIGH, found while
+  measuring): a quoted word in git's options or before git hid the command from every rule. Also items 2, 7, 8, 11-14
+  and 16. Verified at 075f49a; main f2126a1 = origin (pushed). The first project pins 075f49a (its #224 A).
+
 ## Now
 
-- THE KNOWN GAPS (notes/PLAN-KNOWN-GAPS.md; M14; the reviewer's "fix the known gaps now", 15:39), branch
-  `builder-known-gaps`: VERIFIED at 075f49a by girsa-verifier; LANDED-READY sent to girsa-operator at this file's
-  commit. Built: items 1 (a quoted word hid git from every rule - HIGH, found here), 2, 7, 8, 11-14, 16. Not pushed:
-  the push is the reviewer's word, through girsa-operator. The first project's pin bump to it goes to girsa-verifier
-  first (the older-worktree landing check).
-- HELD, on the first project's Board #223 (girsa-verifier: no case on any record; leave them): items 3, 4, 5, 6, 9,
-  10, 15. My recommendation to the reviewer: build 6 in girsa-architect's form B, with the config write closed
-  (design-study/MISHMERET-ALIAS-CONFIG-ARCHITECT.md there) - any role's `git config` writes the main clone's config;
-  build 9 (a "++ " line skips this public repository's address scan); leave the rest. Items 9, 10 and 15 are built:
-  notes/known-gaps/held-9-10-15.diff applies to 075f49a (`git apply`; the suite then 158 passed).
+- No piece is open. The session ended on the reviewer's "land and clear" (2026-11-15). This file's commit is on
+  `builder-state-2026-11-15`, sent LANDED-READY to girsa-operator.
 - Done with, to delete: every merged `builder-*` branch.
-- To resume: `git -C ~/work/mishmeret log --oneline -3`; `git -C ~/work/mishmeret-builder status -sb`; #223's answer.
+- To resume: `git -C ~/work/mishmeret log --oneline -3`; `git -C ~/work/mishmeret-builder status -sb`; the Board.
 
 ## Next, in order
 
-1. On girsa-operator's merge: this file's Built list.
-2. On #223's answer: the items given, from the diff or new (item 6 by girsa-architect's answer); a plan revision to
-   girsa-verifier first.
+1. THE KNOWN GAPS' SEVEN, GIVEN: the first project's #223, answered B ("Build all fifteen") on 2026-11-13 at 16:05.
+   - Items 9, 10 and 15 are built: `git apply notes/known-gaps/held-9-10-15.diff` (it applies to f2126a1; the suite is
+     then 158 passed). Item 15 is in its revised form: a red names a file that moved during the gate.
+   - Items 3, 4 and 5 (two -C; `cd -` and a bare cd; a case pattern) are measured in the plan, not built.
+   - Item 6 in girsa-architect's form B (design-study/MISHMERET-ALIAS-CONFIG-ARCHITECT.md there, d721b739): an unknown
+     git verb refused, with git's own verb list and a test against it (girsa-verifier's LOW 3). The write closed:
+     `git config` write forms and `git remote add/set-url/rename/remove/set-branches` refused in a guarded tree, for
+     every role. On the operator's push line, a `-c remote.`/`url.`/`alias.` key refused.
+   - A plan revision to girsa-verifier first, then the build with rule 45's old-against-new run, as for the first eight.
 
 ## Open
 
@@ -51,3 +53,5 @@ Rewritten in place when a piece lands and at the end of a session; the log is `n
 - The 5 s refresh redraws the corners, so a focused pill loses focus (girsa-ui-steward: leave it).
 - Copy-on-select measured in headless Chromium alone.
 - The first project's older worktree `...-mishmeret` is finished with; its removal is the reviewer's.
+
+The session is ready to clear.

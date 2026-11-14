@@ -73,6 +73,19 @@ M14. **[2026-11-13, the known gaps (notes/PLAN-KNOWN-GAPS.md)]**
       files kept before they were taken out. Two hunks were dropped from it, each undoing later work (land.py's docstring
       wrap, the rule-45 test cases). Checked: `git apply` on a clean copy of HEAD, then the suite: 158 passed. To send
       at this commit, live: LANDED-READY to girsa-operator.
+    * MY SLIP: that commit, as `notes`, was refused by the lane check (a `.diff` is not a document under
+      `--doc-only`); nothing was committed. Committed as `code` with the suite: f2126a1, 158 passed. Sent, live:
+      LANDED-READY to girsa-operator at f2126a1.
+    * girsa-operator's ANSWER, live: MERGED, main f031698 to 075f49a to f2126a1. A push waits for the reviewer's own
+      word in its pane; a word relayed by another session carries no approval. The first project's pin is its Board
+      #224, with girsa-verifier's older-worktree check first.
+    * **[2026-11-15 00:13]** Read now: Mishmeret's main f2126a1 = origin (pushed). The first project pins 075f49a
+      (#224 A). #223 was answered B, "Build all fifteen", on 2026-11-13 at 16:05. MY MISS: I did not read #223 again
+      after it was posted, and told the reviewer twice that it waited on them. The seven held items (3-6, 9, 10, 15)
+      are given; they are the state file's Next.
+    * The reviewer, in this session: "land and clear". The session ends here. The state file and this entry go on
+      branch `builder-state-2026-11-15`, for girsa-operator's merge. To send at this commit, live: LANDED-READY to
+      girsa-operator.
 
 M13. **[2026-11-13, the Board's hold, by session (notes/PLAN-HOLD-SESSION.md)]**
     * Started at main 81759f8, branch `builder-hold-session`. girsa-operator's REQUEST (M09). Read in the first
