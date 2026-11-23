@@ -2,57 +2,54 @@
 
 Rewritten in place when a piece lands and at the end of a session; the log is `notes/LOG.md`, by item.
 
-## Built, on main (main f031698 = origin; each verified by girsa-verifier, merged by girsa-operator)
+## Built, on main (main 8e80020, 6 ahead of origin; each verified by girsa-verifier, merged by girsa-operator)
 
-- c1963d1 (own `.claude/`), 59178bf (open messages), 8f6771d, 31ac716 (copy-on-select), 8738b21 (start scripts).
-- 51499da, 7b9c6e0: finishing a session by day and by night (PLAN-FINISH; M05).
-- f33aad3, 529af0a, b8dac60: an escaped quote no longer turns the guard off (PLAN-GUARD-MASK; M06).
-- 21cb9ba (push forms), db17aac (git after a keyword, behind options, quoted; every cd), 1137c12 (land.py on a
-  signal), d7c97bc (the Board's first answers), 5aa9a0a (a subagent is no role), f734ca4 and febf285 (working in
-  the background) - M07's items (M08).
-- f87e3ce: `LESSONS.md` (PLAN-LESSONS; M08).
-- d6a8ce7, 090253c (with girsa-operator's f7c7d1d): my audit's seven fixes (PLAN-AUDIT-FIXES; M09).
-- a24377d, 6039283: what expires, /expiring.ics (PLAN-EXPIRING; M10). The first project's five rows are in
-  (girsa-operator's 607e871a there); the reviewer subscribes once (On My Mac, alerts kept).
-- fd2178e, 159ea56: the land.py race (PLAN-LAND-RACE; M11). e63b4a2: the gate takes the main tree whole
-  (PLAN-FROZEN-GATE; M12). c8af403: the Board's hold is its session's (PLAN-HOLD-SESSION; M13).
-- The first project pins f031698 (f00c256a there); every tree of it that lands pins it (girsa-operator, 2026-11-13).
-
-- b01f7d0, 075f49a, f2126a1: the known gaps' first eight (notes/PLAN-KNOWN-GAPS.md; M14). Item 1 (HIGH, found while
-  measuring): a quoted word in git's options or before git hid the command from every rule. Also items 2, 7, 8, 11-14
-  and 16. Verified at 075f49a; main f2126a1 = origin (pushed). The first project pins 075f49a (its #224 A).
+- To 2026-11-13 (M01-M13): own `.claude/`, open messages, copy-on-select, the start scripts, finishing a session, the
+  guard's mask, M07's items, `LESSONS.md`, the audit's fixes, /expiring.ics, the land.py race, the frozen gate, the
+  hold by session.
+- b01f7d0, 075f49a, f2126a1: the known gaps' first eight (PLAN-KNOWN-GAPS; M14). The first project pins 075f49a.
+- 977295f, e5a4d40, 958474f, dc30cc2: the known gaps' seven (PLAN-KNOWN-GAPS-SEVEN; M15) - two -C, cd -/popd, a case
+  arm, git's own verb list and the config writes closed, a quoted verb; dc30cc2 is girsa-operator's lane check half.
+- 7c48fea, 7203f57 (status-report), 59f84a2, 5bccb49 (guard-measure, its scripts): Mishmeret's own skills (M16).
+- f49111a, 6575743, fa53cb2: git's command list as a classification (PLAN-GIT-CLASSIFICATION; M17; the first
+  project's #302 A) - the eight writers refused where reset --hard is, 181 names in four sets.
+- 654a562, 0600059, 7d6e9ad, 7cbe089: a role run by pi (PLAN-PI-ROLE; M18; #303 A) - mishmeret/pi_guard.ts, the
+  config's `runner`, agents.sh's pi line.
+- 137ff68, ec8c031, 89cba8b: skills shipped to every project (PLAN-SHIPPED-SKILLS; M19) - mishmeret/skills/, agents.sh's
+  links, pi's `--skill`, the drift test.
 
 ## Now
 
-- ON MAIN a14600c (girsa-operator's merges; 2 ahead of origin, fa53cb2 pushed on the reviewer's word), each VERIFIED:
-  the known gaps' seven (M15); Mishmeret's own skills (M16); git's command list as a classification with its LOW 1
-  fix (M17, fa53cb2; the first project's #302 A); a role run by pi (M18, 7cbe089). The first project pins 075f49a;
-  its pin bump is girsa-verifier's first.
-- THE SHIPPED SKILLS (notes/PLAN-SHIPPED-SKILLS.md; M19), branch `builder-shipped-skills` from main a14600c: plan
-  ec8c031 (girsa-architect's 3e30b334 in it; girsa-verifier READY on LOW 1), the build 89cba8b (175 passed; 8 rules
-  red). Waiting: girsa-verifier's check at this commit. The measure's records in the scratchpad's skillprobe/records/.
-- Waiting on the reviewer: the first project's Board #304 (refs judged by the repository, and the found writers), a
-  later piece.
-- Done with, to delete: every merged `builder-*` branch.
-- To resume: `git -C ~/work/mishmeret log --oneline -3`; `git -C ~/work/mishmeret-builder status -sb`; the Board.
+- No piece is open. Main 8e80020 is 6 ahead of origin: its push is the reviewer's word in girsa-operator's pane.
+- THE FIRST PROJECT'S PIN BUMP (075f49a to main), girsa-verifier first, brings: the seven's refusals, the
+  classification (girsa-builder's 3 measured writes refused), the pi guard (`runner: pi` named with the bump, then
+  #303 A), and the shipped skills - with its own steps: its `.gitignore` line for `.claude/skills/mishmeret-*` below
+  its `!.claude/skills/` un-ignore, and its `landing` and `operator-sessions` cut to its particulars.
+- Waiting on the reviewer: the first project's Board #304 (a ref judged by the repository, not the folder: main's
+  branch, `known-good`, release tags to their owners; with it branch -D/-f, worktree remove, replace, reflog delete,
+  gc --prune, maintenance register, branch -m, init --separate-git-dir).
+- Four builder branches never merged, not read since: builder-background-state-unsplit, builder-board-first-answer,
+  builder-state-after-lessons, builder-subagent-role. The merged ones are deleted (37, 2026-11-23).
+- To resume: `git -C ~/work/mishmeret log --oneline -3`; `git -C ~/work/mishmeret-builder status -sb`; the Board; the
+  first project's Board record (`~/work/girsa-board/board.jsonl`) for #304.
 
 ## Next, in order
 
-1. THE SHIPPED SKILLS: girsa-verifier's findings in one round, then girsa-operator's merge. At the first project's pin
-   bump, its own steps: the ignore line below its un-ignore; its landing and operator-sessions cut to its particulars.
-2. #304, when the reviewer answers it.
+1. #304, when the reviewer answers it: its plan, measured with the guard-measure skill.
+2. The four unmerged branches: each read, then kept or deleted on the reviewer's word.
 
 ## Open
 
 - girsa-verifier's LOW on 075f49a: PREFIX and TMUX_PREFIX are two copies of one pattern (they differ by `env -u`).
-- The piped-check rule does not read a check inside a substitution after another word (`echo $(pytest | tail)`),
-  on f031698 too.
-- Not run live: the night and morning runs as changed (stubs only). Not run on Linux: the session scripts (macOS-only).
+- The piped-check rule does not read a check inside a substitution after another word (`echo $(pytest | tail)`).
+- A GIT_INDEX_FILE set from a variable is taken as temporary (114 such on the record, the scratch-index pattern): the
+  classification's accepted cost.
+- A shell write through a link into a pin meets no file-target rule (as for any pinned file; girsa-verifier's NOTE 3).
+- Not measured: a pi session whose folder differs from its start folder; pi and the shipped skills on Windows and Linux;
+  a skill's link changed under a running session.
+- Not run live: the night and morning runs as changed (stubs only). The session scripts are macOS-only.
 - A `!` command the reviewer types bypasses the hook (2026-11-12).
 - A required config key cannot be added or renamed: Mishmeret pins itself (M05).
 - Not pinned by a test (A2): `land()`'s restart line and ledger copy with the field absent.
 - The 5 s refresh redraws the corners, so a focused pill loses focus (girsa-ui-steward: leave it).
-- Copy-on-select measured in headless Chromium alone.
 - The first project's older worktree `...-mishmeret` is finished with; its removal is the reviewer's.
-
-The session is ready to clear.
