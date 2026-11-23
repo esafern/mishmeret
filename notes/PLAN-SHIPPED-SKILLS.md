@@ -35,6 +35,23 @@ taken; nothing in it goes to the reviewer:
   too, its optional signal: the drift test also REPORTS, without failing, each skill whose named files changed after
   the skill last did (git's dates), for the operator of a pin bump to re-read.
 
+GIRSA-VERIFIER'S REVIEW (the first project's design-study/step5-verification/mishmeret-shipped-skills-plan-2026-11-23/
+REVIEW.md; its message #3107): READY on LOW 1, built with a test.
+- LOW 1: a link the running tree no longer ships stays, and loads the old procedure from the old pin. agents.sh now
+  removes, at each start, a `mishmeret-*` link (a link only) to a skill its tree does not ship.
+- NOTE 1: the measure's Claude Code half had no record left. Run again at the build, one capture log per run, kept in
+  the scratchpad's skillprobe/records/: the probe project's 6 requests each carried PINNED-OK-A1 and
+  `mishmeret-landing` (linked as agents.sh links it); the control's 6 each carried CTRL-OK-B2 and neither of the
+  other two.
+- NOTE 2: pi's two `--skill` paths might load a skill twice. Measured: a skill linked into the project's folder and given
+  by both paths reached the request once (pi keeps the first of one name). Built so it does not depend on that: the
+  project's own skills go to pi one by one, its `mishmeret-*` links left out.
+- NOTE 3, outside this piece: an Edit or Write through a skill's link into the pin is refused; a shell write through
+  it meets no file-target rule for a pin, as for any pinned file.
+
+THE BUILD (89cba8b): suite 175 passed; 8 rules each red with it taken out over a passing baseline (mutate.py). Under
+pi, each shipped skill's description reaches the first request once by `--skill <the tree>/skills`.
+
 THE MEASURE, 2026-11-23, in the scratchpad (skillprobe/). Can a skill kept in a pinned tree reach a session through a
 link? Each tool was pointed at a local capture server that records every request and answers 400, so no model ran
 and no account was charged.

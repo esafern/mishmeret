@@ -18,7 +18,17 @@ M19. **[2026-11-23, skills shipped to every project (notes/PLAN-SHIPPED-SKILLS.m
       setup, not mine.
     * **[21:23]** The reviewer: "write the skills plan". Branch `builder-shipped-skills` from main a14600c: the plan.
       To send at its commit, live: its three design QUESTIONS to girsa-architect; girsa-verifier's review after its
-      answer.
+      answer. Sent, live, at 137ff68.
+    * girsa-architect's ANSWER, live: the first project's design-study/MISHMERET-SHIPPED-SKILLS-ARCHITECT.md at
+      3e30b334 - the prefix; agents.sh's links, only a link, the ignore line below the un-ignore; no list the code can
+      give in a skill. Into the plan, ec8c031. Sent, live: the plan's HANDOFF to girsa-verifier.
+    * girsa-verifier's ANSWER, live (its #3107): READY on LOW 1 (a link no longer shipped stays); NOTE 1 (the Claude
+      Code measure's record lost - I had overwritten its capture log) and NOTE 2 (pi's two paths) to measure at the
+      build. NOTE 2 measured: once. NOTE 1 run again, its logs kept (skillprobe/records/).
+    * BUILT: the four skills, agents.sh's links and the pi line's `--skill`, the drift test, the README. My first-run
+      faults: the drift test read `land.py` as a config field and did not know argparse's `--help`; and a pi test
+      looked for a plain apostrophe where pi's skill list writes `&apos;`. 8 rules red. COMMITTED 89cba8b, 175
+      passed. To send at the notes commit, live: the HANDOFF to girsa-verifier.
 
 M18. **[2026-11-23, a role run by pi, built (notes/PLAN-PI-ROLE.md)]**
     * The classification, after M17: girsa-verifier's ANSWER, live (its #3082): VERIFIED at 367380a, with LOW 1 (an
