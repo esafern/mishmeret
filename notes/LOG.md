@@ -3,6 +3,20 @@
 Findings, decisions and open work, each the moment it is known; a time from `date`. One item per run of work, newest
 first (`M01.`, `M02.` ...); what git records (what each commit did) is not repeated here.
 
+M18. **[2026-11-23, a role run by pi, built (notes/PLAN-PI-ROLE.md)]**
+    * The classification, after M17: girsa-verifier's ANSWER, live (its #3082): VERIFIED at 367380a, with LOW 1 (an
+      index named by a command substitution) before the first project's next pin bump. Sent, live: LANDED-READY at
+      367380a. girsa-operator's ANSWER, live: MERGED, main 367380a, 166 passed; 4 ahead of origin (main pushed since,
+      on the reviewer's word). LOW 1 fixed, fa53cb2: a substitution is the tree's own index unless it is mktemp's;
+      both rules red; rule 45 against 6575743, 0 changed for each role; 166 passed. Sent, live: the HANDOFF.
+    * BUILT the pi piece on the same branch: mishmeret/pi_guard.ts, agents.sh's pi line, config.py's OPTIONAL
+      `runner`, the README's section, tests under pi with a scripted provider (tests/pi/). Two of my own first-run
+      faults: the config test that drops each OPTIONAL key assumed a table, and `roles.runner` is a key of each list
+      entry (the test fixed); and my pi test expected one Edit event for an edit of two edits (each is judged). MY
+      SLIP: the README first named pi's site from memory; it names the package instead.
+    * 14 rules each red with it taken out over a passing baseline. COMMITTED 7cbe089, 170 passed. **[20:29]** To send
+      at the notes commit, live: the HANDOFF to girsa-verifier.
+
 M17. **[2026-11-23, git's command list as a classification (notes/PLAN-GIT-CLASSIFICATION.md)]**
     * girsa-verifier's ANSWER, live: guard-measure's fixes VERIFIED at 5bccb49 (its message #3052, to girsa-operator
       too). Sent, live: LANDED-READY at ff94f3f. girsa-operator's ANSWER, live: MERGED, main 5bccb49 then ff94f3f, 164

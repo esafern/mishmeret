@@ -86,6 +86,18 @@ Not in this piece, and why (each listed in the README as what a pi role lacks):
   `send` and `inbox`.
 - Skills: pi reads `.agents/skills/` or `--skill PATH`, not `.claude/skills/`. That belongs to the skills piece, next.
 
+THE BUILD (7cbe089): the change below, with its tests; suite 170 passed.
+- Under pi itself (tests/test_pi_role.py, two runs and a third with no hook):
+  - each refusal's words reached the model;
+  - the time rule saw a write's content and each of an edit's edits, and blocked the edit whole;
+  - bash ran in the folder the guard judged, with pi's session id, and with CLAUDE_CODE_AGENT the role over the
+    `ex-operator` pi was started with;
+  - every judged call went through the throwaway project's own hook, CLAUDE_PROJECT_DIR the folder pi started in.
+- 14 rules each RED with it taken out, over a passing baseline (mutate.py; the extension's nine, agents.sh's three,
+  config.py's two).
+- role_guard.py is unchanged, so rule 45 has nothing to compare. The guard judges `bash agents.sh` the same with the
+  new script as with main's.
+
 ## The change
 
 1. `mishmeret/pi_guard.ts`, the extension, loaded by `-e` from the pinned tree (never from `.pi/extensions/`, which
@@ -133,8 +145,9 @@ Not in this piece, and why (each listed in the README as what a pi role lacks):
 
 - mishmeret/pi_guard.ts (new)
 - mishmeret/agents.sh, mishmeret/config.py
-- tests/test_pi_role.py (new; the fake provider and server under tests/), tests/test_sessions.py (agents.sh's pi line,
-  with a stub `pi`), tests/test_config.py (ROLE_KEYS), tests/conftest.py (the stub `pi` first on PATH)
+- tests/test_pi_role.py and tests/pi/ (new: the fake provider, its server, a tool the extension does not know),
+  tests/test_sessions.py (agents.sh's pi line, behind the stub tmux that records what is typed - no stub `pi` needed,
+  so tests/conftest.py is unchanged), tests/test_config.py (ROLE_KEYS)
 - README.md
 - notes/PLAN-PI-ROLE.md, notes/LOG.md, notes/STATE-mishmeret-builder.md
 

@@ -24,31 +24,27 @@ Rewritten in place when a piece lands and at the end of a session; the log is `n
 
 ## Now
 
-- ON MAIN ff94f3f (girsa-operator's merges; 12 ahead of origin, not pushed - the reviewer's word in its pane): the
-  known gaps' seven (M15) with dc30cc2, the lane check's half; the pi plan (654a562, 0600059); Mishmeret's own skills,
-  status-report and guard-measure, VERIFIED, guard-measure's two LOWs fixed (5bccb49). The first project pins
-  075f49a; its pin bump is girsa-verifier's first.
-- THE CLASSIFICATION (notes/PLAN-GIT-CLASSIFICATION.md; M17; the first project's #302 A), branch
-  `builder-git-classification` from main ff94f3f: plan f49111a (READY, girsa-architect's 046d111f agreed), the build
-  6575743 (166 passed; 19 rules red; rule 45: girsa-builder 3 newly refused, each meant, the rest 0). Waiting:
-  girsa-verifier's check at this commit. Rule 45's files in the scratchpad's r45c/ (build-*.jsonl, cmp-build-*.txt).
-  The reviewer's Board #304 there (refs judged by the repository, and the found writers) is a later piece.
-- THE PI PLAN (notes/PLAN-PI-ROLE.md; M16): girsa-verifier READY on three conditions - its LOW 1 (an edit's and a
-  write's text to the time rule), LOW 2 (the extension calls the project's own hook, `.claude/hooks/role_guard.py`
-  through the shim, not the guard beside it), NOTE 1 measured (pass every argument of bash's execute through, ctx
-  among them; the cwd run equals the cwd judged). With NOTE 2 (a config naming `runner` lands with its pin bump) and
-  NOTE 3 (`--no-extensions` in agents.sh's line). The first project's #303 answered A: a guarded pi role lands there.
-  The prototype stays in the scratchpad (pi-proto/); the plan's appendix holds the extension.
+- ON MAIN 367380a (girsa-operator's merges; 4 ahead of origin - main pushed since on the reviewer's word): the known
+  gaps' seven (M15), Mishmeret's own skills (M16), and git's command list as a classification (M17; the first
+  project's #302 A), VERIFIED. The first project pins 075f49a; its pin bump is girsa-verifier's first, after the
+  classification's LOW 1 fix lands.
+- Branch `builder-git-classification` at this commit, on main 367380a:
+  - fa53cb2, the classification's LOW 1 (an index named by a command substitution), with girsa-verifier;
+  - 7cbe089, A ROLE RUN BY PI built (notes/PLAN-PI-ROLE.md; M18; its plan READY on three conditions, all built;
+    170 passed; 14 rules red). Waiting: girsa-verifier's check at this commit.
+  The pi prototype and rule 45's files stay in the scratchpad (pi-proto/, r45c/).
+- Waiting on the reviewer: the first project's Board #304 (refs judged by the repository, and the found writers), a
+  later piece.
 - Done with, to delete: every merged `builder-*` branch.
 - To resume: `git -C ~/work/mishmeret log --oneline -3`; `git -C ~/work/mishmeret-builder status -sb`; the Board.
 
 ## Next, in order
 
-1. THE CLASSIFICATION: girsa-verifier's findings in one round, then girsa-operator's merge.
-2. PI: the plan revised on the review's conditions, NOTE 1 measured, then the build.
-3. THE SKILLS SHIPPED TO EVERY PROJECT (the reviewer's "Both" and "all of the above"): a plan - status-report made
+1. girsa-verifier's check of fa53cb2 and of the pi build; its findings in one round; then girsa-operator's merge.
+2. THE SKILLS SHIPPED TO EVERY PROJECT (the reviewer's "Both" and "all of the above"): a plan - status-report made
    general, landing, sessions, push and pin - its first measure how a project, and a pi role (`--skill PATH`), takes
    a pinned skill.
+3. #304, when the reviewer answers it.
 
 ## Open
 
