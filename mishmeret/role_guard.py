@@ -146,9 +146,53 @@ THROUGH_LAND = {"commit": "`land.py commit ROLE notes|code -F MESSAGE NAME...`",
 # refused to the operator too in this repository's main tree (girsa-verifier's LOW on 23be3451; the reviewer, Board #87
 # A), but each one's --abort.
 OPERATOR_THROUGH_LAND = {"revert", "cherry-pick", "am", "rebase", "commit-tree", "update-ref"}
-CHANGES_MAIN = {"commit", "update-ref", "cherry-pick", "revert", "rebase", "am", "reset", "stash", "checkout",
-                "switch", "restore", "clean", "rm", "mv", "add", "apply", "pull", "merge"}
-LEAVES_IT = {"merge": ("--ff-only",), "stash": ("list", "show"), "apply": ("--check", "--stat", "--numstat")}
+# GIT'S COMMANDS, EACH PLACED (notes/PLAN-GIT-CLASSIFICATION.md; the first project's Board #302 A): every name of git's
+# own list in one of four sets, so the next git's command fails a test until it is placed. Only CHANGES_MAIN decides a
+# refusal (where `reset --hard` is refused); the two last sets are labels. CHANGES_MAIN: what writes the checked-out
+# branch, the index or the files of the tree it runs in - the guard's first 18; #302's eight (history, replay,
+# symbolic-ref, read-tree, update-index, checkout-index, sparse-checkout, filter-branch), which had passed in the main
+# tree; and 27 more the classification found (each in the plan).
+CHANGES_MAIN = frozenset("""
+commit update-ref cherry-pick revert rebase am reset stash checkout switch restore clean rm mv add apply pull merge
+history replay symbolic-ref read-tree update-index checkout-index sparse-checkout filter-branch
+stage bisect merge-file merge-index merge-one-file merge-octopus merge-ours merge-recursive merge-recursive-ours
+merge-recursive-theirs merge-resolve merge-subtree mergetool checkout--worker rerere submodule submodule--helper subtree
+fast-import p4 cvsimport archimport quiltimport cvsexportcommit cvsserver receive-pack refs
+""".split())
+# a rule of their own: push (the operator's), config and remote (item 6b of notes/PLAN-KNOWN-GAPS-SEVEN.md); and,
+# refused for every role, a push by a verb other than `git push`, and a verb running git commands this guard cannot read
+OWN_RULES = frozenset({"push", "config", "remote", "send-pack", "http-push", "for-each-repo"})
+REFUSED_VERBS = {"send-pack": "pushes without `git push`, whose forms the push rule reads - the operator pushes with "
+                              "`git push origin <branch>`",
+                 "http-push": "pushes without `git push`, whose forms the push rule reads - the operator pushes with "
+                              "`git push origin <branch>`",
+                 "for-each-repo": "runs a git command in each repository a config key lists, a command this guard "
+                                  "cannot read - run it in each repository by name"}
+# no checked-out branch, index or tree - but the shared repository's refs, tags, objects and config are in this one
+# (girsa-architect's caution on #302; the reviewer's Board #304 for a later piece)
+WRITES_ELSEWHERE = frozenset("""
+archive backfill branch bugreport bundle clone commit-graph commit-tree credential credential-cache
+credential-cache--daemon credential-netrc credential-osxkeychain credential-store daemon diagnose difftool
+difftool--helper fetch fetch-pack format-patch fsmonitor--daemon gc hash-object hook http-backend http-fetch imap-send
+index-pack init init-db instaweb interpret-trailers mailsplit maintenance merge-tree mktag mktree multi-pack-index notes
+pack-objects pack-refs prune prune-packed reflog remote-ext remote-fd remote-ftp remote-ftps remote-http remote-https
+repack replace send-email shell tag unpack-file unpack-objects update-server-info upload-archive upload-archive--writer
+upload-pack web--browse worktree write-tree
+""".split())
+READS = frozenset("""
+annotate blame cat-file check-attr check-ignore check-mailmap check-ref-format cherry column count-objects describe diff
+diff-files diff-index diff-pairs diff-tree fast-export fmt-merge-msg for-each-ref format-rev fsck fsck-objects
+get-tar-commit-id grep help jump last-modified log ls-files ls-remote ls-tree mailinfo merge-base name-rev
+pack-redundant patch-id pickaxe range-diff repo request-pull rev-list rev-parse sh-i18n--envsubst shortlog show
+show-branch show-index show-ref status stripspace url-parse var verify-commit verify-pack verify-tag version whatchanged
+""".split())
+# a form of a CHANGES_MAIN verb that changes nothing there (`_leaves_it`)
+LEAVES_IT = {"merge": ("--ff-only",), "stash": ("list", "show"), "apply": ("--check", "--stat", "--numstat"),
+             "history": ("--dry-run",), "replay": ("--ref-action=print",), "merge-file": ("-p", "--stdout"),
+             "read-tree": ("-n", "--dry-run"),
+             "sparse-checkout": ("list", "check-rules"), "bisect": ("log", "visualize", "view", "help"),
+             "submodule": ("status", "summary"), "refs": ("list", "verify")}
+FIRST_WORD = ("stash", "sparse-checkout", "bisect", "submodule", "refs")      # LEAVES_IT's form there is the subcommand
 # THE OPERATOR'S PUSH NEVER FORCES OR DELETES, in any form (the builder's review, M07 item 4: `+main`, `-uf`, `:main`
 # and `--delete` had gone through; girsa-verifier on its plan: a quoted `"-f"` and a prefix `--del` too). Git takes a
 # unique prefix of a long option as the option (gitcli(7)), so a prefix of one of these is refused, and `--a`,
@@ -171,27 +215,61 @@ def push_forces(word):
 
 
 # GIT'S OWN COMMANDS (notes/PLAN-KNOWN-GAPS-SEVEN.md, item 6a; girsa-architect's B): `git --list-cmds=main` on git
-# 2.56.1. A verb not among them is refused for every role, in every tree - an alias (`git -c alias.p='push --force' p`)
-# or an add-on on PATH runs what this guard cannot read. A test fails when the running git lists a name not here.
-GIT_VERBS = frozenset("""
-add am annotate apply archimport archive backfill bisect blame branch bugreport bundle cat-file check-attr check-ignore
-check-mailmap check-ref-format checkout checkout--worker checkout-index cherry cherry-pick clean clone column commit
-commit-graph commit-tree config count-objects credential credential-cache credential-cache--daemon credential-netrc
-credential-osxkeychain credential-store cvsexportcommit cvsimport cvsserver daemon describe diagnose diff diff-files
-diff-index diff-pairs diff-tree difftool difftool--helper fast-export fast-import fetch fetch-pack filter-branch
-fmt-merge-msg for-each-ref for-each-repo format-patch format-rev fsck fsck-objects fsmonitor--daemon gc
-get-tar-commit-id grep hash-object help history hook http-backend http-fetch http-push imap-send index-pack init
-init-db instaweb interpret-trailers jump last-modified log ls-files ls-remote ls-tree mailinfo mailsplit maintenance
-merge merge-base merge-file merge-index merge-octopus merge-one-file merge-ours merge-recursive merge-recursive-ours
-merge-recursive-theirs merge-resolve merge-subtree merge-tree mergetool mktag mktree multi-pack-index mv name-rev notes
-p4 pack-objects pack-redundant pack-refs patch-id pickaxe prune prune-packed pull push quiltimport range-diff read-tree
-rebase receive-pack reflog refs remote remote-ext remote-fd remote-ftp remote-ftps remote-http remote-https repack
-replace replay repo request-pull rerere reset restore rev-list rev-parse revert rm send-email send-pack
-sh-i18n--envsubst shell shortlog show show-branch show-index show-ref sparse-checkout stage stash status stripspace
-submodule submodule--helper subtree switch symbolic-ref tag unpack-file unpack-objects update-index update-ref
-update-server-info upload-archive upload-archive--writer upload-pack url-parse var verify-commit verify-pack verify-tag
-version web--browse whatchanged worktree write-tree
-""".split())
+# 2.56.1, the four sets above. A verb not among them is refused for every role, in every tree - an alias (`git -c
+# alias.p='push --force' p`) or an add-on on PATH runs what this guard cannot read. A test fails when the running git
+# lists a name not here, and when a name is in two sets.
+GIT_VERBS = CHANGES_MAIN | OWN_RULES | WRITES_ELSEWHERE | READS
+
+
+def _own_index(value):
+    """True when a GIT_INDEX_FILE value names a tree's own index (`.git/index`, a worktree's under `.git/worktrees/`,
+    `$GIT_DIR/index`) - no temporary one (girsa-verifier's LOW 1 on notes/PLAN-GIT-CLASSIFICATION.md)."""
+    return "GIT_DIR" in value or (os.path.basename(value.rstrip("/")) == "index" and ".git" in value.split("/"))
+
+
+def _temp_index(command, masked, m):
+    """True when the GIT match `m` runs on a temporary index: GIT_INDEX_FILE set on git's own line, or exported
+    earlier in the command and not unset since (`export GIT_INDEX_FILE=<scratch>; git read-tree $P; ...; unset
+    GIT_INDEX_FILE` - the record's form), and naming no tree's own index."""
+    setting = r"(?<![\w$])GIT_INDEX_FILE=(" + WORD + ")"
+    on_line = list(re.finditer(setting, masked[m.start():m.start(1)]))
+    if on_line:
+        at = m.start() + on_line[-1].start(1)
+    else:
+        earlier = list(re.finditer(setting, masked[:m.start()]))
+        unset = [u.end() for u in re.finditer(r"(?<![\w-])unset\s+(?:-v\s+)?GIT_INDEX_FILE(?!\w)", masked[:m.start()])]
+        if not earlier or earlier[-1].end() < max(unset, default=-1):
+            return False
+        at = earlier[-1].start(1)
+    end = re.match(WORD, masked[at:])
+    return not _own_index(_word(command[at:at + (end.end() if end else 0)]))
+
+
+def _leaves_it(verb, rest, command, masked, m, trees):
+    """True when this form of a CHANGES_MAIN verb changes no branch, index or file of the tree it runs in: help, the
+    forms LEAVES_IT names, and the few below. `rest`: the words after the verb, as masked; `trees`: the ones it may
+    use (`_git_trees`)."""
+    rest = [w for w in rest if not re.match(r"\d*[<>]", w)]            # a redirection is no word of git's
+    if rest[:1] and rest[0] in ("-h", "--help"):
+        return True
+    if verb in FIRST_WORD:
+        return bool(rest[:1]) and rest[0] in LEAVES_IT[verb]
+    # -u writes the work tree, whatever index it writes (girsa-verifier's MEDIUM 1 on notes/PLAN-GIT-CLASSIFICATION.md)
+    if verb == "read-tree" and any(w[:1] == "-" and w[1:2] != "-" and "u" in w for w in rest):
+        return False
+    if verb in ("read-tree", "update-index") and _temp_index(command, masked, m):
+        return True                         # a temporary index: the tree's own is untouched
+    if verb == "read-tree" and any(w.startswith("--index-output=") for w in rest):
+        return True
+    if verb == "update-index" and rest and all(w in ("--refresh", "--really-refresh", "-q") for w in rest):
+        return True                         # the stat cache only, as `git status` refreshes it
+    if verb == "symbolic-ref":
+        return not any(w in ("-d", "--delete") for w in rest) and len([w for w in rest if w[:1] != "-"]) <= 1
+    if verb == "checkout-index":            # into a folder outside the tree; a relative prefix is a string before
+        prefixes = [w[len("--prefix="):] for w in rest if w.startswith("--prefix=")]   # each path (its MEDIUM 1)
+        inside = lambda p: any((os.path.normpath(p) + "/").startswith(os.path.normpath(t) + "/") for t in trees)
+        return "--temp" in rest or bool(prefixes) and all(os.path.isabs(p) and not inside(p) for p in prefixes)
+    return any(w in rest for w in LEAVES_IT.get(verb, ()))
 # THE REPOSITORY'S CONFIG IS WRITTEN BY NO ROLE in a guarded tree (item 6b; girsa-architect's B): the main clone and
 # every worktree share it, and a key there changes what every role's git does - an alias, `remote.<name>.mirror`, a
 # push refspec, a URL - while the file tools are refused that same file. `git config` in any form but these reads, and
@@ -618,12 +696,19 @@ def refusal(role, command, cwd, main_tree=is_main_tree, read=_read, depth=0, pro
         if verb not in GIT_VERBS:
             return (f"refused by the role guard: `git {verb}` is not one of git's own commands - an alias or an add-on "
                     "runs what this guard cannot read; write the git command it stands for" + no_role)
+        if verb in REFUSED_VERBS or (verb == "submodule" and rest[:1] == ["foreach"]):
+            # for every role, the operator too (notes/PLAN-GIT-CLASSIFICATION.md; `submodule foreach` for the same
+            # reason as for-each-repo - girsa-verifier's NOTE 2 on the plan)
+            why = REFUSED_VERBS.get(verb) or ("runs a shell command in each submodule, a command this guard cannot "
+                                              "read - run it in each submodule by name")
+            return f"refused by the role guard: `git {verb}` {why}" + no_role
         if verb in ("config", "remote") and _config_writes(verb, _split(command[m.start(3):m.end(3)])):
             why = _config_refusal(command, masked, m, cwd, verb, guarded)
             if why:
                 return why + no_role
-        if verb in CHANGES_MAIN and not ((verb == "stash" and rest[:1] and rest[0] in LEAVES_IT["stash"])
-                                         or (verb == "apply" and any(w in rest for w in LEAVES_IT["apply"]))):
+        # a pin or a foreign repository: refused to every role, merge --ff-only too, but a form that changes nothing
+        if verb in CHANGES_MAIN and not (verb != "merge" and _leaves_it(verb, rest, command, masked, m,
+                                                                        _git_trees(command, masked, m, cwd))):
             for where in _git_trees(command, masked, m, cwd):
                 pin = pin_of(where)                                 # a pin: refused to every role, merge --ff-only too
                 if pin:
@@ -666,8 +751,7 @@ def refusal(role, command, cwd, main_tree=is_main_tree, read=_read, depth=0, pro
             return ("refused by the role guard: `git stash` in this repository - its stash list is shared by the main "
                     "clone and every worktree, so a pop can take another role's work - set the work aside as a patch: `git diff > <file>.patch`" + no_role)
         elif verb in CHANGES_MAIN and role != OPERATOR:
-            leaves = LEAVES_IT.get(verb, ())
-            if (rest[:1] and rest[0] in leaves) if verb == "stash" else any(w in rest for w in leaves):
+            if _leaves_it(verb, rest, command, masked, m, _git_trees(command, masked, m, cwd)):
                 continue
             if any(map(main_tree, _git_trees(command, masked, m, cwd))):
                 return (f"refused by the role guard: `git {verb}` would change the main tree or a root the "

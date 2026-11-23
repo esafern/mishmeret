@@ -507,6 +507,73 @@ def test_the_guard_knows_every_command_git_lists():
     assert listed and listed <= role_guard.GIT_VERBS, sorted(listed - role_guard.GIT_VERBS)
 
 
+def test_every_git_command_is_placed_in_one_set():
+    """notes/PLAN-GIT-CLASSIFICATION.md (the first project's Board #302 A): git's list is a classification - each name
+    in exactly one of CHANGES_MAIN, OWN_RULES, WRITES_ELSEWHERE and READS, GIT_VERBS their union; a name in two fails
+    here, and a name git lists but no set holds fails the test above. The sets' sizes as the plan counted them."""
+    import role_guard as rg
+    sets = {"CHANGES_MAIN": rg.CHANGES_MAIN, "OWN_RULES": rg.OWN_RULES, "WRITES_ELSEWHERE": rg.WRITES_ELSEWHERE,
+            "READS": rg.READS}
+    names = [n for s in sets.values() for n in s]
+    assert len(names) == len(set(names)), sorted(n for n in set(names) if names.count(n) > 1)
+    assert set(names) == rg.GIT_VERBS
+    assert [len(s) for s in sets.values()] == [53, 6, 65, 57], {k: len(v) for k, v in sets.items()}
+    assert set(rg.REFUSED_VERBS) <= rg.OWN_RULES and set(rg.LEAVES_IT) <= rg.CHANGES_MAIN
+
+
+def test_the_eight_git_writers_and_the_found_ones_are_refused_where_reset_hard_is():
+    """notes/PLAN-GIT-CLASSIFICATION.md: #302's eight (history, replay, symbolic-ref, read-tree, update-index,
+    checkout-index, sparse-checkout, filter-branch) and the 27 the classification found are refused to every role but
+    the operator in the main tree, as `reset --hard` is; a form that changes nothing there runs. girsa-verifier's
+    MEDIUM 1 (read-tree -u writes the tree on any index; a relative checkout-index prefix writes in it) and LOW 1 (a
+    GIT_INDEX_FILE naming the tree's own index); the prototype's first-run false refusals (help, a redirection, an
+    exported temporary index); a push by another verb, and a verb running commands the guard cannot read, refused for
+    every role. Placeholder paths: the main tree /work/book, a worktree /work/book-builder."""
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("role_guard", os.path.join(PKG, "role_guard.py"))
+    rg = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(rg)
+    main, wt = "/work/book", "/work/book-builder"
+    is_main = lambda p: (os.path.normpath(p) + "/").startswith("/work/book/") and "/work/book/.git" not in p
+    no = lambda cmd, cwd=main, role="ex-builder": rg.refusal(role, cmd, cwd, main_tree=is_main, read={}.get,
+                                                             guarded=lambda p: False)
+    writes = ["git history drop HEAD~1", "git replay --advance main HEAD~2..HEAD", "git symbolic-ref HEAD refs/heads/x",
+              "git symbolic-ref -d HEAD", "git read-tree HEAD", "git update-index --assume-unchanged a",
+              "git update-index --chmod=-x a", "git checkout-index -a -f", "git sparse-checkout set a",
+              "git filter-branch --force HEAD",
+              # found by the classification
+              "git stage a", "git bisect start", "git merge-file a b c", "git merge-recursive HEAD -- a b", "git rerere",
+              "git submodule update", "git fast-import", "git refs migrate --ref-format=reftable",
+              # girsa-verifier's MEDIUM 1 and LOW 1
+              "GIT_INDEX_FILE=/tmp/i git read-tree --reset -u HEAD~1", "git read-tree --reset -u --index-output=/tmp/i HEAD~1",
+              "git read-tree -mu HEAD", "git checkout-index -a -f --prefix=./", "git checkout-index -a --prefix=sub/",
+              "git checkout-index -a --prefix=/work/book/x/", "GIT_INDEX_FILE=/work/book/.git/index git update-index --add a",
+              "GIT_INDEX_FILE=$GIT_DIR/index git read-tree HEAD",
+              # an exported temporary index unset before git: the tree's own again; a read form's word after a write
+              "export GIT_INDEX_FILE=/tmp/i; unset GIT_INDEX_FILE; git read-tree HEAD", "git stash push -m show"]
+    for cmd in writes:
+        why = no(cmd)
+        assert why and "would change the main tree" in why, cmd
+        assert no(cmd, wt) is None and no(cmd, role="ex-operator") is None, cmd
+    for cmd in ("git history drop HEAD~1 --dry-run", "git replay --ref-action=print --onto main x..y",
+                "git symbolic-ref --short HEAD", "git symbolic-ref HEAD", "git symbolic-ref refs/remotes/origin/HEAD 2>&1",
+                "git read-tree -n HEAD", "GIT_INDEX_FILE=/tmp/i git read-tree HEAD", "git read-tree --index-output=/tmp/i HEAD",
+                "export GIT_INDEX_FILE=/tmp/i; git read-tree HEAD; git update-index --add --cacheinfo 100644,b,x; unset GIT_INDEX_FILE",
+                "git update-index --refresh", "git checkout-index -a --prefix=/tmp/x/", "git checkout-index --temp a",
+                "git sparse-checkout list", "git history -h", "git replay -h", "git read-tree --help", "git bisect log",
+                "git submodule status", "git merge-file -p a b c", "git refs list", "git stash list"):
+        assert no(cmd) is None, cmd
+    for cmd in ("git send-pack origin main", "git http-push https://example.org/x main", "git for-each-repo --config=x -- push",
+                "git submodule foreach git push"):
+        for role, cwd in (("ex-operator", main), ("ex-builder", wt), ("ex-operator", "/tmp")):
+            why = no(cmd, cwd, role)
+            assert why and ("pushes without `git push`" in why or "cannot read" in why), (cmd, role)
+    # in a pin every role is refused a write, the operator too, and a form that changes nothing still runs
+    pin = os.path.join(REPO, "checkout", ".pins", "a" * 40)
+    assert "pinned Mishmeret tree" in no("git read-tree HEAD", pin, "ex-operator")
+    assert no("git symbolic-ref --short HEAD", pin, "ex-operator") is None
+
+
 def test_the_role_guard_lets_a_role_land_through_land_py_only_as_itself():
     """The reviewer, 2026-10-26, Board #86 A (girsa-verifier's MEDIUM 1 on the landing script's plan): tools/land.py runs
     git add, commit and merge as Python subprocesses the guard never sees, and takes the role as its second word. So
