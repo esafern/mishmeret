@@ -13,6 +13,15 @@ are `history`, `replay`, `symbolic-ref`, `read-tree`, `update-index`, `checkout-
 (e5a4d40) wrote git's own list down, `GIT_VERBS`, 181 names from `git --list-cmds=main` on git 2.56.1, tested as a
 superset of what git lists.
 
+GIRSA-ARCHITECT'S ANSWER on the two departures (the first project's design-study/MISHMERET-GIT-CLASSIFICATION-ARCHITECT.md
+at 046d111f): both agreed. Four sets, since only CHANGES_MAIN decides a refusal and the others are labels; its caution
+taken: WRITES ELSEWHERE holds the writers of the shared repository (refs, tags, objects, config), not a harmless set.
+The 27 are within #302 A, send-pack and http-push within the push rule, for-each-repo within item 6a: none goes back to
+the reviewer. Its finding beyond #302, the reviewer's Board #304 for a later piece: the guard judges a ref by the
+folder a command runs in, but the ref is the repository's - from a worktree `update-ref refs/heads/<main's branch>`,
+and from anywhere `tag -f known-good`, pass both the guard and git. With it, this plan's found writers below. Nothing
+of #304 is built here.
+
 THE RECORD before the measure (girsa-verifier's count, that project's #3010, over 1,055 transcripts):
 - `read-tree` and `update-index`, with `replay` and `history`, ran 72 times, most on copies or against a temporary
   index of their own.

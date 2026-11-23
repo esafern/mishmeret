@@ -19,6 +19,15 @@ M17. **[2026-11-23, git's command list as a classification (notes/PLAN-GIT-CLASS
     * **[19:26]** Branch `builder-git-classification` from main ff94f3f: the plan, with two departures for review (four
       sets, not two; the 27 found and 3 own-rule names beyond the eight) and five writers found for the reviewer,
       not built. To send at its commit, live: the HANDOFF to girsa-verifier; the departures to girsa-architect.
+      Sent, live, both, at f49111a.
+    * girsa-architect's ANSWER, live: the first project's design-study/MISHMERET-GIT-CLASSIFICATION-ARCHITECT.md at
+      046d111f - both departures agreed, none back to the reviewer; its finding beyond #302 (a ref judged by the folder,
+      not the repository: `update-ref refs/heads/<main's branch>` from a worktree, `tag -f known-good` from anywhere)
+      is the reviewer's Board #304, a later piece with my five found writers. Into the plan's head.
+    * The pi review's NOTE 1, measured on the prototype: the replacement bash passing four arguments ran with no
+      PI_SESSION_ID; passing every argument, it had it. The plan revised on the review: LOW 1 (Write's content, each
+      of an edit's edits as an Edit), LOW 2 (the project's own hook, CLAUDE_PROJECT_DIR the folder pi started in),
+      NOTE 1, NOTE 2 (the config naming `runner` lands with its pin bump), NOTE 3 (`--no-extensions`); #303 A.
 
 M16. **[2026-11-23, skills, the status report, and a role run by pi (notes/PLAN-PI-ROLE.md)]**
     * The seven, after M15: girsa-verifier's ANSWER, live: VERIFIED at 958474f (its review's build section, the first

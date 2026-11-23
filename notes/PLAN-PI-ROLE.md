@@ -36,7 +36,26 @@ design-study/MISHMERET-PI-ROLE-ARCHITECT.md at 78c32beb), all taken:
 - The README names pi on Windows and Linux as unmeasured.
 - For the first project: its Board #168 A (a session run outside Claude Code only hands off) binds it. Whether a
   guarded pi role may commit and land there is the reviewer's, on its Board #303. Mishmeret's build does not wait on
-  it: the extension guards a pi role either way.
+  it: the extension guards a pi role either way. ANSWERED A by the reviewer, 2026-11-23 18:50 (in this session at
+  18:46: "yes may commit"): once the extension has landed and been verified, a `runner: pi` role commits and lands as
+  any role does; #168 A binds only sessions with no guard.
+
+GIRSA-VERIFIER'S REVIEW (the first project's design-study/step5-verification/mishmeret-pi-role-plan-2026-11-23/
+REVIEW.md, on 0600059): READY on three conditions, each taken below.
+- LOW 1: an edit's and a write's text reach the time rule. The prototype gave Edit and Write `{file_path}` alone, and
+  the time rule reads Edit's old_string/new_string and Write's content. pi's records: 12 of 12 edits are
+  `{path, edits: [{oldText, newText}]}`, the write `{path, content}`.
+- LOW 2: one path to the guard (DON'T REINVENT THE WHEEL). Claude Code runs the project's own hook,
+  `python3 "$CLAUDE_PROJECT_DIR/.claude/hooks/role_guard.py"`, whose shim runs the guard of the commit the checkout's
+  config pins. "The role_guard.py beside" the extension is the tree agents.sh loaded it from, once, at start: in a
+  worktree whose branch bumps the pin, a pi role would be judged by other code than a Claude Code role there.
+- NOTE 1, measured since (the prototype, its replacement bash): passing four of execute's five arguments drops pi's
+  `ctx`. Bash then ran with no `PI_SESSION_ID`; passing every argument through, it had it. The cwd bash ran in equalled
+  the session's in both runs, but there they are the same folder; a run where they differ is the build's test.
+- NOTE 2: a config naming `runner` is refused by any pin older than this build (config.py checks role keys exactly).
+  This piece adds it to no config; the step that first names a role `runner: pi` lands with its project's pin bump.
+- NOTE 3: agents.sh's line passes `--no-extensions`, as the prototype ran: by pi's docs `-e` still loads, and no other
+  extension's bash can then replace the guarded one.
 
 THE MEASURE, a prototype in the scratchpad: no model called, nothing outside the scratchpad written. A scripted
 provider (an OpenAI-compatible fake server on 127.0.0.1, registered by a second extension) gave pi fixed tool calls.
@@ -72,17 +91,22 @@ Not in this piece, and why (each listed in the README as what a pi role lacks):
 1. `mishmeret/pi_guard.ts`, the extension, loaded by `-e` from the pinned tree (never from `.pi/extensions/`, which
    loads only once the project is trusted):
    - It registers `--role` (Q1).
-   - On `tool_call`, for bash, edit and write, it runs the role_guard.py beside it in the same tree with the event
-     above. On any exit but 0, a timeout (20 s) or a fault, it blocks with the guard's words.
+   - On `tool_call`, for bash, edit and write, it runs the project's own hook, as Claude Code does:
+     `python3 <the project>/.claude/hooks/role_guard.py`, with CLAUDE_PROJECT_DIR set to the project - the folder pi
+     was started in, as Claude Code takes the folder a session starts in (LOW 2). The event: Bash `{command}`;
+     Write `{file_path, content}`; and an edit as one Edit `{file_path, old_string, new_string}` for each of its edits,
+     the call blocked if any is refused (LOW 1). On any exit but 0, a timeout (20 s) or a fault, it blocks with the
+     guard's words.
    - `read` passes, by name, as Claude Code's hook lets Read through. Any other tool is blocked, its name in the reason
      (Q3).
    - It replaces bash with pi's own bash, adding `CLAUDE_CODE_AGENT` (the role) through the spawn hook, after the
-     inherited environment (Q2).
+     inherited environment (Q2), and passing every argument of `execute` through, pi's `ctx` among them (NOTE 1).
 2. agents.sh: a role whose config entry names `"runner": "pi"` (an OPTIONAL role key; absent means claude) is
-   started as `pi --name R --role R -e <the tree>/mishmeret/pi_guard.ts`, plus `--thinking X` for the agent file's
-   effort, `--append-system-prompt` with the agent file's body, and the brief's line as its first message. It is
-   started fresh: no `--resume` for a pi role. When the extension file is missing, it starts nothing for that role and
-   says why (Q4).
+   started as `pi --no-extensions --name R --role R -e <the tree>/pi_guard.ts` (NOTE 3), plus `--thinking X` for the
+   agent file's effort, `--append-system-prompt` with the agent file's body, and the brief's line as its first
+   message. `<the tree>` is the one agents.sh itself runs from, the pin its project's shim names; which guard judges
+   is the project's hook (LOW 2), not that tree. It is started fresh: no `--resume` for a pi role. When the extension
+   file is missing, it starts nothing for that role and says why (Q4).
 3. config.py: `runner` in ROLE_KEYS, OPTIONAL, `claude` or `pi`; any other value refused.
 4. README: "A role run by pi" - how it is started, what guards it, the four things it lacks (above), and that pi on
    Windows and Linux is unmeasured.
@@ -124,16 +148,22 @@ Not in this piece, and why (each listed in the README as what a pi role lacks):
   - a missing guard blocking every call;
   - `CLAUDE_CODE_AGENT` in bash's environment equal to `--role`, over one the launching shell carried;
   - an edit (pi's `path`) resolved against the cwd;
-  - a tool the extension does not know blocked, its name in the reason (registered by a test extension).
-- agents.sh with a stub `pi`: a `runner: pi` role's line holds `-e`, `--role` and `--name`; a claude role's line is
-  unchanged; `--resume` starts the pi role fresh; a missing extension file starts nothing for that role.
+  - a tool the extension does not know blocked, its name in the reason (registered by a test extension);
+  - LOW 1: a write naming a time ahead of the clock blocked by the time rule; an edit whose second edit names one
+    blocked whole;
+  - LOW 2: the guard reached through the throwaway project's own `.claude/hooks/role_guard.py` (its shim, recording
+    that it ran), with CLAUDE_PROJECT_DIR the folder pi started in;
+  - NOTE 1: the folder bash ran in equals the cwd the guard judged, and PI_SESSION_ID is set (the sign `ctx` arrived).
+- agents.sh with a stub `pi`: a `runner: pi` role's line holds `--no-extensions`, `-e`, `--role` and `--name`; a
+  claude role's line is unchanged; `--resume` starts the pi role fresh; a missing extension file starts nothing for
+  that role.
 - config: `runner` absent, `claude` or `pi` accepted; any other value refused.
 
 ## For the first project
 
-Nothing in its config until it names a role `runner: pi`. Until then a pi session there runs unguarded, as the
-2026-11-22 one did. Its Board #168 A binds it meanwhile: a session run outside Claude Code only hands off. Whether a
-guarded pi role may commit and land there is the reviewer's, on its Board #303.
+Nothing in its config until it names a role `runner: pi`, with its pin bump to this build (NOTE 2). Until then a pi
+session there runs unguarded, as the 2026-11-22 one did, and its Board #168 A binds it: a session run outside Claude
+Code only hands off. After it, a guarded pi role commits and lands as any role does (#303 A).
 
 ## Appendix: the prototype extension, as measured
 
