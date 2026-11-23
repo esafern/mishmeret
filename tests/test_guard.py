@@ -549,6 +549,9 @@ def test_the_eight_git_writers_and_the_found_ones_are_refused_where_reset_hard_i
               "git read-tree -mu HEAD", "git checkout-index -a -f --prefix=./", "git checkout-index -a --prefix=sub/",
               "git checkout-index -a --prefix=/work/book/x/", "GIT_INDEX_FILE=/work/book/.git/index git update-index --add a",
               "GIT_INDEX_FILE=$GIT_DIR/index git read-tree HEAD",
+              # its LOW 1 on 6575743: a substitution other than mktemp's is unknown, so the tree's own
+              "GIT_INDEX_FILE=$(git rev-parse --git-dir)/index git read-tree HEAD~1",
+              "GIT_INDEX_FILE=$(git rev-parse --git-path index) git update-index --cacheinfo 100644,b,x",
               # an exported temporary index unset before git: the tree's own again; a read form's word after a write
               "export GIT_INDEX_FILE=/tmp/i; unset GIT_INDEX_FILE; git read-tree HEAD", "git stash push -m show"]
     for cmd in writes:
@@ -558,6 +561,7 @@ def test_the_eight_git_writers_and_the_found_ones_are_refused_where_reset_hard_i
     for cmd in ("git history drop HEAD~1 --dry-run", "git replay --ref-action=print --onto main x..y",
                 "git symbolic-ref --short HEAD", "git symbolic-ref HEAD", "git symbolic-ref refs/remotes/origin/HEAD 2>&1",
                 "git read-tree -n HEAD", "GIT_INDEX_FILE=/tmp/i git read-tree HEAD", "git read-tree --index-output=/tmp/i HEAD",
+                "GIT_INDEX_FILE=$(mktemp) git read-tree HEAD", 'GIT_INDEX_FILE="$(mktemp -d)/index" git update-index --refresh',
                 "export GIT_INDEX_FILE=/tmp/i; git read-tree HEAD; git update-index --add --cacheinfo 100644,b,x; unset GIT_INDEX_FILE",
                 "git update-index --refresh", "git checkout-index -a --prefix=/tmp/x/", "git checkout-index --temp a",
                 "git sparse-checkout list", "git history -h", "git replay -h", "git read-tree --help", "git bisect log",

@@ -223,7 +223,11 @@ GIT_VERBS = CHANGES_MAIN | OWN_RULES | WRITES_ELSEWHERE | READS
 
 def _own_index(value):
     """True when a GIT_INDEX_FILE value names a tree's own index (`.git/index`, a worktree's under `.git/worktrees/`,
-    `$GIT_DIR/index`) - no temporary one (girsa-verifier's LOW 1 on notes/PLAN-GIT-CLASSIFICATION.md)."""
+    `$GIT_DIR/index`) - no temporary one (girsa-verifier's LOW 1 on notes/PLAN-GIT-CLASSIFICATION.md) - or may: a
+    command substitution is unknown, so taken as the tree's own, but a `$(mktemp ...)` (its LOW 1 on 6575743:
+    `$(git rev-parse --git-dir)/index` is .git/index; the record's 5 substitutions are all mktemp's)."""
+    if "$(" in value or "`" in value:
+        return not re.fullmatch(r"(?:\$\(\s*mktemp\b[^()`]*\)|`\s*mktemp\b[^`]*`)(?:/[^$`]*)?", value.strip())
     return "GIT_DIR" in value or (os.path.basename(value.rstrip("/")) == "index" and ".git" in value.split("/"))
 
 
