@@ -1,0 +1,16 @@
+[
+  ["extract: pi's format", "elif part.get(\"type\") == \"toolCall\" and part.get(\"name\") == \"bash\":", "elif False:", ".claude/skills/guard-measure/extract.py"],
+  ["extract: pi's cwd from the header", "cwd = rec.get(\"cwd\") or \"\"", "pass", ".claude/skills/guard-measure/extract.py"],
+  ["extract: each pair once", "if (cmd, cwd) not in seen:", "if True:", ".claude/skills/guard-measure/extract.py"],
+  ["compare: newly refused", "elif not o[\"why\"] and n[\"why\"]:", "elif False:", ".claude/skills/guard-measure/compare.py"],
+  ["compare: the length check", "if not len(cmds) == len(old) == len(new):", "if False:", ".claude/skills/guard-measure/compare.py"],
+  ["decide: the refusal written", "json.dumps({\"i\": i, \"why\": judge(rg, role, c, cwd, read)})", "json.dumps({\"i\": i, \"why\": None})", ".claude/skills/guard-measure/decide.py"],
+  ["rules: every rule the hook runs", "\"check_status_refusal\", \"piped_check_refusal\")", "\"check_status_refusal\")", ".claude/skills/guard-measure/rules.py"],
+  ["rules: a rule an older guard lacks", "if rule is None:\n            continue", "if False:\n            continue", ".claude/skills/guard-measure/rules.py"],
+  ["probe: the decision printed", "{'REFUSED' if why else 'let through':11}", "{'let through':11}", ".claude/skills/guard-measure/probe.py"],
+  ["probe: the copy rule's placeholder worktree", "\"is_worktree\": lambda p:", "\"is_worktree_unused\": lambda p:", ".claude/skills/guard-measure/probe.py"],
+  ["mutate: the baseline", "    if rc != 0:\n        print(f\"BASELINE EXIT", "    if False:\n        print(f\"BASELINE EXIT", ".claude/skills/guard-measure/mutate.py"],
+  ["mutate: RED only on exit 1", "verdict = \"RED  \" if rc == 1 else", "verdict = \"RED  \" if rc else", ".claude/skills/guard-measure/mutate.py"],
+  ["mutate: a green fails the run", "bad |= rc != 1", "pass", ".claude/skills/guard-measure/mutate.py"],
+  ["mutate: found exactly once", "if count != 1:", "if False:", ".claude/skills/guard-measure/mutate.py"]
+]

@@ -57,19 +57,52 @@ def test_mutate_says_red_green_and_not_found_and_probe_judges_on_placeholder_pat
                                               "def test_f():\n    assert f() == 1\n")
     mutations = tmp_path / "m.json"
 
-    def mutate(*rows):
+    def mutate(*rows, select=("tests", "-q")):
         mutations.write_text(json.dumps(list(rows)))
-        r = run("mutate.py", str(tree), "mishmeret/x.py", str(mutations), str(tmp_path / "scratch"), "--", "tests", "-q")
+        r = run("mutate.py", str(tree), "mishmeret/x.py", str(mutations), str(tmp_path / "scratch"), "--", *select)
         return r.returncode, r.stdout.splitlines()
     red, green, absent = ["the rule", "return 1", "return 2"], ["a comment", "# the rule", "# a word"], ["absent", "nowhere", "x"]
     rc, lines = mutate(red)
-    assert rc == 0 and lines[0].startswith("RED   the rule") and "assert 2 == 1" in lines[0], lines
-    assert mutate(red, green) == (1, [lines[0], "GREEN a comment  "]), "a rule whose test stays green fails the run"
-    assert mutate(absent) == (1, ["NOT FOUND ONCE (0): absent"])
+    assert rc == 0 and lines[0] == "BASELINE passed" and lines[1].startswith("RED   the rule"), lines
+    assert "assert 2 == 1" in lines[1], lines
+    assert mutate(red, green) == (1, lines[:2] + ["GREEN a comment  "]), "a rule whose test stays green fails the run"
+    assert mutate(absent) == (1, ["BASELINE passed", "NOT FOUND ONCE (0): absent"])
+    # girsa-verifier's LOW 2 on 59f84a2: only pytest's exit 1 is RED - a broken file (exit 2) is not a rule's test
+    # failing, and a selection that collects nothing (exit 5) stops at the baseline
+    rc, lines = mutate(["a broken file", "return 1", "return ("])
+    assert rc == 1 and lines[1].startswith("EXIT 2 a broken file"), lines
+    rc, lines = mutate(red, select=("tests", "-q", "-k", "nothing_has_this_name"))
+    assert rc == 1 and len(lines) == 1 and lines[0].startswith("BASELINE EXIT 5"), lines
     assert (tree / "mishmeret" / "x.py").read_text().endswith("return 1  # the rule\n"), "the tree itself untouched"
+    # the probe asks every Bash rule the hook runs (its LOW 1: a piped check had read as let through)
     cases = tmp_path / "cases.json"
     cases.write_text(json.dumps([["ex-builder", "/work/book-builder", "git -C /work -C book reset --hard"],
+                                 ["ex-builder", "/work/book-builder", "python3 -m pytest tests | tail -3"],
+                                 ["ex-builder", "/work", "cp -r /work/book-builder /tmp/c"],
                                  ["ex-builder", "/work/book-builder", "git status"]]))
     r = run("probe.py", os.path.dirname(PKG), str(cases))
     assert r.returncode == 0, r.stderr
-    assert [line.split()[0] for line in r.stdout.splitlines()] == ["REFUSED", "let"], r.stdout
+    assert [line.split()[0] for line in r.stdout.splitlines()] == ["REFUSED", "REFUSED", "REFUSED", "let"], r.stdout
+
+
+def test_both_scripts_judge_by_the_rules_the_hook_runs():
+    """girsa-verifier's LOW 1 on 59f84a2: decide.py held a hand copy of check()'s rules and probe.py asked one of
+    five, and nothing held them to the hook. Now both judge by rules.RULES, and check()'s own calls are read here: a
+    rule in neither RULES nor LEFT_OUT fails, and RULES keeps check()'s order. A rule an older guard lacks is not
+    asked."""
+    import ast
+    sys.path.insert(0, SKILL)
+    import rules
+    tree = ast.parse(open(os.path.join(PKG, "role_guard.py"), encoding="utf-8").read())
+    check = next(f for f in tree.body if isinstance(f, ast.FunctionDef) and f.name == "check")
+    called = [n.func.id for n in ast.walk(check) if isinstance(n, ast.Call) and isinstance(n.func, ast.Name)
+              and n.func.id.endswith("refusal")]
+    assert set(called) == set(rules.RULES) | set(rules.LEFT_OUT), called
+    assert [n for n in called if n in rules.RULES] == list(rules.RULES), called
+    for script in ("decide.py", "probe.py"):
+        text = open(os.path.join(SKILL, script), encoding="utf-8").read()
+        assert "judge(" in text and "_refusal(" not in text, script
+    # lacking the three rules between its first and its last, which alone refuses
+    older = type("OlderGuard", (), {"refusal": staticmethod(lambda role, command, cwd, read=None: None),
+                                    "piped_check_refusal": staticmethod(lambda command, cwd, read=None: f"piped {command}")})
+    assert rules.judge(older, "ex-builder", "x", "/w", None) == "piped x"

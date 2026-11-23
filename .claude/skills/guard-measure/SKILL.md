@@ -26,9 +26,11 @@ thought of; the record shows what sessions actually type.
    tests/test_guard.py, on placeholder paths.
 4. EACH RULE RED WITH IT TAKEN OUT: one `[name, old, new]` per rule in a JSON list, `old` the rule's own text, then
    `python3 -I mutate.py <the worktree> mishmeret/role_guard.py MUTATIONS <scratch> -- tests/test_guard.py -k "<the
-   new tests>" -q -x`. Every line must read RED. A GREEN is answered before the piece goes on: either the tests cannot
-   see the rule, or the rule does nothing (THE MUTATION THAT DID NOT FAIL). Add the case that pins it, or delete the
-   rule.
+   new tests>" -q -x`. It runs the selection unmutated first, and stops unless that passes. Then every line must read
+   RED, which is pytest's exit 1 alone: `EXIT 2` (a broken file) or `EXIT 5` (nothing collected) is not a rule's test
+   failing. A GREEN is answered before the piece goes on: either the tests cannot see the rule, or the rule does
+   nothing (THE MUTATION THAT DID NOT FAIL). Add the case that pins it, or delete the rule. A row may name its own
+   file as a fourth element.
 5. RULE 45, OLD AGAINST NEW ON THE WHOLE RECORD:
    - The old side: `git -C ~/work/mishmeret archive <main> mishmeret | tar -x -C <scratch>/old`.
    - The new side: `cp -c -R mishmeret <scratch>/new/` from the worktree. Never the worktree itself, and never a copy
@@ -54,3 +56,9 @@ thought of; the record shows what sessions actually type.
 - A long run works on a snapshot, never on the tree being edited (DO NOT MUTATE A TREE YOU ARE EDITING). `decide.py`
   memoizes git's answers within one run only.
 - pi and other runners: `extract.py` reads pi's sessions too, and a pi role's commands are judged like any other.
+- ONE LIST OF RULES: `decide.py` and `probe.py` judge by `rules.py`'s RULES - every Bash rule `role_guard.check` runs,
+  in its order. A test reads check()'s own calls and fails on a rule in neither RULES nor LEFT_OUT, so a new rule is
+  placed before any measure runs.
+- THE SCRIPTS' OWN CHECK: `python3 -I mutate.py <the worktree> .claude/skills/guard-measure/extract.py
+  .claude/skills/guard-measure/self-check.json <scratch> -- tests/test_guard_measure.py -q` - each row takes one
+  script's key line out; every line must read RED. A change to a script adds its row.
