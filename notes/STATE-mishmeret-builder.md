@@ -24,25 +24,31 @@ Rewritten in place when a piece lands and at the end of a session; the log is `n
 
 ## Now
 
-- THE KNOWN GAPS' SEVEN (notes/PLAN-KNOWN-GAPS-SEVEN.md; the first project's #223 B; M15), on branch
-  `builder-known-gaps-seven` from main d9fda25: plan 977295f (girsa-verifier READY), the build e5a4d40 (suite 161
-  passed; rule 45: 6 newly refused for each of the first project's roles, each planned, 0 let through, 0 faults), and
-  the notes commit after it. Items 3-6, 9, 10, 15, 17 (a quoted or escaped verb, a line continuation) and 18 (the pill
-  test, Chromium 1255's outline order).
-- Waiting: girsa-verifier's check at the notes commit (HANDOFF sent with it). The lane check's half of item 9 is
-  girsa-operator's own commit (notes/PLAN-KNOWN-GAPS-SEVEN-LANE-CHECK.md; sent with it).
-- Waiting on the reviewer: the first project's Board #302 (girsa-architect's) - whether the eight git writers in no
-  verb set (history, replay, symbolic-ref, read-tree, update-index, checkout-index, sparse-checkout, filter-branch)
-  are refused in the main tree. With its answer, item 6a's list becomes the classification (each name in a verb set or
-  in a named set that changes nothing; a test red on a name in neither): a round on this branch or the next piece.
+- THE KNOWN GAPS' SEVEN (notes/PLAN-KNOWN-GAPS-SEVEN.md; M15): VERIFIED at 958474f, merged by girsa-operator (main
+  958474f, then its dc30cc2, the lane check's half). Not pushed (main 5 ahead of origin: the reviewer's word in
+  girsa-operator's pane). The first project's pin bump next, girsa-verifier first; it pins 075f49a.
+- A ROLE RUN BY PI (notes/PLAN-PI-ROLE.md; M16), branch `builder-pi-role` from main dc30cc2: the plan, its measure a
+  prototype in the scratchpad (pi-proto/: guard.ts, guard2.ts, fake.ts, fake_server.py; the appendix holds the
+  extension). Waiting: girsa-architect's answer to its four design questions; then girsa-verifier's review; then the
+  build.
+- MISHMERET'S OWN SKILLS (M16), branch `builder-own-skills`, stacked on 958474f: status-report, ca105a6 and 0ec46be;
+  to rebase onto main before it lands. Its first report: Mishmeret's Board, Q&A #1.
+- Waiting on the reviewer: the first project's Board #302 (the eight git writers in no verb set). With its answer, item
+  6a's list becomes the classification (each name in a verb set or in a named set that changes nothing; a test red on
+  a name in neither).
 - Done with, to delete: every merged `builder-*` branch.
 - To resume: `git -C ~/work/mishmeret log --oneline -3`; `git -C ~/work/mishmeret-builder status -sb`; the Board;
   #302 in the first project's Board record (`~/work/girsa-board/board.jsonl`).
 
 ## Next, in order
 
-1. girsa-verifier's findings on the seven, fixed in one round; then girsa-operator's merge.
-2. Item 6a's classification, on #302's answer.
+1. PI: girsa-architect's answer, girsa-verifier's review, the build (the reviewer: "before the skills do the plan and
+   design question").
+2. THE SKILLS (the reviewer's "Both" and "all of the above"): the guard-measure skill with its scripts (extract,
+   decide, compare, mutate), Mishmeret's own, on `builder-own-skills`; then a plan for the skills shipped to every
+   project - status-report made general, landing, sessions, push and pin - its first measure how a project, and a pi
+   role (`--skill PATH`), takes a pinned skill.
+3. Item 6a's classification, on #302's answer.
 
 ## Open
 

@@ -3,6 +3,38 @@
 Findings, decisions and open work, each the moment it is known; a time from `date`. One item per run of work, newest
 first (`M01.`, `M02.` ...); what git records (what each commit did) is not repeated here.
 
+M16. **[2026-11-23, skills, the status report, and a role run by pi (notes/PLAN-PI-ROLE.md)]**
+    * The seven, after M15: girsa-verifier's ANSWER, live: VERIFIED at 958474f (its review's build section, the first
+      project's design-study/step5-verification/mishmeret-known-gaps-seven-2026-11-23/REVIEW.md: 161 passed on its
+      clean clone, the 25 mutations red, rule 45 reproduced byte for byte). Its NOTE 2, to girsa-operator: with 6a
+      pinned, the going-public step's `git filter-repo` is refused everywhere.
+    * The reviewer, in this session: "grab the status-report skill from girsa and add it to mishmeret. what other
+      skills are helpful here". MY PUSHBACK: the first project's skill names that project's books, release and files,
+      and this repository is public. A QUESTION, answered: "Both" - Mishmeret's own version, and one shipped to every
+      project - and all four others proposed (landing, guard measure, sessions, push and pin). Then: "do s-r first and
+      give me one".
+    * **[17:58]** Built on `builder-own-skills` (stacked on 958474f): .claude/skills/status-report/SKILL.md, ca105a6,
+      outside the lane on the reviewer's word (`--because`). Its first run found my own fault: step 4 read every
+      repository in `guard.foreign`, and one is a book's repository that pins nothing; fixed, 0ec46be. The report is
+      on Mishmeret's Board, Q&A #1.
+    * Sent, live: LANDED-READY to girsa-operator at 958474f (a restarted session, its state file holding the lane
+      check's request). Its ANSWER, live: MERGED - main d9fda25 to 958474f, then its own dc30cc2 (the lane check's half,
+      applied unchanged, 161 passed); main 5 ahead of origin, not pushed. LANDED to girsa-verifier, its Board message
+      #3030. Its finding: `.claude/lanes.txt` has no operator row, so the lane check fails the operator's own commits
+      under .claude/; asked of girsa-verifier.
+    * The reviewer: pi as a builder, with `--name` and no `--agent`. Read: pi 1.6.0, no extension installed, three
+      sessions; the 2026-11-22 one in the first project's main clone, 96 tool calls, worked as its operator, landing
+      by `CLAUDE_CODE_AGENT=<operator>` in its commands, unguarded (judged now: as that operator 5 refused, as its
+      builder 20). The reviewer: "before the skills do the plan and design question".
+    * The prototype (the plan's measure), scratch only, no model called: the guard as a pi extension blocks a push and
+      a main-tree write with the guard's words, passes `echo`, judges no `--role` as no role, blocks everything with no
+      guard, and gives bash the role through pi's spawn hook. MY SLIP: the first launch line set `CLAUDE_CODE_AGENT`,
+      and my own guard refused it - which is itself the plan's design question 2. MY SLIP: the first pi run waited on
+      stdin for 120 s; run again with stdin closed. MY SLIP: the plan's appendix was added by a script, not the Edit
+      tool.
+    * **[18:27]** Branch `builder-pi-role` from main dc30cc2: the plan. To send at its commit, live: its four design
+      QUESTIONS to girsa-architect. The review by girsa-verifier follows its answer, so it reads the design settled.
+
 M15. **[2026-11-23, the known gaps' seven (notes/PLAN-KNOWN-GAPS-SEVEN.md)]**
     * **[16:22]** Session start. Main d9fda25, one ahead of origin f2126a1 (the state commit, merged). The first
       project's #223, read in its Board's record: answered B, "Build all fifteen", 2026-11-13 16:05. Branch
@@ -44,6 +76,9 @@ M15. **[2026-11-23, the known gaps' seven (notes/PLAN-KNOWN-GAPS-SEVEN.md)]**
       a copy of the main clone; the two files taken back to HEAD by Edit. COMMITTED e5a4d40, land.py ran the suite:
       161 passed. To send at the notes commit, live: the HANDOFF to girsa-verifier, and the lane check's half to
       girsa-operator.
+    * Sent, live, at 958474f: the HANDOFF to girsa-verifier; a REQUEST to girsa-operator (the lane check's half, and
+      girsa-verifier's NOTE 1). girsa-operator's ANSWER, live: taken - applied and committed by it after VERIFIED and
+      the merge, kept in its state file for its next session; the repoint is with the reviewer.
 
 M14. **[2026-11-13, the known gaps (notes/PLAN-KNOWN-GAPS.md)]**
     * Two messages sent after M13's state commit (f031698) that M13 does not hold. A NOTE to girsa-operator at the
