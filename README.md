@@ -83,11 +83,28 @@ in the pane's prompt, and does not start a role twice in ten minutes; what it di
 While a night run is going it stands down and the run closes the session itself: at night nothing is started again,
 and `bash agents.sh` starts each closed role in its pane when you are back.
 
+## A role run by pi
+
+A role whose config entry names `"runner": "pi"` runs under pi (the coding agent `@earendil-works/pi-coding-agent`) instead of Claude Code. pi has
+no `--agent` and runs no Claude Code hook, so `agents.sh` starts it as `pi --no-extensions --name ROLE --role ROLE -e
+<the pinned tree>/mishmeret/pi_guard.ts`, with the agent file's effort as `--thinking`, the agent file appended to the
+system prompt, and its `initialPrompt` as the first message. The extension puts every bash, edit and write call to the
+project's own `.claude/hooks/role_guard.py`, as Claude Code does, and blocks it unless the guard lets it run; `read`
+runs, and any other tool is blocked. It sets `CLAUDE_CODE_AGENT` to the role in each bash call, for `land.py` and
+`board.py`. `agents.sh` starts nothing for a pi role whose extension file is missing.
+
+What a pi role lacks: the reports and night-run steps that read Claude Code's transcripts (the token report, the
+status line, the keep-alive, the night run's context check, `agents.sh --resume`, which starts a pi role fresh); the
+finish hook (a pi role is cleared and started again by hand); and SendMessage between sessions (it is reached through
+the Board's `send` and `inbox`). A pin older than the commit that brought `runner` refuses a config naming it. Measured
+on macOS only (pi 1.6.0); Linux and Windows are not.
+
 ## Tests
 
     python3 -m pytest tests/
 
 They run against a placeholder project, with stub `tmux`, `claude`, `osascript` and `launchctl` first on PATH, so no
-test reaches a real tmux server or starts a session (`tests/conftest.py`).
+test reaches a real tmux server or starts a session (`tests/conftest.py`). The pi tests run pi itself with a scripted
+provider (`tests/pi/`, no model), and are skipped where `pi` is not on PATH.
 
 MIT licence (`LICENSE`).

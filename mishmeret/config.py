@@ -30,7 +30,7 @@ FIELDS = {
     "mishmeret_commit": str,    # the shim: the commit whose pinned tree every hook runs
     "project": str,             # board_server (the page's title), agents-morning (the morning alert)
     "roles": list,              # board, board_server, agents-lib, agents: [{name, short, colour, page_light, page_dark,
-                                # corner, tmux}]
+                                # corner, tmux, runner (OPTIONAL: "claude", absent, or "pi")}]
     "page_order": list,         # board_server: the corners' order on the page, by short name
     "operator": str,            # agents (the pane selected last), and the guard and the landing tool when they move
     "board_dir": str,           # board: the Board's record and its files
@@ -66,7 +66,7 @@ SERVER = {"entry": str, "folders": list, "page": str}
 # project can fill is that project's field in Mishmeret's code), and repositories no role changes (girsa-verifier's
 # review of that plan: a project's config then gains no field at its pin bump). Absent, its reader takes it as off.
 OPTIONAL = {"python", "drafts", "guard.homes", "guard.precommit", "guard.foreign", "land.ledger", "land.server",
-            "night.finish_command", "night.finish_exit_command", "expiring"}
+            "night.finish_command", "night.finish_exit_command", "expiring", "roles.runner"}
 # WHAT EXPIRES (notes/PLAN-EXPIRING.md): each item's keys, and each source's kind with the kinds of its value -
 # expiring.READERS reads one each (a test holds the two to one list); a name given twice is refused (girsa-architect:
 # its events' UIDs would be one)
@@ -89,7 +89,10 @@ START_READS = {"briefs": str, "logs": list}
 BUDGET = {"warn_percent": int}
 DRAFTS = {"pattern": str, "check": str, "passed": str, "failed": str, "timeout": int}
 ROLE_KEYS = {"name": str, "short": str, "colour": str, "page_light": str, "page_dark": str, "corner": bool,
-             "tmux": bool}
+             "tmux": bool, "runner": str}
+# WHAT STARTS A ROLE (notes/PLAN-PI-ROLE.md): Claude Code, absent or "claude"; or pi, guarded by mishmeret/pi_guard.ts.
+# A pin older than this commit refuses the key (its role keys are exact): it is named with the pin bump that brings it
+RUNNERS = ("claude", "pi")
 
 
 class ConfigError(Exception):
@@ -168,9 +171,12 @@ def load(p=None):
     for i, r in enumerate(cfg["roles"]):
         if not isinstance(r, dict):
             raise ConfigError(f"{p}: roles[{i}] is not a table")
-        _exact(r, ROLE_KEYS, f"{p}: roles[{i}]")
+        _exact(r, ROLE_KEYS, f"{p}: roles[{i}]", "roles.")
         for k, t in ROLE_KEYS.items():
-            _typed(f"roles[{i}].{k}", t, r[k], p)
+            if k in r:
+                _typed(f"roles[{i}].{k}", t, r[k], p)
+        if r.get("runner", "claude") not in RUNNERS:
+            raise ConfigError(f"{p}: roles[{i}].runner must be one of {', '.join(RUNNERS)}, not {r['runner']!r}")
         # a colour is "" only where the role is not drawn: no tmux pane, no corner on the page
         for k, used in (("colour", r["tmux"]), ("page_light", r["corner"]), ("page_dark", r["corner"])):
             if bool(r[k]) != used:
@@ -270,6 +276,7 @@ def shell():
     pairs.append(("MM_ROLES", " ".join(r["name"] for r in tmux)))
     pairs.append(("MM_LAYOUT", " ".join(by_short[s]["name"] for s in cfg["page_order"] if s in by_short)))
     pairs.append(("MM_COLOURS", " ".join(f"{r['name']}={r['colour']}" for r in tmux)))
+    pairs.append(("MM_PI_ROLES", " ".join(r["name"] for r in tmux if r.get("runner") == "pi")))
     pairs += [(f"MM_NIGHT_{k.upper()}", str(v)) for k, v in cfg["night"].items()]
     return "".join(f"{k}={shlex.quote(v)}\n" for k, v in pairs)
 

@@ -124,7 +124,9 @@ def test_a_project_without_the_optional_fields_loads_and_each_reader_takes_them_
     cfg = sample()
     for dotted in config.OPTIONAL:
         parent, _, key = dotted.rpartition(".")
-        (cfg[parent] if parent else cfg).pop(key)
+        held = cfg[parent] if parent else cfg
+        for table in held if isinstance(held, list) else [held]:       # roles.runner: a key of each role's entry
+            table.pop(key, None) if isinstance(held, list) else table.pop(key)
     write(cfg)
     loaded = config.load()
     assert not {"python", "drafts"} & set(loaded) and not {"homes", "precommit"} & set(loaded["guard"])
@@ -170,6 +172,27 @@ def test_the_shell_form_quotes_every_value(write):
     got = subprocess.run(["bash", "-c", 'eval "$1"; printf "%s|%s|%s" "$MM_PROJECT" "$MM_ROLES" "$MM_NIGHT_GAP"',
                           "-", out.stdout], capture_output=True, text=True)
     assert got.stdout == "Ex ample's|ex-operator ex-builder|7"
+
+
+def test_a_role_may_name_its_runner_and_the_shell_form_lists_the_pi_roles(write):
+    """notes/PLAN-PI-ROLE.md: a role entry's OPTIONAL `runner` - absent or "claude" (Claude Code) or "pi"; any other
+    refused by name. agents.sh reads the pi roles from MM_PI_ROLES."""
+    cfg = sample()
+    cfg["roles"][1]["runner"] = "pi"
+    cfg["roles"][0]["runner"] = "claude"
+    write(cfg)
+    loaded = config.load()
+    assert [r.get("runner") for r in loaded["roles"]] == ["claude", "pi", None]
+    out = subprocess.run([sys.executable, os.path.join(PKG, "config.py"), "--shell"], capture_output=True, text=True,
+                         env=os.environ)
+    got = subprocess.run(["bash", "-c", 'eval "$1"; printf "%s" "$MM_PI_ROLES"', "-", out.stdout], capture_output=True,
+                         text=True)
+    assert out.returncode == 0 and got.stdout == "ex-builder", (out.stderr, got.stdout)
+    for bad in ("codex", "", 1):
+        cfg["roles"][1]["runner"] = bad
+        write(cfg)
+        with pytest.raises(config.ConfigError, match=r"roles\[1\]\.runner"):
+            config.load()
 
 
 def test_every_field_is_read_by_some_module_or_the_projects_shim():

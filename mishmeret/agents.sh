@@ -32,6 +32,21 @@ effort_of() {   # role -> "--effort X" for the effort its agent file names, sinc
   sed -n 's/^effort: *\([^ ][^ ]*\).*/--effort \1/p' "$DIR/${MM_AGENT_FILES//\{role\}/$1}" 2>/dev/null | head -1
 }
 
+# A ROLE RUN BY PI (notes/PLAN-PI-ROLE.md; the config's `runner: pi`): pi has no --agent and runs no Claude Code hook, so
+# it is started with Mishmeret's guard extension beside this script (its tree is the pin the project's shim names) and
+# no other extension; its effort as pi's --thinking, its agent file appended to the system prompt, and the agent
+# file's initialPrompt as its first message (Claude Code sends that itself)
+is_pi() { case " $MM_PI_ROLES " in *" $1 "*) return 0 ;; esac; return 1; }
+pi_line() {   # role -> the command that starts it under pi
+  local agent="$DIR/${MM_AGENT_FILES//\{role\}/$1}" first
+  local line="cd '$DIR' && $CLEAN pi --no-extensions --name $1 --role $1 -e '$HERE/pi_guard.ts'"
+  line="$line$(sed -n 's/^effort: *\([^ ][^ ]*\).*/ --thinking \1/p' "$agent" 2>/dev/null | head -1)"
+  [ -f "$agent" ] && line="$line --append-system-prompt '$agent'"
+  first=$(sed -n 's/^initialPrompt: *"\{0,1\}\(.*[^"]\)"\{0,1\} *$/\1/p' "$agent" 2>/dev/null | head -1)
+  [ -n "$first" ] && line="$line '${first//\'/\'\\\'\'}'"
+  echo "$line"
+}
+
 # THE AGENTS' TMUX SETTINGS, LOADED EVERY TIME (the reviewer, 2026-10-11: "control-a z doesn't work today for zooming"):
 # the config's tmux_conf (here ~/.tmux-agents.conf) holds the Ctrl-A prefix, Alt+z zoom and mouse; nothing loaded it, so the tmux server agents.sh
 # started on 2026-10-09 ran on tmux's defaults. Loaded into the server whenever this script starts or attaches.
@@ -61,6 +76,14 @@ start_role() {   # pane-id role colour; fails when the role is left alone (its l
   if [ "$sid" = "live" ]; then
     tmux send-keys -t "$1" "echo '$2: its last session is still running elsewhere - not started again here'" Enter
     return 1
+  fi
+  if is_pi "$2"; then   # started fresh, never resumed: its sessions are pi's, not in Claude Code's transcripts
+    if [ ! -f "$HERE/pi_guard.ts" ]; then
+      tmux send-keys -t "$1" "echo '$2: not started - its runner is pi, and the guard extension $HERE/pi_guard.ts is missing'" Enter
+      return 1
+    fi
+    tmux send-keys -t "$1" "$(pi_line "$2")" Enter
+    return
   fi
   if [ "$MODE" = "--resume" ]; then
     case "$sid" in

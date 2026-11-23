@@ -379,6 +379,53 @@ def test_a_role_starts_with_no_project_config_inherited(tmp_path):
     assert not [s for s in starts if "--effort" in s and "ex-builder" not in s], starts
 
 
+def test_a_role_run_by_pi_starts_with_the_guard_extension_and_no_other(tmp_path):
+    """notes/PLAN-PI-ROLE.md: a role whose config names `runner: pi` is typed into its pane as pi with Mishmeret's guard
+    extension and no other (`--no-extensions`, girsa-verifier's NOTE 3), `--role` and `--name` its own, its effort as
+    --thinking, its agent file appended, its initialPrompt the first message; started fresh at --resume; and, with the
+    extension file missing (girsa-architect's Q4), not started at all, the pane saying why. Behind a stub tmux recording
+    what is typed; a claude role's line is as before."""
+    import shutil
+    from conftest import project_config
+    typed = tmp_path / "typed.txt"
+    stub = tmp_path / "bin"
+    stub.mkdir()
+    (stub / "tmux").write_text("#!/bin/sh\ncase \"$1\" in has-session) exit 1 ;; new-session|split-window) echo %1 ;;"
+                               f" send-keys) echo \"$*\" >> '{typed}' ;; esac\nexit 0\n", encoding="utf-8")
+    (stub / "tmux").chmod(0o755)
+    root = tmp_path / "p"
+    (root / ".claude" / "agents").mkdir(parents=True)
+    cfg = project_config(root)
+    next(r for r in cfg["roles"] if r["name"] == "ex-builder")["runner"] = "pi"
+    (root / ".claude" / "mishmeret.json").write_text(json.dumps(cfg), encoding="utf-8")
+    (root / ".claude" / "agents" / "ex-builder.md").write_text(
+        "---\nname: ex-builder\neffort: high\ninitialPrompt: \"Read `BRIEF.md` in full: it's the brief.\"\n---\nBody.\n",
+        encoding="utf-8")
+    env = dict(os.environ, PATH=f"{stub}{os.pathsep}{os.environ['PATH']}", TERM="dumb",
+               MISHMERET_CONFIG=str(root / ".claude" / "mishmeret.json"))
+    run = lambda script, *mode: subprocess.run(["bash", script, *mode], env=env, capture_output=True, text=True,
+                                               stdin=subprocess.DEVNULL, timeout=60)
+    for mode in ((), ("--resume",)):
+        typed.write_text("")
+        out = run(os.path.join(PKG, "agents.sh"), *mode)
+        lines = typed.read_text().splitlines()
+        pi_line = [line for line in lines if " pi --" in line]
+        assert out.returncode == 0 and len(pi_line) == 1, (mode, out.stderr, lines)
+        assert (f"&& env -u MISHMERET_CONFIG -u MISHMERET_CONFIG_BY_SHIM pi --no-extensions --name ex-builder "
+                f"--role ex-builder -e '{PKG}/pi_guard.ts' --thinking high --append-system-prompt "
+                f"'{root}/.claude/agents/ex-builder.md' 'Read `BRIEF.md` in full: it'\\''s the brief.' Enter") in pi_line[0], pi_line
+        assert not [line for line in lines if "claude --" in line and "ex-builder" in line], lines
+        assert len([line for line in lines if "claude --" in line]) == 4, lines          # the others, by Claude Code
+    # the extension missing from the tree agents.sh runs from: that role is not started, and its pane says why
+    copy = tmp_path / "mishmeret"
+    shutil.copytree(PKG, copy, ignore=shutil.ignore_patterns("pi_guard.ts", "__pycache__"))
+    typed.write_text("")
+    out = run(str(copy / "agents.sh"))
+    lines = typed.read_text().splitlines()
+    assert out.returncode == 0 and not [line for line in lines if " pi --" in line], lines
+    assert [line for line in lines if "ex-builder: not started - its runner is pi, and the guard extension" in line], lines
+
+
 def test_the_agents_scripts_share_one_clone_one_role_list_and_one_pane_lookup():
     """The duplication audit's E26 (the reviewer, Board #82 A, 2026-10-26: the scripts in the operator's lane): agents.sh
     and agents-morning.sh each kept the role list, the clone, the session-to-pane lookup and the transcript lookup, and
