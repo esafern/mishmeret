@@ -29,9 +29,10 @@ Rewritten in place when a piece lands and at the end of a session; the log is `n
   status-report and guard-measure, VERIFIED, guard-measure's two LOWs fixed (5bccb49). The first project pins
   075f49a; its pin bump is girsa-verifier's first.
 - THE CLASSIFICATION (notes/PLAN-GIT-CLASSIFICATION.md; M17; the first project's #302 A), branch
-  `builder-git-classification` from main ff94f3f: the plan at this commit, measured on a prototype in the scratchpad
-  (cls/mishmeret/role_guard.py; rule 45's files in r45c/). Waiting: girsa-verifier's review, girsa-architect on its
-  two departures; then the build.
+  `builder-git-classification` from main ff94f3f: plan f49111a (READY, girsa-architect's 046d111f agreed), the build
+  6575743 (166 passed; 19 rules red; rule 45: girsa-builder 3 newly refused, each meant, the rest 0). Waiting:
+  girsa-verifier's check at this commit. Rule 45's files in the scratchpad's r45c/ (build-*.jsonl, cmp-build-*.txt).
+  The reviewer's Board #304 there (refs judged by the repository, and the found writers) is a later piece.
 - THE PI PLAN (notes/PLAN-PI-ROLE.md; M16): girsa-verifier READY on three conditions - its LOW 1 (an edit's and a
   write's text to the time rule), LOW 2 (the extension calls the project's own hook, `.claude/hooks/role_guard.py`
   through the shim, not the guard beside it), NOTE 1 measured (pass every argument of bash's execute through, ctx
@@ -43,7 +44,7 @@ Rewritten in place when a piece lands and at the end of a session; the log is `n
 
 ## Next, in order
 
-1. THE CLASSIFICATION: the review, its findings, the build (the prototype's code, with tests and mutate.py), rule 45.
+1. THE CLASSIFICATION: girsa-verifier's findings in one round, then girsa-operator's merge.
 2. PI: the plan revised on the review's conditions, NOTE 1 measured, then the build.
 3. THE SKILLS SHIPPED TO EVERY PROJECT (the reviewer's "Both" and "all of the above"): a plan - status-report made
    general, landing, sessions, push and pin - its first measure how a project, and a pi role (`--skill PATH`), takes

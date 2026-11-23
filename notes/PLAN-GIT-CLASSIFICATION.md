@@ -22,6 +22,28 @@ folder a command runs in, but the ref is the repository's - from a worktree `upd
 and from anywhere `tag -f known-good`, pass both the guard and git. With it, this plan's found writers below. Nothing
 of #304 is built here.
 
+GIRSA-VERIFIER'S REVIEW (the first project's design-study/step5-verification/mishmeret-git-classification-plan-
+2026-11-23/REVIEW.md; its message #3072): READY on two conditions, both built with a test each.
+- MEDIUM 1: three "read forms" wrote the main tree's files, run in a throwaway repository on git 2.56.1:
+  - `GIT_INDEX_FILE=<tmp> git read-tree --reset -u HEAD~1`;
+  - `git read-tree --reset -u --index-output=<tmp> HEAD~1` (read-tree's -u updates the work tree whatever index it
+    writes);
+  - `git checkout-index -a -f --prefix=./` (the prefix is put before each path as a string).
+  Now read-tree's exemptions hold only without -u, and checkout-index's prefix is a read form only when it is
+  absolute and outside the tree.
+- LOW 1: GIT_INDEX_FILE naming the tree's own index (`.git/index`, `$GIT_DIR/index`) had counted as temporary; now it
+  does not.
+- NOTE 2: `submodule foreach` runs a command the guard cannot read, the reason for-each-repo is refused; it is now
+  refused for every role with it (no guarded tree has a .gitmodules today).
+- NOTE 3: rule 45 run on the build with all 53 in CHANGES_MAIN (below).
+- NOTE 1, for #304's piece: `git branch -m <new>` with one name renames the checked-out branch; `git init
+  --separate-git-dir=<path>` in an existing repository moves its .git.
+
+THE BUILD'S RUN OF RULE 45 (the build against main's guard, e5a4d40's, on the record as extracted above): girsa-builder
+3 newly refused, girsa-operator 0, mishmeret-builder 0, mishmeret-operator 0; 0 newly let through, 0 faults. The 3 are
+the prototype's second run's, each read there: 2 `update-index --cacheinfo` into the main clone's index, 1
+`symbolic-ref` write in a corpus root.
+
 THE RECORD before the measure (girsa-verifier's count, that project's #3010, over 1,055 transcripts):
 - `read-tree` and `update-index`, with `replay` and `history`, ran 72 times, most on copies or against a temporary
   index of their own.
@@ -84,7 +106,8 @@ THE MEASURE, a prototype on a scratch copy of `mishmeret/` (the guard-measure sk
      - `merge-file` (`-p`/`--stdout` a read), `merge-index`, `merge-one-file`, `merge-octopus`, `merge-ours`,
        `merge-recursive`, `merge-recursive-ours`, `merge-recursive-theirs`, `merge-resolve`, `merge-subtree` (merge's
        strategies), `mergetool`, `checkout--worker` (checkout's), `rerere` (replays resolutions into files);
-     - `submodule` and `submodule--helper` (status, summary and foreach are reads), `subtree`;
+     - `submodule` and `submodule--helper` (status and summary are reads; foreach is refused for every role, as
+       for-each-repo is), `subtree`;
      - `fast-import`, `p4`, `cvsimport`, `archimport`, `quiltimport`, `cvsexportcommit`, `cvsserver`,
        `receive-pack` (import or receive commits onto the branches here);
      - `refs` (`migrate` rewrites ref storage; list and verify are reads).

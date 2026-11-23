@@ -28,6 +28,15 @@ M17. **[2026-11-23, git's command list as a classification (notes/PLAN-GIT-CLASS
       PI_SESSION_ID; passing every argument, it had it. The plan revised on the review: LOW 1 (Write's content, each
       of an edit's edits as an Edit), LOW 2 (the project's own hook, CLAUDE_PROJECT_DIR the folder pi started in),
       NOTE 1, NOTE 2 (the config naming `runner` lands with its pin bump), NOTE 3 (`--no-extensions`); #303 A.
+      COMMITTED 7d6e9ad (both plans). Sent, live: a NOTE to girsa-verifier (its review's head moved; the pi
+      conditions taken).
+    * girsa-verifier's ANSWER, live (its message #3072): the classification plan READY on MEDIUM 1 (read-tree -u and
+      a relative checkout-index prefix write the tree) and LOW 1 (a GIT_INDEX_FILE naming the tree's own index), with
+      NOTE 2 (submodule foreach, as for-each-repo) and NOTE 3 (rule 45 on the build with all 53).
+    * BUILT: the classification in role_guard.py, with the review's conditions; its tests; 19 rules each red with it
+      taken out over a passing baseline (mutate.py). Rule 45 on the build: girsa-builder 3 newly refused (the
+      prototype's second run's), the other three roles 0; 0 let through; 0 faults. COMMITTED 6575743, 166 passed. To
+      send at the notes commit, live: the HANDOFF to girsa-verifier.
 
 M16. **[2026-11-23, skills, the status report, and a role run by pi (notes/PLAN-PI-ROLE.md)]**
     * The seven, after M15: girsa-verifier's ANSWER, live: VERIFIED at 958474f (its review's build section, the first
