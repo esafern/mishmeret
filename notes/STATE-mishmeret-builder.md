@@ -24,15 +24,13 @@ Rewritten in place when a piece lands and at the end of a session; the log is `n
 
 ## Now
 
-- ON MAIN 367380a (girsa-operator's merges; 4 ahead of origin - main pushed since on the reviewer's word): the known
-  gaps' seven (M15), Mishmeret's own skills (M16), and git's command list as a classification (M17; the first
-  project's #302 A), VERIFIED. The first project pins 075f49a; its pin bump is girsa-verifier's first, after the
-  classification's LOW 1 fix lands.
-- Branch `builder-git-classification` at this commit, on main 367380a:
-  - fa53cb2, the classification's LOW 1 (an index named by a command substitution), with girsa-verifier;
-  - 7cbe089, A ROLE RUN BY PI built (notes/PLAN-PI-ROLE.md; M18; its plan READY on three conditions, all built;
-    170 passed; 14 rules red). Waiting: girsa-verifier's check at this commit.
-  The pi prototype and rule 45's files stay in the scratchpad (pi-proto/, r45c/).
+- ON MAIN a14600c (girsa-operator's merges; 2 ahead of origin, fa53cb2 pushed on the reviewer's word), each VERIFIED:
+  the known gaps' seven (M15); Mishmeret's own skills (M16); git's command list as a classification with its LOW 1
+  fix (M17, fa53cb2; the first project's #302 A); a role run by pi (M18, 7cbe089). The first project pins 075f49a;
+  its pin bump is girsa-verifier's first.
+- THE SHIPPED SKILLS (notes/PLAN-SHIPPED-SKILLS.md; M19), branch `builder-shipped-skills` from main a14600c: the plan
+  at this commit, its measure done (scratchpad skillprobe/). Waiting: girsa-architect on its three design questions;
+  then girsa-verifier's review; then the build.
 - Waiting on the reviewer: the first project's Board #304 (refs judged by the repository, and the found writers), a
   later piece.
 - Done with, to delete: every merged `builder-*` branch.
@@ -40,11 +38,9 @@ Rewritten in place when a piece lands and at the end of a session; the log is `n
 
 ## Next, in order
 
-1. girsa-verifier's check of fa53cb2 and of the pi build; its findings in one round; then girsa-operator's merge.
-2. THE SKILLS SHIPPED TO EVERY PROJECT (the reviewer's "Both" and "all of the above"): a plan - status-report made
-   general, landing, sessions, push and pin - its first measure how a project, and a pi role (`--skill PATH`), takes
-   a pinned skill.
-3. #304, when the reviewer answers it.
+1. THE SHIPPED SKILLS: the design answer, the review, the build (four skills in mishmeret/skills/, agents.sh's links
+   and the pi line's `--skill`, the drift test).
+2. #304, when the reviewer answers it.
 
 ## Open
 

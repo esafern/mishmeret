@@ -3,6 +3,23 @@
 Findings, decisions and open work, each the moment it is known; a time from `date`. One item per run of work, newest
 first (`M01.`, `M02.` ...); what git records (what each commit did) is not repeated here.
 
+M19. **[2026-11-23, skills shipped to every project (notes/PLAN-SHIPPED-SKILLS.md)]**
+    * The pi piece, after M18: girsa-verifier's ANSWERS, live - fa53cb2 VERIFIED (its #3091), then the pi build
+      VERIFIED with no finding (its #3098, 170 passed with pi installed, the 14 mutations re-run red). Sent, live:
+      LANDED-READY for fa53cb2 alone, then for a14600c. girsa-operator's ANSWERS, live: MERGED, main fa53cb2 (166
+      passed), then a14600c (170 passed); 2 ahead of origin, fa53cb2 pushed on the reviewer's word.
+    * The reviewer: "go ahead" (a model run for the skill-loading measure). Measured instead with capture servers, no
+      model run: Claude Code follows a linked skill folder in `.claude/skills/` (6 of 6 requests carried the probe's
+      word, the control's 6 of 6); pi follows a link in `.agents/skills/` only in a trusted project (0 of 1 untrusted,
+      1 of 1 with --approve), and loads an explicit `--skill` path either way (1 of 1).
+    * The reviewer: "i would like to use pi to do some work on ~/work/sefaria-citation-normalizer". Read only: a
+      standalone repository, no Mishmeret config or hook. Told the reviewer: pi there runs unguarded, as any session;
+      the extension would block every call without the project's hook; bringing it under Mishmeret is that project's
+      setup, not mine.
+    * **[21:23]** The reviewer: "write the skills plan". Branch `builder-shipped-skills` from main a14600c: the plan.
+      To send at its commit, live: its three design QUESTIONS to girsa-architect; girsa-verifier's review after its
+      answer.
+
 M18. **[2026-11-23, a role run by pi, built (notes/PLAN-PI-ROLE.md)]**
     * The classification, after M17: girsa-verifier's ANSWER, live (its #3082): VERIFIED at 367380a, with LOW 1 (an
       index named by a command substitution) before the first project's next pin bump. Sent, live: LANDED-READY at
