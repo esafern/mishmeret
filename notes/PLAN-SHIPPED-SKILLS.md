@@ -17,7 +17,7 @@ two of them on Mishmeret's own code (`landing` for land.py, `operator-sessions` 
 project's words and kept by hand beside the code they describe. They also go stale at each pin bump, because the code
 moves and the skill does not (THE SECOND COPY OF THE TRUTH).
 
-GIRSA-ARCHITECT'S ANSWER (the first project's design-study/MISHMERET-SHIPPED-SKILLS-ARCHITECT.md at 3e30b334), all
+GIRSA-ARCHITECT'S ANSWER (the first project's design-study/MISHMERET-SHIPPED-SKILLS-ARCHITECT.md at 3c8479a9), all
 taken; nothing in it goes to the reviewer:
 - Q1, the prefix: agreed. A shipped skill never replaces a project's own; one home for each part. Each description says
   it is Mishmeret's general procedure, so Claude Code, which chooses a skill by its description, loads the right one.
@@ -109,7 +109,7 @@ and no account was charged.
 6. Mishmeret's README says what is shipped and how a project gets it, that only a link is replaced, and that Windows
    is unmeasured (MSYS's `ln -s` copies).
 
-## Design questions (to girsa-architect; answered at 3e30b334, the plan's head)
+## Design questions (to girsa-architect; answered at 3c8479a9, the plan's head)
 
 1. THE NAMES AND THE PROJECT'S OWN: shipped with a `mishmeret-` prefix, beside the project's own, which stay its own
    (the first project's `landing` and `operator-sessions` could then point to the shipped ones for the general part).

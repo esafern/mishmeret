@@ -20,7 +20,7 @@ M19. **[2026-11-23, skills shipped to every project (notes/PLAN-SHIPPED-SKILLS.m
       To send at its commit, live: its three design QUESTIONS to girsa-architect; girsa-verifier's review after its
       answer. Sent, live, at 137ff68.
     * girsa-architect's ANSWER, live: the first project's design-study/MISHMERET-SHIPPED-SKILLS-ARCHITECT.md at
-      3e30b334 - the prefix; agents.sh's links, only a link, the ignore line below the un-ignore; no list the code can
+      3c8479a9 - the prefix; agents.sh's links, only a link, the ignore line below the un-ignore; no list the code can
       give in a skill. Into the plan, ec8c031. Sent, live: the plan's HANDOFF to girsa-verifier.
     * girsa-verifier's ANSWER, live (its #3107): READY on LOW 1 (a link no longer shipped stays); NOTE 1 (the Claude
       Code measure's record lost - I had overwritten its capture log) and NOTE 2 (pi's two paths) to measure at the
@@ -33,7 +33,14 @@ M19. **[2026-11-23, skills shipped to every project (notes/PLAN-SHIPPED-SKILLS.m
       girsa-operator's ANSWER, live: MERGED, main 8e80020, 175 passed; 6 ahead of origin, not pushed.
     * **[21:49]** No piece open. The merged `builder-*` branches deleted (`git branch -d`, 37); four never merged left,
       to be read. The state file rewritten on branch `builder-state-2026-11-23`. To send at its commit, live:
-      LANDED-READY to girsa-operator.
+      LANDED-READY to girsa-operator. Sent, live, at a7e060e; merged.
+    * The reviewer: "read the 4", then "delete". Each of the four read: its content on main under other ids. Deleted
+      (`git branch -D`; tips 7e0e8b3, 3bc9c49, 96454a1, 4b9133b).
+    * **[23:33]** girsa-architect's NOTE, live: girsa-operator rewrote the first project's unpushed main (Board #306
+      A); three answers I cite have new ids - 78c32beb is 79b449f5, 046d111f is 40dfc210, 3e30b334 is 3c8479a9.
+      Checked: each answer document the same blob at old and new; only two RULE45 record files differ. The seven
+      citations in the notes changed to the new ids. Main a7e060e found pushed (origin at it); the state file says
+      so. To send at its commit, live: LANDED-READY to girsa-operator.
 
 M18. **[2026-11-23, a role run by pi, built (notes/PLAN-PI-ROLE.md)]**
     * The classification, after M17: girsa-verifier's ANSWER, live (its #3082): VERIFIED at 367380a, with LOW 1 (an
@@ -67,7 +74,7 @@ M17. **[2026-11-23, git's command list as a classification (notes/PLAN-GIT-CLASS
       not built. To send at its commit, live: the HANDOFF to girsa-verifier; the departures to girsa-architect.
       Sent, live, both, at f49111a.
     * girsa-architect's ANSWER, live: the first project's design-study/MISHMERET-GIT-CLASSIFICATION-ARCHITECT.md at
-      046d111f - both departures agreed, none back to the reviewer; its finding beyond #302 (a ref judged by the folder,
+      40dfc210 - both departures agreed, none back to the reviewer; its finding beyond #302 (a ref judged by the folder,
       not the repository: `update-ref refs/heads/<main's branch>` from a worktree, `tag -f known-good` from anywhere)
       is the reviewer's Board #304, a later piece with my five found writers. Into the plan's head.
     * The pi review's NOTE 1, measured on the prototype: the replacement bash passing four arguments ran with no
@@ -124,7 +131,7 @@ M16. **[2026-11-23, skills, the status report, and a role run by pi (notes/PLAN-
       tests/test_guard_measure.py; each script's key line taken out on a copy: 8 of 8 red. One test first could not
       fail on its own (mutate.py's exit for a green rule, hidden by an absent one in the same run); split. COMMITTED
       59f84a2 outside the lane on the reviewer's word; land.py ran the suite: 163 passed.
-    * girsa-architect's ANSWER, live: the first project's design-study/MISHMERET-PI-ROLE-ARCHITECT.md at 78c32beb -
+    * girsa-architect's ANSWER, live: the first project's design-study/MISHMERET-PI-ROLE-ARCHITECT.md at 79b449f5 -
       Q1 `--role`, Q2 (a), Q3 as planned plus an unknown tool blocked, Q4 with two conditions; the 2026-11-22
       session's three commits re-checked and verified there; its Board #303 for the reviewer (may a guarded pi role
       land in that project, its #168 A). All taken into the plan. MY SLIP: this entry's first edit failed (the file

@@ -14,7 +14,7 @@ are `history`, `replay`, `symbolic-ref`, `read-tree`, `update-index`, `checkout-
 superset of what git lists.
 
 GIRSA-ARCHITECT'S ANSWER on the two departures (the first project's design-study/MISHMERET-GIT-CLASSIFICATION-ARCHITECT.md
-at 046d111f): both agreed. Four sets, since only CHANGES_MAIN decides a refusal and the others are labels; its caution
+at 40dfc210): both agreed. Four sets, since only CHANGES_MAIN decides a refusal and the others are labels; its caution
 taken: WRITES ELSEWHERE holds the writers of the shared repository (refs, tags, objects, config), not a harmless set.
 The 27 are within #302 A, send-pack and http-push within the push rule, for-each-repo within item 6a: none goes back to
 the reviewer. Its finding beyond #302, the reviewer's Board #304 for a later piece: the guard judges a ref by the

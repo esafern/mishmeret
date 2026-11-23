@@ -2,7 +2,7 @@
 
 Rewritten in place when a piece lands and at the end of a session; the log is `notes/LOG.md`, by item.
 
-## Built, on main (main 8e80020, 6 ahead of origin; each verified by girsa-verifier, merged by girsa-operator)
+## Built, on main (main a7e060e, pushed; each verified by girsa-verifier, merged by girsa-operator)
 
 - To 2026-11-13 (M01-M13): own `.claude/`, open messages, copy-on-select, the start scripts, finishing a session, the
   guard's mask, M07's items, `LESSONS.md`, the audit's fixes, /expiring.ics, the land.py race, the frozen gate, the
@@ -20,7 +20,7 @@ Rewritten in place when a piece lands and at the end of a session; the log is `n
 
 ## Now
 
-- No piece is open. Main 8e80020 is 6 ahead of origin: its push is the reviewer's word in girsa-operator's pane.
+- No piece is open. Main a7e060e is pushed (origin at it, 2026-11-23).
 - THE FIRST PROJECT'S PIN BUMP (075f49a to main), girsa-verifier first, brings: the seven's refusals, the
   classification (girsa-builder's 3 measured writes refused), the pi guard (`runner: pi` named with the bump, then
   #303 A), and the shipped skills - with its own steps: its `.gitignore` line for `.claude/skills/mishmeret-*` below
@@ -28,15 +28,15 @@ Rewritten in place when a piece lands and at the end of a session; the log is `n
 - Waiting on the reviewer: the first project's Board #304 (a ref judged by the repository, not the folder: main's
   branch, `known-good`, release tags to their owners; with it branch -D/-f, worktree remove, replace, reflog delete,
   gc --prune, maintenance register, branch -m, init --separate-git-dir).
-- Four builder branches never merged, not read since: builder-background-state-unsplit, builder-board-first-answer,
-  builder-state-after-lessons, builder-subagent-role. The merged ones are deleted (37, 2026-11-23).
+- Every old builder branch is deleted (2026-11-23): 37 merged by `git branch -d`; and, on the reviewer's "delete",
+  four whose content had landed under other ids (`git branch -D`; tips 7e0e8b3, 3bc9c49, 96454a1, 4b9133b), each read
+  first.
 - To resume: `git -C ~/work/mishmeret log --oneline -3`; `git -C ~/work/mishmeret-builder status -sb`; the Board; the
   first project's Board record (`~/work/girsa-board/board.jsonl`) for #304.
 
 ## Next, in order
 
 1. #304, when the reviewer answers it: its plan, measured with the guard-measure skill.
-2. The four unmerged branches: each read, then kept or deleted on the reviewer's word.
 
 ## Open
 

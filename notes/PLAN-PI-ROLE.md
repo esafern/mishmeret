@@ -24,7 +24,7 @@ installed (`pi list`: none; no `~/.pi/agent/extensions`, no project `.pi/`), so 
 So a pi role runs unguarded today, and it lands only by naming its role in a variable any command can set.
 
 GIRSA-ARCHITECT'S ANSWER to the four design questions (the first project's
-design-study/MISHMERET-PI-ROLE-ARCHITECT.md at 78c32beb), all taken:
+design-study/MISHMERET-PI-ROLE-ARCHITECT.md at 79b449f5), all taken:
 - Q1: `--role`, fixed at start, with `--name` set to the same: the guard judges an identity a rename cannot change.
 - Q2: (a). One name; the spawn hook writes the role after the inherited environment, so one the launching shell carried
   is overwritten; a command's own setting is refused already (SETS_AGENT).
@@ -123,7 +123,7 @@ THE BUILD (7cbe089): the change below, with its tests; suite 170 passed.
 4. README: "A role run by pi" - how it is started, what guards it, the four things it lacks (above), and that pi on
    Windows and Linux is unmeasured.
 
-## Design questions (to girsa-architect; answered at 78c32beb, the plan's head)
+## Design questions (to girsa-architect; answered at 79b449f5, the plan's head)
 
 1. THE ROLE: a flag the extension registers (`--role`, fixed at start), or `--name`, as the reviewer suggests?
    `--name` is also the session's display name, and `/name` or an extension's `setSessionName` can rename the
