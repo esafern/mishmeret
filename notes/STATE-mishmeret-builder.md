@@ -24,22 +24,25 @@ Rewritten in place when a piece lands and at the end of a session; the log is `n
 
 ## Now
 
-- No piece is open. The session ended on the reviewer's "land and clear" (2026-11-15). This file's commit is on
-  `builder-state-2026-11-15`, sent LANDED-READY to girsa-operator.
+- THE KNOWN GAPS' SEVEN (notes/PLAN-KNOWN-GAPS-SEVEN.md; the first project's #223 B; M15), on branch
+  `builder-known-gaps-seven` from main d9fda25: plan 977295f (girsa-verifier READY), the build e5a4d40 (suite 161
+  passed; rule 45: 6 newly refused for each of the first project's roles, each planned, 0 let through, 0 faults), and
+  the notes commit after it. Items 3-6, 9, 10, 15, 17 (a quoted or escaped verb, a line continuation) and 18 (the pill
+  test, Chromium 1255's outline order).
+- Waiting: girsa-verifier's check at the notes commit (HANDOFF sent with it). The lane check's half of item 9 is
+  girsa-operator's own commit (notes/PLAN-KNOWN-GAPS-SEVEN-LANE-CHECK.md; sent with it).
+- Waiting on the reviewer: the first project's Board #302 (girsa-architect's) - whether the eight git writers in no
+  verb set (history, replay, symbolic-ref, read-tree, update-index, checkout-index, sparse-checkout, filter-branch)
+  are refused in the main tree. With its answer, item 6a's list becomes the classification (each name in a verb set or
+  in a named set that changes nothing; a test red on a name in neither): a round on this branch or the next piece.
 - Done with, to delete: every merged `builder-*` branch.
-- To resume: `git -C ~/work/mishmeret log --oneline -3`; `git -C ~/work/mishmeret-builder status -sb`; the Board.
+- To resume: `git -C ~/work/mishmeret log --oneline -3`; `git -C ~/work/mishmeret-builder status -sb`; the Board;
+  #302 in the first project's Board record (`~/work/girsa-board/board.jsonl`).
 
 ## Next, in order
 
-1. THE KNOWN GAPS' SEVEN, GIVEN: the first project's #223, answered B ("Build all fifteen") on 2026-11-13 at 16:05.
-   - Items 9, 10 and 15 are built: `git apply notes/known-gaps/held-9-10-15.diff` (it applies to f2126a1; the suite is
-     then 158 passed). Item 15 is in its revised form: a red names a file that moved during the gate.
-   - Items 3, 4 and 5 (two -C; `cd -` and a bare cd; a case pattern) are measured in the plan, not built.
-   - Item 6 in girsa-architect's form B (design-study/MISHMERET-ALIAS-CONFIG-ARCHITECT.md there, d721b739): an unknown
-     git verb refused, with git's own verb list and a test against it (girsa-verifier's LOW 3). The write closed:
-     `git config` write forms and `git remote add/set-url/rename/remove/set-branches` refused in a guarded tree, for
-     every role. On the operator's push line, a `-c remote.`/`url.`/`alias.` key refused.
-   - A plan revision to girsa-verifier first, then the build with rule 45's old-against-new run, as for the first eight.
+1. girsa-verifier's findings on the seven, fixed in one round; then girsa-operator's merge.
+2. Item 6a's classification, on #302's answer.
 
 ## Open
 

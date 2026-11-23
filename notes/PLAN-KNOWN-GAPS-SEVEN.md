@@ -8,6 +8,31 @@ seven are items 3, 4, 5, 6, 9, 10 and 15 of notes/PLAN-KNOWN-GAPS.md, which the 
 Item 6 is taken in girsa-architect's form B (the first project's design-study/MISHMERET-ALIAS-CONFIG-ARCHITECT.md,
 d721b739); girsa-verifier's LOW 3 on that plan with it (git's own verb list, not the guard's).
 
+THE REVIEW (girsa-verifier, on 977295f and its addendum; the first project's
+design-study/step5-verification/mishmeret-known-gaps-seven-2026-11-23/REVIEW.md): READY to build items 3-6, 9, 10, 15,
+17 with the line continuation, and 18. Every form named here was put to d9fda25's guard by it, and each was let through
+or refused as written. Item 17 and the continuation are item 1's class, which #223 B built: in scope as its siblings.
+Its count of the record: 2 real `git config` writes, both in a scratch repository the same command made. With, in the
+build: girsa-architect's `push.` key (6c), and 6a's list made a classification; where the eight unbuilt writers go is
+the reviewer's, on the first project's Board #302 (#301 withdrawn: its "no session used them" was false - 72 runs of
+read-tree and update-index, most in copies or on a temporary index, and one symbolic-ref write in a corpus root).
+
+THE BUILD'S RUN OF RULE 45 (e5a4d40 against d9fda25): every distinct command-and-cwd pair of the record below, judged
+at its cwd by every rule the hook runs on a Bash command, under its own project's config - the first project's 161,803
+as girsa-builder and as girsa-operator, Mishmeret's 1,298 as mishmeret-builder and as mishmeret-operator; git's tree
+lookups memoized, the same answers. For each of the first project's roles: 6 newly refused, 0 newly let through, 0
+faults, the same 6 for both. Mishmeret's: no change for either role. Every change read:
+- 4: `git filter-repo` (an add-on; `--version`, in the main clone and in scratch mirrors) - item 6a, its cost as
+  planned (design question 2).
+- 1: `git $o status` in a scratch repository, a probe looping over git's options - 6a.
+- 1: girsa-operator's `git remote set-url origin <URL>` in a corpus root (2026-11-22) - 6b (design question 1).
+No decision on the 25 commands with a case arm changed.
+
+GIRSA-ARCHITECT'S ANSWER to the two design questions (the first project's
+design-study/MISHMERET-ALIAS-CONFIG-ARCHITECT.md at aca9ccaf, "Follow-up, 2026-11-23"): both as recommended - the
+operator's set-url refused, the way out the reviewer's `!` command; `--list-cmds=main` only. The siblings right, with
+`push.` added; a relative `-f` path read from the place after the command's cds and -C.
+
 Each item was measured again on main d9fda25 with probe scripts on the guard's own functions and placeholder paths
 (the main tree `/work/book`, a worktree `/work/book-builder`, role ex-builder unless named). Each form below is let
 through there unless it says refused. Three NEW FINDINGS were made while measuring; they are items 17 and 18 and the
@@ -63,6 +88,10 @@ Not in this piece, and why:
       p origin main`, the operator's, is refused as `p`). A test checks that every name this machine's
       `git --list-cmds=main` gives is in the list, so a newer git's command is noticed. The cost on the record: 5 of
       113,908 git runs (above). The 28 add-ons on this machine's PATH are not taken in.
+      THE LIST AS A CLASSIFICATION (girsa-architect's follow-up, girsa-verifier's review): each name in one of the
+      guard's verb sets or in a named set of commands that change no branch, index or tree, and a test red on a name
+      in neither. Built once the reviewer answers the first project's #302, which places the eight writers above;
+      until then the list is git's, tested as a subset.
    b. THE WRITE CLOSED: in a tree whose common git dir is guarded (`guarded_git_dirs`: the project's main clone, a pin,
       a corpus root, TREES), and in a foreign repository's, for every role, the operator too:
       - `git config` in any form but a read;
@@ -71,15 +100,20 @@ Not in this piece, and why:
       `get`, `list`, or a key alone. Siblings (new): a `--global` or `--system` write is refused from any tree, since
       git reads that file in every repository; a `-f`/`--file` write is judged by the folder of the file it names.
       The refusal names the way out: the reviewer's own `!` command, as for a remote delete.
-   c. ON THE OPERATOR'S PUSH: a `-c` or `--config-env` with a `remote.`, `url.`, `alias.` or `branch.` key, or a
-      `GIT_CONFIG...=` assignment before git, is refused. A text rule, no subprocess. (`branch.<name>.pushRemote` and
-      `remote.pushDefault` choose a bare push's remote: girsa-architect's point 2.)
+   c. ON THE OPERATOR'S PUSH: a `-c` or `--config-env` with a `remote.`, `url.`, `alias.`, `branch.` or `push.` key,
+      or a `GIT_CONFIG...=` assignment before git, is refused. A text rule, no subprocess. (`branch.<name>.pushRemote`
+      and `remote.pushDefault` choose a bare push's remote: girsa-architect's point 2; `-c push.default=matching`
+      pushes every branch of the same name: its follow-up.)
    No `git config` subprocess is added.
 17. A QUOTED OR ESCAPED VERB (new, found measuring item 6, the class of item 1). `git "push" origin main`,
     `git 'reset' --hard` (from the main tree) and `git \push origin main` are let through for every role: GIT's verb is
     `[a-z][\w-]*` in the masked text, where a quoted verb is its quotes around spaces. Fix: the verb is one WORD, not
     starting with `-`, read in the original as the shell reads it (`_word`). With 6a a capitalised verb (`git Push`,
     which git looks up as an alias) is refused as unknown.
+    SIBLING (the HANDOFF's addendum): a line continuation before the verb. `git \<newline> push origin main` and
+    `git -C /work/book \<newline> reset --hard` are let through: outside quotes the mask turns the newline into a
+    space but keeps the backslash. Fix: the mask blanks a backslash-newline whole, the space the shell makes of it.
+    0 on the record.
 
 ### The rest (built before the review, kept whole in notes/known-gaps/held-9-10-15.diff, applied here)
 
@@ -94,7 +128,7 @@ Not in this piece, and why:
     the shorthand and went red at both window sizes; the page is unchanged. The test reads `outlineStyle` and
     `outlineWidth` (green; red with the page's outline made 2px).
 
-## Design questions (to girsa-architect)
+## Design questions (to girsa-architect; answered, both as recommended - the plan's head)
 
 1. Item 6b refuses girsa-operator's `git remote set-url origin <URL>` in a corpus root (2026-11-22, the one write on
    the record in a guarded tree). Your B says every role, the operator included, the way out being the reviewer's own
@@ -106,11 +140,14 @@ Not in this piece, and why:
 ## Files
 
 - mishmeret/role_guard.py, tests/test_guard.py (items 3-6, 17)
-- .claude/lane_check.py, mishmeret/time_precommit.py, tests/test_own_project.py, tests/test_guard.py (item 9)
+- mishmeret/time_precommit.py, tests/test_guard.py (item 9); its lane check half, .claude/lane_check.py and
+  tests/test_own_project.py, is girsa-operator's own commit (`.claude/` is the operator's; the check judges the commit
+  that brings it): notes/PLAN-KNOWN-GAPS-SEVEN-LANE-CHECK.md, the diff and its apply command
 - mishmeret/agents.sh, tests/test_sessions.py (item 10)
 - mishmeret/land.py, tests/test_guard.py (item 15)
 - tests/test_board.py (item 18)
-- notes/PLAN-KNOWN-GAPS-SEVEN.md, notes/LOG.md, notes/STATE-mishmeret-builder.md
+- notes/PLAN-KNOWN-GAPS-SEVEN.md, notes/PLAN-KNOWN-GAPS-SEVEN-LANE-CHECK.md, notes/LOG.md,
+  notes/STATE-mishmeret-builder.md
 
 ## Tests (each rule's test shown red with the rule taken out)
 

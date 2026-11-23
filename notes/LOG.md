@@ -3,6 +3,48 @@
 Findings, decisions and open work, each the moment it is known; a time from `date`. One item per run of work, newest
 first (`M01.`, `M02.` ...); what git records (what each commit did) is not repeated here.
 
+M15. **[2026-11-23, the known gaps' seven (notes/PLAN-KNOWN-GAPS-SEVEN.md)]**
+    * **[16:22]** Session start. Main d9fda25, one ahead of origin f2126a1 (the state commit, merged). The first
+      project's #223, read in its Board's record: answered B, "Build all fifteen", 2026-11-13 16:05. Branch
+      `builder-known-gaps-seven` from main; notes/known-gaps/held-9-10-15.diff applied unchanged.
+    * The suite with it: 156 passed, 2 failed - the open-messages pill test at both window sizes, in files the diff
+      does not touch. Chromium 1255 (installed with Playwright 1.65.2 on 2026-11-22) writes a computed outline as
+      `1px solid <colour>`; the test read the shorthand. It now reads outlineStyle and outlineWidth: green, and red on
+      a file copy with the page's outline made 2px (item 18). MY SLIP: the first run piped pytest into `tail`; the
+      guard refused it, and it ran again to a log. MY SLIP: a red run first tried `cp -c -R` of my worktree, which the
+      guard refuses (a worktree's copy shares its index); the copy was made of mishmeret/ and tests/ alone.
+    * Measured on d9fda25 (probe scripts on the guard's functions, placeholder paths): items 3-6 let through as the
+      plan said, and item 3's false refusal. NEW: a quoted or escaped verb hides git from every rule (item 17); as
+      siblings, popd and a bare pushd, a check in a case arm, `git config --global` and `-f`, `--config-env`. The
+      record extracted from the transcripts: 1,044 of the first project's (161,803 command-and-cwd pairs), 9 of
+      Mishmeret's (1,298). Found for the reviewer, outside the fifteen: git 2.56.1's history, replay, symbolic-ref,
+      read-tree, update-index, checkout-index, sparse-checkout and filter-branch are in no verb set of the guard's.
+    * **[16:35]** The plan written; 977295f. Sent, live: the plan's HANDOFF to girsa-verifier; two design QUESTIONS to
+      girsa-architect (the operator's set-url, main or main,others). Then, found working out the build, a line
+      continuation before the verb hides it too (0 on the record): an ADDENDUM to girsa-verifier.
+    * girsa-architect's ANSWER, live: the first project's design-study/MISHMERET-ALIAS-CONFIG-ARCHITECT.md at aca9ccaf,
+      "Follow-up, 2026-11-23" - both as recommended; the siblings right, with `push.` added; the list made a
+      classification, where the eight go being the reviewer's (its Board #301). Sent, live: an ANSWER, taken.
+    * **[16:47]** girsa-verifier's ANSWER, live: READY - items 3-6, 9, 10, 15, 17 with the continuation, and 18; its
+      review the first project's design-study/step5-verification/mishmeret-known-gaps-seven-2026-11-23/REVIEW.md. With
+      `push.`, and the classification after the reviewer's answer. Its NOTE 1 goes to girsa-operator: the second
+      book's origin repoint, refused on 2026-11-22, is the reviewer's `!` command once 6b is pinned.
+      girsa-architect's NOTE, live: #301 withdrawn (its "no session used them" was false: 72 read-tree and
+      update-index runs, one symbolic-ref write in a corpus root) and asked again as #302; the classification waits
+      on #302.
+    * BUILT. Suite 161 passed. Each rule's test red with it taken out, on a file copy of mishmeret/ and tests/: 25 of
+      25 mutations, and the list test red without `worktree`. One mutation first stayed green (the continuation,
+      refused anyway as an unknown verb `\`): a let-through case, `git \<newline> status`, now pins it.
+    * RULE 45, d9fda25's guard against the build on the whole record (the plan's head): 6 newly refused for each of
+      the first project's two roles, the same 6, each read and each planned; 0 newly let through; 0 faults;
+      Mishmeret's unchanged.
+    * MY SLIP: the build's first commit named `.claude/lane_check.py`, and land.py's lane check refused it (`.claude/`
+      is the operator's); nothing was committed or left staged. M09 had settled it: the check's own edit is
+      girsa-operator's commit. Its half (with its test hunk) is notes/PLAN-KNOWN-GAPS-SEVEN-LANE-CHECK.md, measured on
+      a copy of the main clone; the two files taken back to HEAD by Edit. COMMITTED e5a4d40, land.py ran the suite:
+      161 passed. To send at the notes commit, live: the HANDOFF to girsa-verifier, and the lane check's half to
+      girsa-operator.
+
 M14. **[2026-11-13, the known gaps (notes/PLAN-KNOWN-GAPS.md)]**
     * Two messages sent after M13's state commit (f031698) that M13 does not hold. A NOTE to girsa-operator at the
       session's end. At 13:12, the reviewer's "push" relayed to girsa-operator. Its ANSWER, live: pushed on the
