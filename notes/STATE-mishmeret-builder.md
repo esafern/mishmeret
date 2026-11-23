@@ -24,12 +24,14 @@ Rewritten in place when a piece lands and at the end of a session; the log is `n
 
 ## Now
 
-- ON MAIN 0600059 (girsa-operator's merges; 10 ahead of origin, not pushed - the reviewer's word in its pane): the
+- ON MAIN ff94f3f (girsa-operator's merges; 12 ahead of origin, not pushed - the reviewer's word in its pane): the
   known gaps' seven (M15) with dc30cc2, the lane check's half; the pi plan (654a562, 0600059); Mishmeret's own skills,
-  status-report (VERIFIED) and guard-measure (VERIFIED with two LOWs). The first project pins 075f49a; its pin bump
-  is girsa-verifier's first.
-- Branch `builder-own-skills` at this commit, on main 0600059: 5bccb49, guard-measure's LOW 1 and LOW 2 fixed (with
-  girsa-verifier for its check).
+  status-report and guard-measure, VERIFIED, guard-measure's two LOWs fixed (5bccb49). The first project pins
+  075f49a; its pin bump is girsa-verifier's first.
+- THE CLASSIFICATION (notes/PLAN-GIT-CLASSIFICATION.md; M17; the first project's #302 A), branch
+  `builder-git-classification` from main ff94f3f: the plan at this commit, measured on a prototype in the scratchpad
+  (cls/mishmeret/role_guard.py; rule 45's files in r45c/). Waiting: girsa-verifier's review, girsa-architect on its
+  two departures; then the build.
 - THE PI PLAN (notes/PLAN-PI-ROLE.md; M16): girsa-verifier READY on three conditions - its LOW 1 (an edit's and a
   write's text to the time rule), LOW 2 (the extension calls the project's own hook, `.claude/hooks/role_guard.py`
   through the shim, not the guard beside it), NOTE 1 measured (pass every argument of bash's execute through, ctx
@@ -41,12 +43,7 @@ Rewritten in place when a piece lands and at the end of a session; the log is `n
 
 ## Next, in order
 
-1. ITEM 6a's CLASSIFICATION, the first project's #302 A ("close the eight in the piece building now"): git's list as
-   a classification - each name in a verb set that changes a branch, the index or the tree (refused where reset
-   --hard is), or in a named set that changes none; a test failing on a name in neither; the eight in the first. Its
-   plan first: girsa-verifier's count holds 72 read-tree/update-index runs (most on copies or a temporary index) and
-   27 symbolic-ref (nearly all reads), so the read forms that leave the main tree alone are measured before they are
-   refused. Rule 45 with the guard-measure scripts.
+1. THE CLASSIFICATION: the review, its findings, the build (the prototype's code, with tests and mutate.py), rule 45.
 2. PI: the plan revised on the review's conditions, NOTE 1 measured, then the build.
 3. THE SKILLS SHIPPED TO EVERY PROJECT (the reviewer's "Both" and "all of the above"): a plan - status-report made
    general, landing, sessions, push and pin - its first measure how a project, and a pi role (`--skill PATH`), takes

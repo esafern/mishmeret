@@ -3,6 +3,23 @@
 Findings, decisions and open work, each the moment it is known; a time from `date`. One item per run of work, newest
 first (`M01.`, `M02.` ...); what git records (what each commit did) is not repeated here.
 
+M17. **[2026-11-23, git's command list as a classification (notes/PLAN-GIT-CLASSIFICATION.md)]**
+    * girsa-verifier's ANSWER, live: guard-measure's fixes VERIFIED at 5bccb49 (its message #3052, to girsa-operator
+      too). Sent, live: LANDED-READY at ff94f3f. girsa-operator's ANSWER, live: MERGED, main 5bccb49 then ff94f3f, 164
+      passed; 12 ahead of origin, not pushed.
+    * The first project's #302 A: the eight closed, git's list a classification. A prototype on a scratch copy of
+      mishmeret/: probed (each of the eight refused in the main tree, its read forms let through); rule 45 with the
+      guard-measure scripts on the record extracted again (with pi's sessions): the first run 7/0/3/1 newly refused
+      (girsa-builder, girsa-operator, mishmeret-builder, mishmeret-operator), 8 of them the prototype's false
+      refusals - help, a redirection read as a word, an exported temporary index. Fixed; the second run 3/0/0/0, each
+      a write meant: 2 update-index --cacheinfo into the main clone's index, 1 symbolic-ref write in a corpus root.
+      The 27 found writers in the first set: the same counts.
+    * MY SLIP: the plan's first draft gave two set sizes (68, 54) not counted; computed before the commit, 65 and 57,
+      and written so.
+    * **[19:26]** Branch `builder-git-classification` from main ff94f3f: the plan, with two departures for review (four
+      sets, not two; the 27 found and 3 own-rule names beyond the eight) and five writers found for the reviewer,
+      not built. To send at its commit, live: the HANDOFF to girsa-verifier; the departures to girsa-architect.
+
 M16. **[2026-11-23, skills, the status report, and a role run by pi (notes/PLAN-PI-ROLE.md)]**
     * The seven, after M15: girsa-verifier's ANSWER, live: VERIFIED at 958474f (its review's build section, the first
       project's design-study/step5-verification/mishmeret-known-gaps-seven-2026-11-23/REVIEW.md: 161 passed on its
