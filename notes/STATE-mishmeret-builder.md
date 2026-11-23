@@ -24,32 +24,33 @@ Rewritten in place when a piece lands and at the end of a session; the log is `n
 
 ## Now
 
-- THE KNOWN GAPS' SEVEN (notes/PLAN-KNOWN-GAPS-SEVEN.md; M15): VERIFIED at 958474f, merged by girsa-operator (main
-  958474f, then its dc30cc2, the lane check's half). Not pushed (main 5 ahead of origin: the reviewer's word in
-  girsa-operator's pane). The first project's pin bump next, girsa-verifier first; it pins 075f49a.
-- ONE BRANCH, `builder-own-skills`, on main dc30cc2: the pi plan (654a562, revised at this commit on girsa-architect's
-  78c32beb answer), and Mishmeret's own skills - status-report (7c48fea, 7203f57; its first report Mishmeret's Board
-  Q&A #1) and guard-measure (59f84a2, its scripts and tests/test_guard_measure.py). `builder-pi-role` is its first
-  commit only.
-- Waiting: girsa-verifier's check of the two skills and review of the pi plan (one HANDOFF). Then the skills go to
-  girsa-operator; the pi build follows on this branch. The prototype stays in the scratchpad (pi-proto/: guard.ts,
-  guard2.ts, fake.ts, fake_server.py); the plan's appendix holds the extension.
-- Waiting on the reviewer: the first project's #303 (may a guarded pi role land there); the push of Mishmeret's main
-  (its word in girsa-operator's pane).
-- Waiting on the reviewer: the first project's Board #302 (the eight git writers in no verb set). With its answer, item
-  6a's list becomes the classification (each name in a verb set or in a named set that changes nothing; a test red on
-  a name in neither).
+- ON MAIN 0600059 (girsa-operator's merges; 10 ahead of origin, not pushed - the reviewer's word in its pane): the
+  known gaps' seven (M15) with dc30cc2, the lane check's half; the pi plan (654a562, 0600059); Mishmeret's own skills,
+  status-report (VERIFIED) and guard-measure (VERIFIED with two LOWs). The first project pins 075f49a; its pin bump
+  is girsa-verifier's first.
+- Branch `builder-own-skills` at this commit, on main 0600059: 5bccb49, guard-measure's LOW 1 and LOW 2 fixed (with
+  girsa-verifier for its check).
+- THE PI PLAN (notes/PLAN-PI-ROLE.md; M16): girsa-verifier READY on three conditions - its LOW 1 (an edit's and a
+  write's text to the time rule), LOW 2 (the extension calls the project's own hook, `.claude/hooks/role_guard.py`
+  through the shim, not the guard beside it), NOTE 1 measured (pass every argument of bash's execute through, ctx
+  among them; the cwd run equals the cwd judged). With NOTE 2 (a config naming `runner` lands with its pin bump) and
+  NOTE 3 (`--no-extensions` in agents.sh's line). The first project's #303 answered A: a guarded pi role lands there.
+  The prototype stays in the scratchpad (pi-proto/); the plan's appendix holds the extension.
 - Done with, to delete: every merged `builder-*` branch.
-- To resume: `git -C ~/work/mishmeret log --oneline -3`; `git -C ~/work/mishmeret-builder status -sb`; the Board;
-  #302 in the first project's Board record (`~/work/girsa-board/board.jsonl`).
+- To resume: `git -C ~/work/mishmeret log --oneline -3`; `git -C ~/work/mishmeret-builder status -sb`; the Board.
 
 ## Next, in order
 
-1. PI: girsa-verifier's review, then the build (the reviewer: "before the skills do the plan and design question").
-2. THE SKILLS SHIPPED TO EVERY PROJECT (the reviewer's "Both" and "all of the above"): a plan - status-report made
+1. ITEM 6a's CLASSIFICATION, the first project's #302 A ("close the eight in the piece building now"): git's list as
+   a classification - each name in a verb set that changes a branch, the index or the tree (refused where reset
+   --hard is), or in a named set that changes none; a test failing on a name in neither; the eight in the first. Its
+   plan first: girsa-verifier's count holds 72 read-tree/update-index runs (most on copies or a temporary index) and
+   27 symbolic-ref (nearly all reads), so the read forms that leave the main tree alone are measured before they are
+   refused. Rule 45 with the guard-measure scripts.
+2. PI: the plan revised on the review's conditions, NOTE 1 measured, then the build.
+3. THE SKILLS SHIPPED TO EVERY PROJECT (the reviewer's "Both" and "all of the above"): a plan - status-report made
    general, landing, sessions, push and pin - its first measure how a project, and a pi role (`--skill PATH`), takes
    a pinned skill.
-3. Item 6a's classification, on #302's answer.
 
 ## Open
 

@@ -48,7 +48,25 @@ M16. **[2026-11-23, skills, the status report, and a role run by pi (notes/PLAN-
       session's three commits re-checked and verified there; its Board #303 for the reviewer (may a guarded pi role
       land in that project, its #168 A). All taken into the plan. MY SLIP: this entry's first edit failed (the file
       unread since the rebase), and land.py refused the commit that named it; nothing was committed. To send at this
-      commit, live: the HANDOFF to girsa-verifier - the two skills to check, the pi plan to review.
+      commit, live: the HANDOFF to girsa-verifier - the two skills to check, the pi plan to review. Sent, live, at
+      0600059.
+    * **[18:46]** The reviewer, in this session, on the first project's #303: "yes may commit" - its option A, a guarded
+      pi role commits and lands there. Relayed, live, as a NOTE to girsa-architect, which asked it; #303 is unanswered
+      in that Board's record, and I write nothing there. For the plan at the build's commit.
+    * girsa-verifier's ANSWER, live, on the skills: status-report VERIFIED; guard-measure VERIFIED with LOW 1 (decide.py
+      a hand copy of check()'s rules, probe.py asking one rule of five) and LOW 2 (mutate.py's RED on any exit, no
+      baseline), to fix before the scripts' next run. Sent, live: LANDED-READY to girsa-operator at 0600059. Its
+      ANSWER, live: MERGED, main dc30cc2 to 0600059, 163 passed; 10 ahead of origin, not pushed.
+    * The LOWs fixed: rules.py, the one list, held to check() by a test; mutate.py's baseline and exit 1 alone; the
+      scripts' own check committed (self-check.json, 14 of 14 red - one row first green, my fake older guard answering
+      before the rules it lacked). COMMITTED 5bccb49, 164 passed. Sent, live: the HANDOFF to girsa-verifier.
+    * girsa-verifier's ANSWER, live, on the pi plan: READY on three conditions - LOW 1 (an edit's and a write's text
+      to the time rule), LOW 2 (the extension calls the project's own hook, as Claude Code does, not the guard beside
+      it), NOTE 1 settled by a measure (the prototype's replacement bash drops pi's fifth argument, ctx). With NOTE 2
+      (a config naming `runner` lands with its project's pin bump) and NOTE 3 (`--no-extensions` in agents.sh's
+      line). Its review: the first project's design-study/step5-verification/mishmeret-pi-role-plan-2026-11-23/.
+    * girsa-architect's NOTE, live: the first project's #302 answered A at 18:49 (the eight git writers closed, git's
+      list made a classification, a test failing on a name in neither) and #303 A at 18:50 (a guarded pi role lands).
 
 M15. **[2026-11-23, the known gaps' seven (notes/PLAN-KNOWN-GAPS-SEVEN.md)]**
     * **[16:22]** Session start. Main d9fda25, one ahead of origin f2126a1 (the state commit, merged). The first
