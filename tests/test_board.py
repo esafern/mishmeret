@@ -540,7 +540,8 @@ LIST = """() => { const q = document.getElementById("qlist");
                     text: c.querySelector(".ans").textContent, cut: c.scrollWidth > c.clientWidth})),
             empty: (q.querySelector(".empty") || {}).textContent || "",
             pressed: Object.fromEntries([...document.querySelectorAll("button[data-msgs]")].map(b => [b.dataset.msgs, b.getAttribute("aria-pressed")])),
-            focus: [document.activeElement.dataset.msgs || "", getComputedStyle(document.activeElement).outline,
+            focus: [document.activeElement.dataset.msgs || "", getComputedStyle(document.activeElement).outlineStyle + " " +
+                    getComputedStyle(document.activeElement).outlineWidth,          // the shorthand's order is Chromium's
                     getComputedStyle(document.activeElement).outlineOffset]}; }"""
 
 
@@ -606,7 +607,7 @@ def test_a_pill_of_open_messages_lists_each_one(tmp_path, monkeypatch, size):
     assert not any(c["cut"] for c in listed["cards"]) and listed["wide"][0] <= listed["wide"][1], listed
     assert first["pressed"] == {"ex-architect": "false", "ex-demo-operator": "false"}, first
     assert listed["pressed"] == {"ex-architect": "true", "ex-demo-operator": "false"}, listed
-    assert listed["focus"][0] == "ex-architect" and " solid 1px" in listed["focus"][1] and \
+    assert listed["focus"][0] == "ex-architect" and listed["focus"][1] == "solid 1px" and \
         listed["focus"][2] == "2px", f"the focus on the pill, outlined: {listed['focus']}"
     assert closed["title"] == "Questions for you" and closed["pressed"]["ex-architect"] == "false" and \
         closed["focus"][0] == "ex-architect", f"Enter again closes the list: {closed}"

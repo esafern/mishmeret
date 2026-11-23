@@ -14,15 +14,19 @@ parallel"):
   * STOPPING THE LIVE TMUX SERVER - for every role, the operator too (below, TMUX_KILL).
   * LANDING AS ANOTHER ROLE through `tools/land.py`, which runs git where this hook cannot see it (below, LAND); and
     a `git commit` or a landing `git merge` in this repository run any other way (below, THROUGH_LAND).
+  * A GIT VERB THAT IS NOT GIT'S OWN - an alias or an add-on - for every role (GIT_VERBS); and WRITING A GUARDED
+    REPOSITORY'S CONFIG (`git config`, `git remote add`), or the global one, for every role, the operator too.
 
 WHAT IT READS: the command, and the text of a shell script it runs (`bash x.sh`, `sh x.sh`, `./x.sh`, its path from
 a variable the same command sets) - commits here are made by script. Only git in COMMAND POSITION counts (a line's
-start, or after ; & | ( ` or $(, and after the shell's keywords then, do, else, elif, if, while, until, ! and {;
-git also written `\\git`, "git" or 'git', and behind its own options), and never what stands inside quotes or a
+start, or after ; & | ( ` or $(, after the shell's keywords then, do, else, elif, if, while, until, ! and {, and after
+a case arm's pattern; git also written `\\git`, "git" or 'git', behind its own options, and its verb quoted or
+escaped), and never what stands inside quotes or a
 heredoc's body: `grep "git push"` and a
 commit message saying "never git push --all" are words, not commands (the builder's and the verifier's probes). It
 is a guard on the ordinary forms, not a sandbox: `bash -c "..."`'s argument and git behind env, time, command, exec,
-nice, sudo or xargs, or by a path, are read; git hidden in a variable, another interpreter or a deeper script is not. Anything it cannot judge runs.
+nice, sudo or xargs, or by a path, are read; git hidden in a variable, another interpreter or a deeper script is not.
+Anything it cannot judge runs - but a verb it cannot read (`git $V` with V set elsewhere) is not git's own, and is refused.
 
 WHO: the hook input's `agent_type` - the agent a session was started as (`claude --agent girsa-builder`). A SUBAGENT
 (the input carries an `agent_id`) is no role, whatever its type (`role_of`; M07 item 2). A session started without one is guarded like any role other than the operator (the reviewer, 2026-10-04, "do a and b to prevent
@@ -51,12 +55,23 @@ _CFG = config.load()
 OPERATOR = _CFG["operator"]
 PLANNED = _CFG["land"]["planned"]
 GUARD = _CFG["guard"]
+# ONE SHELL WORD in the masked text, its quoted parts kept as quotes around spaces (notes/PLAN-KNOWN-GAPS.md, item 1):
+# with `\S+` a quoted word ended at its first space, so `git -C "." push`, `X="a b" git push` and the like matched
+# nothing and every rule let them through. It ends at an unquoted separator, as the shell's does (else `R=x; S=y; git`
+# read as one prefix and lost the assignments), and holds a $(...) or `...` (`X=$(pwd) git push`), and an escaped
+# character, which the mask leaves as a backslash and a space (`git \push`: notes/PLAN-KNOWN-GAPS-SEVEN.md, item 17)
+WORD = r"""(?:"[^"]*"|'[^']*'|\$\([^()]*\)|`[^`]*`|\\.|[^\s"';&|()<>`])+"""
 # COMMAND POSITION (M07 item 1, notes/PLAN-GUARD-KEYWORDS.md): after a separator, and after any run of the shell's
 # keywords - `if true; then git push; fi`, `{ git push; }`, `! git push` had gone through every check built on it
 BASE_BOUNDARY = r"(?:^|[;&|(`]|\$\()\s*"
 KEYWORDS = ("if", "!", "then", "else", "elif", "do", "while", "until", "{")
 KEYWORD = r"(?:(?:" + "|".join(KEYWORDS) + r")\s+)"
-BOUNDARY = BASE_BOUNDARY + KEYWORD + "*"
+# A CASE ARM (notes/PLAN-KNOWN-GAPS-SEVEN.md, item 5): after `in`, `;;`, `;&` or `;;&`, a pattern - its words, `|`
+# between them - and its `)`. `case x in x) git push origin main;; esac` had gone through every check built on BOUNDARY;
+# an arm may not run, so a cd in one is read as a cd after a keyword (KEYWORD_CD)
+CASE_PATTERN = r"\(?\s*" + WORD + r"(?:\s*\|\s*" + WORD + r")*\s*\)"
+CASE_ARM = r"(?:\bin|;;&?|;&)\s+" + CASE_PATTERN + r"\s*"
+BOUNDARY = r"(?:" + BASE_BOUNDARY + "|" + CASE_ARM + ")" + KEYWORD + "*"
 # the names the guard reads in command position: `mask` gives each back written `\name`, `"name"` or `'name'` (a
 # path inside the quotes too), as the shell runs it
 NAMES = ("git", "tmux", "pkill", "killall", "cp", "cd", "bash", "sh", "zsh", "dash", "ksh", "env", "time", "command",
@@ -64,20 +79,17 @@ NAMES = ("git", "tmux", "pkill", "killall", "cp", "cd", "bash", "sh", "zsh", "da
 _NAME = "(?:" + "|".join(NAMES) + ")"
 NAME_WORD = re.compile(r"""(?<![\w"'\\])(?:\\""" + _NAME + r"""|(["'])(?:[\w.~/-]*/)?""" + _NAME + r"""\1)(?![\w"'-])""")
 SHELL = r"""(?:\\|["'])?(?:\S*/)?(?:bash|sh|zsh|dash|ksh)["']?"""     # for the patterns that read the original text
-# ONE SHELL WORD in the masked text, its quoted parts kept as quotes around spaces (notes/PLAN-KNOWN-GAPS.md, item 1):
-# with `\S+` a quoted word ended at its first space, so `git -C "." push`, `X="a b" git push` and the like matched
-# nothing and every rule let them through. It ends at an unquoted separator, as the shell's does (else `R=x; S=y; git`
-# read as one prefix and lost the assignments), and holds a $(...) or `...` (`X=$(pwd) git push`)
-WORD = r"""(?:"[^"]*"|'[^']*'|\$\([^()]*\)|`[^`]*`|[^\s"';&|()<>`])+"""
 # what may stand before git and still run it (girsa-verifier's probe of 78b8088): assignments, and the prefixes env,
 # time, command, exec, nice, sudo and xargs with their options; and git by a path (/usr/bin/git)
 PREFIX = (r"(?:(?:[A-Za-z_]\w*=(?:" + WORD + r")?|env(?:\s+-" + WORD + r")*|time|command|exec"
           r"|nice(?:\s+-n\s*" + WORD + r"|\s+-\d+)?|sudo(?:\s+-[A-Za-z]+(?:\s+(?:[\w.-]+|\"[^\"]*\"|'[^']*'))?)*"
           r"|xargs(?:\s+-" + WORD + r"(?:\s+" + WORD + r")?)*)\s+)*")
-# git's own options before the verb: those with a spaced argument, then any other word starting with `-`
+# git's own options before the verb: those with a spaced argument, then any other word starting with `-`. THE VERB IS
+# ONE WORD, read as the shell reads it (notes/PLAN-KNOWN-GAPS-SEVEN.md, item 17): as `[a-z][\w-]*` a quoted or escaped
+# one (`git "push"`, `git \push`) matched nothing and every rule let it through; it is on git's line, not the next
 GIT = re.compile(BOUNDARY + PREFIX + r"(?:\S*/)?git"
                  r"((?:\s+-[Cc]\s+" + WORD + r"|\s+--(?:git-dir|work-tree|namespace|config-env|attr-source)\s+" + WORD
-                 + r"|\s+-" + WORD + r")*)\s+([a-z][\w-]*)([^;&|\n]*)", re.M)
+                 + r"|\s+-" + WORD + r")*)[ \t]+(?!-)(" + WORD + r")([^;&|\n]*)", re.M)
 SHELL_C = re.compile(r"(?<![\w-])" + SHELL + r"\s+(?:-\w+\s+)*-c\s+(\"(?:[^\"\\]|\\.)*\"|'[^']*')"
                      r"|(?<![\w-])" + SHELL + r"(?:\s+-\w+)*\s*<<<\s*(\"(?:[^\"\\]|\\.)*\"|'[^']*')")
 # a heredoc that a shell reads as its script (girsa-verifier, 2026-10-11): `bash <<'EOF'`, `sh -s <<EOF`, `. /dev/stdin
@@ -106,10 +118,11 @@ def shell_c(command, masked):
 # building M07 item 1, each let through from a worktree into the main tree): it ends at a separator (`cd <main>; ls;
 # git reset --hard` had been judged at `<main>;`), it may be quoted (in the masked text a quoted path had read as a
 # lone quote), it comes after cd's options (`cd -P <main>`, `cd -- <main>`), and `pushd` goes there too; one word of
-# quoted and plain parts (`cd "$R"/book`: item 1 of notes/PLAN-KNOWN-GAPS.md)
-CD_TO = r"""(?:cd|pushd)(?:\s+(?:-[LPe@]+|--))*\s+((?:"[^"]*"|'[^']*'|[^\s;&|)`"'])+)"""
+# quoted and plain parts (`cd "$R"/book`: item 1 of notes/PLAN-KNOWN-GAPS.md). With no path, and `popd` (item 4 of
+# notes/PLAN-KNOWN-GAPS-SEVEN.md: a bare cd and a popd had not been read, `cd -` had been a folder named "-")
+CD_TO = r"""(cd|pushd|popd)(?![\w.-])(?:\s+(?:-[LPe@]+|--))*(?:\s+((?:"[^"]*"|'[^']*'|[^\s;&|)`"'<>])+))?"""
 CD = re.compile(BASE_BOUNDARY + CD_TO, re.M)
-KEYWORD_CD = re.compile(BASE_BOUNDARY + KEYWORD + "+" + CD_TO, re.M)
+KEYWORD_CD = re.compile(r"(?:" + BASE_BOUNDARY + KEYWORD + "+|" + CASE_ARM + KEYWORD + "*)" + CD_TO, re.M)
 SCRIPT = re.compile(BOUNDARY + r"(?:(?:bash|sh|zsh)\s+(?:-\w+\s+)*)?(\S+\.sh)(?![\w.])", re.M)
 ASSIGN = re.compile(r"(?<![\w$])([A-Za-z_]\w*)=(\"[^\"]*\"|'[^']*'|[^\s;&|]+)")
 HEREDOC = re.compile(r"<<-?\s*(['\"]?)([A-Za-z_]\w*)\1")
@@ -143,14 +156,91 @@ LEAVES_IT = {"merge": ("--ff-only",), "stash": ("list", "show"), "apply": ("--ch
 PUSH_LONG = ("--all", "--branches", "--mirror", "--delete", "--prune", "--force-with-lease", "--force-if-includes")
 
 
+def _long(word, options):
+    """True when `word` is a long option of `options`, or a prefix of one, as git takes a unique prefix (gitcli(7))."""
+    opt = word.split("=", 1)[0]
+    return len(opt) > 2 and opt[:2] == "--" and any(o.startswith(opt) for o in options)
+
+
 def push_forces(word):
     """True when `word`, as the shell gives it to git push, forces or deletes: a `+` or `:` refspec, a long option of
     PUSH_LONG or a prefix of one, or a short cluster holding f or d (copy_refusal's reading; after an `o`, the rest is
     `-o`'s argument)."""
-    opt = word.split("=", 1)[0]
-    return (word.startswith(("+", ":"))
-            or (len(opt) > 2 and opt[:2] == "--" and any(o.startswith(opt) for o in PUSH_LONG))
+    return (word.startswith(("+", ":")) or _long(word, PUSH_LONG)
             or (word[:1] == "-" and word[1:2] != "-" and bool({"f", "d"} & set(word[1:].split("o", 1)[0]))))
+
+
+# GIT'S OWN COMMANDS (notes/PLAN-KNOWN-GAPS-SEVEN.md, item 6a; girsa-architect's B): `git --list-cmds=main` on git
+# 2.56.1. A verb not among them is refused for every role, in every tree - an alias (`git -c alias.p='push --force' p`)
+# or an add-on on PATH runs what this guard cannot read. A test fails when the running git lists a name not here.
+GIT_VERBS = frozenset("""
+add am annotate apply archimport archive backfill bisect blame branch bugreport bundle cat-file check-attr check-ignore
+check-mailmap check-ref-format checkout checkout--worker checkout-index cherry cherry-pick clean clone column commit
+commit-graph commit-tree config count-objects credential credential-cache credential-cache--daemon credential-netrc
+credential-osxkeychain credential-store cvsexportcommit cvsimport cvsserver daemon describe diagnose diff diff-files
+diff-index diff-pairs diff-tree difftool difftool--helper fast-export fast-import fetch fetch-pack filter-branch
+fmt-merge-msg for-each-ref for-each-repo format-patch format-rev fsck fsck-objects fsmonitor--daemon gc
+get-tar-commit-id grep hash-object help history hook http-backend http-fetch http-push imap-send index-pack init
+init-db instaweb interpret-trailers jump last-modified log ls-files ls-remote ls-tree mailinfo mailsplit maintenance
+merge merge-base merge-file merge-index merge-octopus merge-one-file merge-ours merge-recursive merge-recursive-ours
+merge-recursive-theirs merge-resolve merge-subtree merge-tree mergetool mktag mktree multi-pack-index mv name-rev notes
+p4 pack-objects pack-redundant pack-refs patch-id pickaxe prune prune-packed pull push quiltimport range-diff read-tree
+rebase receive-pack reflog refs remote remote-ext remote-fd remote-ftp remote-ftps remote-http remote-https repack
+replace replay repo request-pull rerere reset restore rev-list rev-parse revert rm send-email send-pack
+sh-i18n--envsubst shell shortlog show show-branch show-index show-ref sparse-checkout stage stash status stripspace
+submodule submodule--helper subtree switch symbolic-ref tag unpack-file unpack-objects update-index update-ref
+update-server-info upload-archive upload-archive--writer upload-pack url-parse var verify-commit verify-pack verify-tag
+version web--browse whatchanged worktree write-tree
+""".split())
+# THE REPOSITORY'S CONFIG IS WRITTEN BY NO ROLE in a guarded tree (item 6b; girsa-architect's B): the main clone and
+# every worktree share it, and a key there changes what every role's git does - an alias, `remote.<name>.mirror`, a
+# push refspec, a URL - while the file tools are refused that same file. `git config` in any form but these reads, and
+# `git remote`'s writes; the options whose value is the next word, so it is not read as a key
+CONFIG_READS = ("--get", "--get-all", "--get-regexp", "--get-urlmatch", "--get-color", "--get-colorbool", "--list")
+CONFIG_WRITES = ("--add", "--unset", "--unset-all", "--replace-all", "--rename-section", "--remove-section", "--edit")
+CONFIG_VALUED = ("-f", "--file", "--blob", "--type", "--default", "--comment", "--value", "--url")
+REMOTE_WRITES = ("add", "set-url", "rename", "remove", "rm", "set-branches")
+# ...and on the operator's push, no config from its own line (item 6c): these keys choose where a push goes or what it
+# sends (`-c remote.origin.mirror=true`, `-c push.default=matching`, a bare push's `branch.<name>.pushRemote`)
+PUSH_CONFIG_KEYS = ("remote.", "url.", "alias.", "branch.", "push.")
+
+
+def _config_writes(verb, words):
+    """True when `git config` or `git remote` with these words (as the shell gives them) writes the config: a write
+    option or subcommand, or a key with a value; `remote` add, set-url, rename, remove or set-branches."""
+    words = [w for w in words if not re.match(r"\d*[<>]", w)]          # a redirection is no word of git's
+    if verb == "remote":
+        sub = [w for w in words if w not in ("-v", "--verbose")][:1]
+        return bool(sub) and sub[0] in REMOTE_WRITES
+    plain, i = [], 0
+    while i < len(words):
+        w = words[i]
+        if w == "-e" or _long(w, CONFIG_WRITES):
+            return True
+        if w == "-l" or _long(w, CONFIG_READS):
+            return False
+        if w in CONFIG_VALUED:
+            i += 2
+            continue
+        if not w.startswith("-"):
+            plain.append(w)
+        i += 1
+    if plain[:1] and plain[0] in ("get", "list"):
+        return False
+    return (bool(plain[:1]) and plain[0] in ("set", "unset", "rename-section", "remove-section", "edit")) or len(plain) > 1
+
+
+def _push_config(lead, opts):
+    """The config the operator's push line sets that PUSH_CONFIG_KEYS name: `-c KEY=...` or `--config-env KEY=...` among
+    git's options (as the shell gives them), or a GIT_CONFIG... assignment before git."""
+    found = re.findall(r"(?<![\w$])GIT_CONFIG\w*=", lead)
+    words = _split(opts)
+    for i, w in enumerate(words):
+        key = (words[i + 1] if i + 1 < len(words) else "") if w in ("-c", "--config-env") else \
+            w[2:] if w.startswith("-c") else w[13:] if w.startswith("--config-env=") else ""
+        if key.lower().startswith(PUSH_CONFIG_KEYS):
+            found.append(f"{w} {key}" if w in ("-c", "--config-env") else w)
+    return found
 
 
 def mask(text, runs=True):
@@ -219,6 +309,8 @@ def mask(text, runs=True):
             quote = "$'" if c == "'" and (i - j) % 2 else c
         elif c == "\\" and i + 1 < n:
             out[i + 1] = " "
+            if text[i + 1] == "\n":     # a line continuation is the space the shell makes of it (item 17's sibling:
+                out[i] = " "            # `git \<newline> push` had hidden the verb from every rule)
             escaped = i + 1
             i += 1
         elif c == "<" and text.startswith("<<", i) and not text.startswith("<<<", i):
@@ -261,6 +353,14 @@ def _word(s):
     except ValueError:
         return _unquote(s)
     return parts[0] if len(parts) == 1 else _unquote(s)
+
+
+def _split(s):
+    """`s`'s words as the shell gives them, quotes taken off; split at spaces when it leaves a quote open."""
+    try:
+        return shlex.split(s)
+    except ValueError:
+        return s.split()
 
 
 def _expand(path, text):
@@ -387,6 +487,13 @@ def is_project_tree(path):
     return bool(dirs and own and dirs[1] == own[1])
 
 
+def in_guarded_repo(path):
+    """True when `path` is in a guarded tree's repository - its main tree or any linked worktree, one common git dir -
+    whose config they all read."""
+    dirs = _git_dirs(path)
+    return bool(dirs and dirs[1] in guarded_git_dirs())
+
+
 def _read(path):
     try:
         with open(path, encoding="utf-8") as fh:
@@ -398,14 +505,29 @@ def _read(path):
 def _places_before(text, masked, at, base, keyword_cds=True):
     """Each directory a command at position `at` may run in: every cd before it, in order, from where the one before
     it left (girsa-verifier's MEDIUM 2 on 828abdc: `cd ~/work && cd <the project> && git reset --hard` had been judged
-    at `<cwd>/<the project>`). A keyword-led cd (KEYWORD_CD) may not run, so the place it leaves stays one too."""
+    at `<cwd>/<the project>`). A keyword-led cd (KEYWORD_CD) may not run, so the place it leaves stays one too. Each
+    place is kept with the one before it and pushd's stack (notes/PLAN-KNOWN-GAPS-SEVEN.md, item 4): `cd -` goes back,
+    a bare cd home, `popd` to the stack's top, a bare `pushd` swaps the two."""
     cds = sorted([(c, False) for c in CD.finditer(masked[:at])]
                  + [(c, True) for c in KEYWORD_CD.finditer(masked[:at])] * keyword_cds, key=lambda cd: cd[0].start())
-    places = [base]
+    states = [(base, None, ())]             # (a place, the place before it, pushd's stack)
     for c, maybe in cds:
-        moved = [os.path.join(p, _expand(_word(text[c.start(1):c.end(1)]), text[:at])) for p in places]
-        places = list(dict.fromkeys(places + moved if maybe else moved))
-    return places
+        verb, path = c.group(1), c.group(2) and _expand(_word(text[c.start(2):c.end(2)]), text[:at])
+        moved = []
+        for here, before, stack in states:
+            # shortcut: with no cd before it on the line, a `cd -` or `popd` goes where the shell was before the
+            # command, which the hook's input does not hold - the place is kept; upgrade if the input ever carries it
+            if verb == "popd":
+                moved.append((stack[0], here, stack[1:]) if stack else (here, before, stack))
+            elif path == "-" or (verb == "pushd" and not path):     # bash: `pushd -` is a pushd to the place before
+                back = before if path == "-" else (stack[:1] or [None])[0]
+                rest = stack if verb == "cd" else (here,) + (stack if path == "-" else stack[1:])
+                moved.append((back, here, rest) if back else (here, before, stack))
+            else:
+                there = os.path.join(here, path) if path else os.path.expanduser("~")
+                moved.append((there, here, (here,) + stack if verb == "pushd" else stack))
+        states = list(dict.fromkeys(states + moved if maybe else moved))
+    return list(dict.fromkeys(here for here, _, _ in states))
 
 
 def _dir_before(text, masked, at, base):
@@ -425,9 +547,10 @@ def _git_trees(command, masked, m, cwd):
     a, before = m.start(1), command[:m.start()]
     opts, lead = masked[a:m.end(1)], masked[m.start():a]
     said = lambda at, g: _expand(_word(command[at + g.start(1):at + g.end(1)]), before)
-    c = re.search(r"-C\s+(" + WORD + ")", opts)
     places = _places_before(command, masked, m.start(), cwd)
-    if c:                                   # a relative -C from where the cd went (girsa-verifier's MEDIUM on db7b0ff)
+    # a relative -C from where the cd went (girsa-verifier's MEDIUM on db7b0ff), and EVERY -C from where the one before
+    # it left, as git takes them (notes/PLAN-KNOWN-GAPS-SEVEN.md, item 3: `git -C /work -C book` had read /work)
+    for c in re.finditer(r"(?<!\S)-C\s+(" + WORD + ")", opts):
         places = [os.path.join(place, said(a, c)) for place in places]
     named = {}
     for flag, var in (("--work-tree", "GIT_WORK_TREE"), ("--git-dir", "GIT_DIR")):
@@ -441,7 +564,36 @@ def _git_trees(command, masked, m, cwd):
     return tuple(dict.fromkeys(trees))
 
 
-def refusal(role, command, cwd, main_tree=is_main_tree, read=_read, depth=0, project_tree=is_project_tree):
+def _config_refusal(command, masked, m, cwd, verb, guarded):
+    """For a GIT match whose `verb` writes the config (`_config_writes`): the reason to refuse it, for every role - a
+    `--global` or `--system` write from anywhere, since every repository reads that file; else one in a guarded tree's
+    repository or a foreign one, a `-f` file's by the folder it is in - or None."""
+    words = _split(command[m.start(3):m.end(3)])
+    if verb == "config" and any(_long(w, ("--global", "--system")) for w in words):
+        return ("refused by the role guard: a `git config --global` or `--system` write is read by every repository on "
+                "this machine, the guarded ones too - a change to it is the reviewer's own command: `! git config ...` "
+                "in the operator's pane")
+    named = [words[i + 1] for i, w in enumerate(words[:-1]) if w in ("-f", "--file")] + \
+            [w[len("--file="):] for w in words if w.startswith("--file=")]
+    trees = _git_trees(command, masked, m, cwd)
+    if verb == "config" and named:          # the file's own folder, from where the command's cds and -C left
+        trees = tuple(os.path.dirname(os.path.join(t, _expand(named[0], command[:m.start()]))) for t in trees)
+    for where in trees:
+        pin, repo = pin_of(where), foreign_tree(where)
+        if pin:
+            return pin_refusal(pin)
+        if repo:
+            return foreign_refusal(repo)
+        if guarded(where):
+            return (f"refused by the role guard: `git {verb}` here writes the config of a guarded tree's repository, "
+                    "which its main clone and every worktree read - a key there changes what every role's git does "
+                    "(an alias, a mirror, where a push goes), and the file tools are refused that file too; a change "
+                    f"to it is the reviewer's own command: `! git {verb} ...` in the operator's pane")
+    return None
+
+
+def refusal(role, command, cwd, main_tree=is_main_tree, read=_read, depth=0, project_tree=is_project_tree,
+            guarded=in_guarded_repo):
     """None to let `command` run as `role` from `cwd`, or the reason to refuse it."""
     masked = mask(command)
     if depth == 0:                          # one level into a script the command runs
@@ -451,18 +603,25 @@ def refusal(role, command, cwd, main_tree=is_main_tree, read=_read, depth=0, pro
             here = _dir_before(command, masked, a, cwd)
             body = _moved(read(os.path.join(here, path)), read)
             if body:
-                why = refusal(role, body, here, main_tree, read, depth + 1, project_tree)
+                why = refusal(role, body, here, main_tree, read, depth + 1, project_tree, guarded)
                 if why:
                     return f"{why} (in the script {path})"
     for m in shell_c(command, masked):          # `bash -c "..."`: the quoted argument is a command, read as one
         why = refusal(role, shell_arg(m), _dir_before(command, masked, m.start(), cwd), main_tree, read,
-                      depth, project_tree)
+                      depth, project_tree, guarded)
         if why:
             return why
     no_role = (f" (this session was started without a role: for the main clone start it as {OPERATOR}; a one-off "
                "session works in a worktree, where nothing is refused)") if role == NO_ROLE else ""
     for m in GIT.finditer(masked):
-        verb, rest = m.group(2), m.group(3).split()
+        verb, rest = _expand(_word(command[m.start(2):m.end(2)]), command[:m.start()]), m.group(3).split()
+        if verb not in GIT_VERBS:
+            return (f"refused by the role guard: `git {verb}` is not one of git's own commands - an alias or an add-on "
+                    "runs what this guard cannot read; write the git command it stands for" + no_role)
+        if verb in ("config", "remote") and _config_writes(verb, _split(command[m.start(3):m.end(3)])):
+            why = _config_refusal(command, masked, m, cwd, verb, guarded)
+            if why:
+                return why + no_role
         if verb in CHANGES_MAIN and not ((verb == "stash" and rest[:1] and rest[0] in LEAVES_IT["stash"])
                                          or (verb == "apply" and any(w in rest for w in LEAVES_IT["apply"]))):
             for where in _git_trees(command, masked, m, cwd):
@@ -489,12 +648,13 @@ def refusal(role, command, cwd, main_tree=is_main_tree, read=_read, depth=0, pro
                 return (f"refused by the role guard: pushing is the operator's ({OPERATOR}), on the reviewer's "
                         "word - send it a LANDED or a REQUEST instead" + no_role)
             retired = GUARD["retired_remotes"]
-            span = command[m.start(3):m.end(3)]     # the words as given: masked, a quoted word is spaces
-            try:
-                words = shlex.split(span)
-            except ValueError:                      # a quote the span leaves open
-                words = span.split()
-            bad = [w for w in words if w in retired or push_forces(w)]
+            set_here = _push_config(command[m.start():m.start(1)], command[m.start(1):m.end(1)])
+            if set_here:
+                return ("refused by the role guard: the operator's push takes no config from its own line (found "
+                        f"{', '.join(set_here)}) - a remote., url., alias., branch. or push. key, or GIT_CONFIG..., "
+                        "changes where a push goes or what it sends; push the branch to origin by name")
+            # the words as given: masked, a quoted word is spaces
+            bad = [w for w in _split(command[m.start(3):m.end(3)]) if w in retired or push_forces(w)]
             if bad:
                 return ("refused by the role guard: the operator never pushes --all, --mirror, a force or a delete"
                         + (f", nor to {' or '.join(retired)}" if retired else "")
@@ -696,11 +856,15 @@ CHECKS = tuple(GUARD["checks"])
 GATED_STEPS = {"commit", "merge", "push", "tag", "update-ref", "cherry-pick", "am"}
 STEP_SPLIT = re.compile(r"(\|\||&&|\|&?|;|(?<![<>&])&(?![>&])|\n)")
 LEAD_WORDS = {*KEYWORDS, "(", "time", "command", "exec"}
+# a case's head and an arm's pattern before a statement's program (item 5 of notes/PLAN-KNOWN-GAPS-SEVEN.md: `case x in
+# a) pytest | tail;; esac` had passed both check rules); a pattern's `|` alternatives are split as a pipe, so `b)` too
+CASE_LEAD = re.compile(r"^\s*(?:case\s.*?\sin\s+)?" + CASE_PATTERN)
 
 
 def _words(stmt):
-    """The statement's words with what stands before its program taken off: keywords, assignments, env and its
-    options, `timeout N`; and the keywords so taken, as a set."""
+    """The statement's words with what stands before its program taken off: a case arm's pattern, keywords,
+    assignments, env and its options, `timeout N`; and the keywords so taken, as a set."""
+    stmt = CASE_LEAD.sub("", stmt, count=1)
     words, lead = stmt.replace("(", " ( ").replace("{", " { ").split(), set()
     while words:
         w = words[0]

@@ -26,9 +26,10 @@ set -u
 . "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/agents-lib.sh"
 MODE="${1:-}"
 
-effort_of() {   # role -> the effort its agent file names; passed as --effort, since Claude Code does not apply an agent
-                # file's effort itself - the user settings' would win (the reviewer, 2026-10-06: "go agents.sh")
-  sed -n 's/^effort: *//p' "$DIR/${MM_AGENT_FILES//\{role\}/$1}" | head -1
+effort_of() {   # role -> "--effort X" for the effort its agent file names, since Claude Code does not apply an agent
+                # file's effort itself - the user settings' would win (the reviewer, 2026-10-06: "go agents.sh");
+                # nothing when it names none: a bare --effort took the next word, at --resume the prompt (M07)
+  sed -n 's/^effort: *\([^ ][^ ]*\).*/--effort \1/p' "$DIR/${MM_AGENT_FILES//\{role\}/$1}" 2>/dev/null | head -1
 }
 
 # THE AGENTS' TMUX SETTINGS, LOADED EVERY TIME (the reviewer, 2026-10-11: "control-a z doesn't work today for zooming"):
@@ -64,13 +65,13 @@ start_role() {   # pane-id role colour; fails when the role is left alone (its l
   if [ "$MODE" = "--resume" ]; then
     case "$sid" in
       ""|none) ;;                                       # no earlier session: started fresh, below
-      *) tmux send-keys -t "$1" "cd '$DIR' && $CLEAN claude --resume $sid --agent $2 --name $2 --effort $(effort_of "$2") 'agents.sh --resume: this session stopped without finishing (its tmux pane closed) and is resumed here with its context. A command that was running when it stopped did not finish - check the state of what you were doing before you go on.'" Enter
+      *) tmux send-keys -t "$1" "cd '$DIR' && $CLEAN claude --resume $sid --agent $2 --name $2 $(effort_of "$2") 'agents.sh --resume: this session stopped without finishing (its tmux pane closed) and is resumed here with its context. A command that was running when it stopped did not finish - check the state of what you were doing before you go on.'" Enter
          return ;;
     esac
   fi
   # NO OPENING PROMPT HERE: the agent file's `initialPrompt` sends the brief's line itself, so typing it too sent it twice
   # (the reviewer, 2026-10-25: "each command line includes the start prompt as a parameter which is duplicative")
-  tmux send-keys -t "$1" "cd '$DIR' && $CLEAN claude --agent $2 --name $2 --effort $(effort_of "$2")" Enter
+  tmux send-keys -t "$1" "cd '$DIR' && $CLEAN claude --agent $2 --name $2 $(effort_of "$2")" Enter
 }
 
 # NEXT - A FINISHED SESSION IS CLEARED, EXITED AND STARTED AGAIN IN ITS PANE (the reviewer, 2026-11-10, the first

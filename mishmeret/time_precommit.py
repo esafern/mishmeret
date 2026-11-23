@@ -35,11 +35,16 @@ def added_lines(cwd=None):
     """[(path, line)] for every line the staged changes add to a .md or .txt file."""
     diff = subprocess.run(["git", "diff", "--cached", "-U0", "--no-color", "--diff-filter=AMR", "--", "*.md", "*.txt"],
                           cwd=cwd, capture_output=True, text=True, encoding="utf-8", errors="replace").stdout
-    out, path = [], None
+    out, path, hunk = [], None, False
     for line in diff.splitlines():
-        if line.startswith("+++ "):
+        # a "+++ " line is a header only before the file's first @@ - an added line "++ x" reads "+++ x" too
+        if line.startswith("diff --git "):
+            hunk = False
+        elif line.startswith("@@"):
+            hunk = True
+        elif not hunk and line.startswith("+++ "):
             path = line[6:] if line.startswith("+++ b/") else line[4:]
-        elif line.startswith("+") and path:
+        elif hunk and line.startswith("+") and path:
             out.append((path, line[1:]))
     return out
 

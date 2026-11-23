@@ -564,15 +564,22 @@ def _frozen_gate(where, copy):
         subprocess.run(["cp", "-c", "-R", where.main_tree, tree], check=True)        # APFS: a clone, instant
     else:
         shutil.copytree(where.main_tree, tree, symlinks=True)                        # untried on Linux (0II)
-    theirs = _uncommitted(where.main_tree)
+    theirs, seen = _uncommitted(where.main_tree), {}
     for rel in sorted(theirs | _uncommitted(tree) | ({LEDGER} if LEDGER else set())):
-        if _content(os.path.join(where.main_tree, rel)) != _content(os.path.join(tree, rel)):
+        seen[rel] = _content(os.path.join(where.main_tree, rel))
+        if seen[rel] != _content(os.path.join(tree, rel)):
             raise Refused(f"{rel} changed in the main tree while it was copied: gate main again "
                           f"(land.py gate --tree <a copy of {where.main_tree}>)")
     if theirs:
         print(f"  the copy holds the main tree's uncommitted {', '.join(sorted(theirs))}")
     if run_gate(tree, "landing"):
+        # A FILE MID-WRITE AT THE COPY, AND STILL AT THE COMPARE, passed it: both trees held the same half-written bytes
+        # (girsa-verifier's gap on M12; notes/PLAN-KNOWN-GAPS.md, item 15). Such a write ends during the gate, so a red
+        # whose compared files moved since is read against that write first
+        moved = sorted(rel for rel in seen if _content(os.path.join(where.main_tree, rel)) != seen[rel])
         raise Red("LANDED, and the gate on main is red - " + (
+            f"{', '.join(moved)} changed in the main tree during the gate: gate main again before the red is yours "
+            f"(land.py gate --tree <a copy of {where.main_tree}>)" if moved else
             f"read it against {', '.join(sorted(theirs))}, the main tree's own, before it is yours" if theirs
             else "the fix is yours"))
 

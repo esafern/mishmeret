@@ -362,6 +362,21 @@ def test_a_role_starts_with_no_project_config_inherited(tmp_path):
     assert out.returncode == 0 and len(starts) == 5, (out.returncode, out.stderr, starts)
     assert all("&& env -u MISHMERET_CONFIG -u MISHMERET_CONFIG_BY_SHIM claude --agent ex-" in s for s in starts), starts
     assert "$CLEAN claude --resume $sid" in open(os.path.join(PKG, "agents.sh"), encoding="utf-8").read(), "the resume too"
+    # AN AGENT FILE THAT NAMES NO EFFORT GIVES NO --effort (notes/PLAN-KNOWN-GAPS.md, item 10): a bare one took the next
+    # word as its value - at --resume, the prompt. ex-builder's names one; the others have no agent file at all.
+    from conftest import write_project
+    cfg = write_project(tmp_path / "p")
+    (tmp_path / "p" / ".claude" / "agents").mkdir()
+    (tmp_path / "p" / ".claude" / "agents" / "ex-builder.md").write_text("---\nname: ex-builder\neffort: high\n---\n",
+                                                                         encoding="utf-8")
+    typed.unlink()
+    out = subprocess.run(["bash", os.path.join(PKG, "agents.sh")], env=dict(env, MISHMERET_CONFIG=cfg), capture_output=True,
+                         text=True, stdin=subprocess.DEVNULL, timeout=60)
+    starts = [line for line in typed.read_text().splitlines() if "claude --agent" in line]
+    assert out.returncode == 0 and len(starts) == 5, (out.returncode, out.stderr, starts)
+    assert [s.split("claude ")[1] for s in starts if "ex-builder" in s] == ["--agent ex-builder --name ex-builder "
+                                                                           "--effort high Enter"], starts
+    assert not [s for s in starts if "--effort" in s and "ex-builder" not in s], starts
 
 
 def test_the_agents_scripts_share_one_clone_one_role_list_and_one_pane_lookup():

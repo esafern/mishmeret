@@ -369,6 +369,144 @@ def test_a_quoted_word_before_git_or_a_command_inside_a_string_does_not_hide_it(
         assert len(rg.mask(text)) == len(text), text
 
 
+def test_two_c_options_cd_back_a_case_arm_and_a_quoted_verb_do_not_hide_git(monkeypatch):
+    """notes/PLAN-KNOWN-GAPS-SEVEN.md, each form measured let through (or refused the wrong way) on d9fda25. ITEM 3: git
+    takes each -C from where the one before left; the guard read the first. ITEM 4: `cd -` was a folder named "-", a
+    bare cd and popd were not read. ITEM 5: a case arm's pattern hid what follows it from every rule, the check rules
+    too. ITEM 17: a quoted or escaped verb (`git "push"`, `git \\push`), or a line continuation before it, hid the
+    command from every rule. Placeholder paths: the main tree /work/book, a worktree /work/book-builder."""
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("role_guard", os.path.join(PKG, "role_guard.py"))
+    rg = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(rg)
+    main, wt = "/work/book", "/work/book-builder"
+    is_main = lambda p: (os.path.normpath(p) + "/").startswith("/work/book/") and "/work/book/.git" not in p
+    scripts = {"/work/book-builder/x.sh": "git commit -q -m x\n", "/work/book/x.sh": "git commit -q -m x\n"}
+    no = lambda cmd, cwd, role="ex-builder": rg.refusal(role, cmd, cwd, main_tree=is_main, read=scripts.get,
+                                                         guarded=lambda p: False)
+    monkeypatch.setenv("HOME", "/work/home-x")
+    refused = [
+        # item 3
+        ("git -C /work -C book reset --hard", wt), ("git -C / -C work -C book reset --hard", wt),
+        # item 4
+        ("cd /work/book; cd /work/book-builder; cd -; git reset --hard", wt),
+        ("cd /work/book-builder && cd - && git reset --hard", main), ("cd; cd -; git reset --hard", main),
+        ("pushd /work/book-builder; popd; git reset --hard", main), ("cd /work/book-builder; pushd -; git reset --hard", main),
+        ("pushd /work/book; pushd /work/book-builder; pushd; git reset --hard", wt),
+        ("pushd /work/book >/dev/null && popd >/dev/null && pushd /work/book && git reset --hard", wt),
+        # item 5: after `in`, `;;`, a `(pattern)`, alternatives, across lines; a cd in an arm may run
+        ("case x in x) git push origin main;; esac", wt), ("case x in a) :;; x) git push origin main;; esac", wt),
+        ("case x in (x) git push origin main;; esac", wt), ('case "$x" in "a b"|c) git push origin main;; esac', wt),
+        ("case $1 in\n  a)\n    :;;\n  b) git push origin main ;;\nesac", wt), ("case x in x) bash x.sh;; esac", main),
+        ("case x in x) cd /work/book;; esac; git reset --hard", wt),
+        ("case x in x) cd /work/book-builder;; esac; git reset --hard", main),
+        ("case x in x) if true; then git push origin main; fi;; esac", wt),
+        # item 17: quoted, escaped, after a line continuation, from a variable the command sets
+        ('git "push" origin main', wt), ("git 'push' origin main", wt), ("git \\push origin main", wt),
+        ("git 'reset' --hard", main), ('git "re"set --hard', main), ("git \\\n  push origin main", wt),
+        ("git -C /work/book \\\n  reset --hard", wt), ("V=push; git $V origin main", wt)]
+    for cmd, cwd in refused:
+        assert no(cmd, cwd), (cmd, cwd)
+    assert "never pushes" in no('git "push" --force origin main', main, "ex-operator")
+    monkeypatch.setenv("HOME", main)
+    assert no("cd; git reset --hard", wt) and no("cd /work; cd && git reset --hard", wt)
+    monkeypatch.setenv("HOME", "/work/home-x")
+    for cmd, cwd in (("git -C /work -C book-builder reset --hard", wt), ("git -C /work/book -C ../book-builder reset --hard", wt),
+                     ("cd /work/book-builder; cd /work/book; cd -; git reset --hard", wt), ("cd; git reset --hard", main),
+                     ("cd /work/book; cd; git reset --hard", wt), ("pushd /work/book; popd; git reset --hard", wt),
+                     ("cd -; git reset --hard", wt), ("popd; git reset --hard", wt),     # no cd before: the place is kept
+                     ("case x in x) echo git push;; esac", wt), ('echo "in a) git push"', wt),
+                     ("for f in a b; do echo $f; done", wt), ('case "$PWD" in /private/tmp/*) git reset -q --hard;; esac', "/private/tmp/c"),
+                     ("case x in x) cd /work/book-builder; git reset --hard;; esac", wt),
+                     ('git "status"', main), ("git \\status", main), ("echo a \\\n  git push origin main", wt),
+                     ("git log \\\n  --oneline", main), ("git \\\n  status", main), ("V=status; git $V", main),
+                     ("git\npush origin main", wt)):
+        assert no(cmd, cwd) is None, (cmd, cwd)
+    # every rule on BOUNDARY reads an arm: the tmux kill and cp too; and the check rules' reader takes the pattern off
+    assert rg.tmux_refusal("case x in x) tmux kill-server;; esac", wt, read={}.get)
+    assert rg.copy_refusal("case x in x) cp -r /work/book-builder /tmp/c;; esac", "/work",
+                           is_worktree=lambda p: p.rstrip("/").endswith("book-builder"))
+    for cmd in ("case x in a) python3 -m pytest tests | tail -3;; esac", "case x in a|b) python3 -m pytest tests | tail -3;; esac"):
+        assert rg.piped_check_refusal(cmd, wt, read={}.get), cmd
+    assert rg.check_status_refusal("case x in a) python3 -m pytest tests; git commit -m x;; esac", wt, read={}.get)
+    assert rg.piped_check_refusal("case x in a) python3 -m pytest tests > log 2>&1;; esac", wt, read={}.get) is None
+    for text in ("git \\\n  push", "a \\\nb\nc"):                     # the mask keeps every position
+        assert len(rg.mask(text)) == len(text), text
+
+
+def test_no_alias_and_no_config_write_reach_a_guarded_repository(monkeypatch):
+    """notes/PLAN-KNOWN-GAPS-SEVEN.md, item 6, girsa-architect's B. (a) A verb that is not git's own - an alias, an
+    add-on, a variable set elsewhere - is refused for every role. (b) The config of a guarded tree's repository, which
+    its main clone and every worktree read, is written by no role, the operator too: `git config` but its reads, and
+    `git remote`'s writes; a --global or --system write from anywhere; a -f file by its folder. (c) The operator's push
+    takes no remote., url., alias., branch. or push. key from its own line. Placeholder paths: the guarded repository's
+    trees /work/book and /work/book-builder, a scratch repository /work/scratch."""
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("role_guard", os.path.join(PKG, "role_guard.py"))
+    rg = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(rg)
+    main, wt, scratch = "/work/book", "/work/book-builder", "/work/scratch"
+    is_main = lambda p: (os.path.normpath(p) + "/").startswith("/work/book/") and "/work/book/.git" not in p
+    guarded = lambda p: os.path.normpath(p).startswith("/work/book")
+    no = lambda cmd, cwd, role="ex-builder": rg.refusal(role, cmd, cwd, main_tree=is_main, read={}.get, guarded=guarded)
+    # (a)
+    for cmd, role, cwd in (("git -c alias.p='push --force' p origin main", "ex-operator", main), ("git p origin main", "ex-builder", wt),
+                           ("git Push origin main", "ex-operator", main), ("git st", "ex-builder", scratch),
+                           ("git filter-repo --version", "ex-operator", scratch), ("git $V status", "ex-builder", scratch)):
+        why = no(cmd, cwd, role)
+        assert why and "not one of git's own commands" in why, cmd
+    for cmd in ("git status", "git log --oneline -3", "git worktree list", "git rev-parse HEAD", "git help push"):
+        assert no(cmd, scratch) is None, cmd
+    # (b)
+    writes = ("git config alias.p push", "git config remote.origin.mirror true", "git config --add x.y z",
+              "git config remote.origin.push +refs/heads/*:refs/heads/*", "git config --unset x.y", "git config --unset-a x.y",
+              "git config set x.y z", "git config unset x.y", "git config --rename-section a b", "git config -e",
+              "git config edit", "git config --local alias.p push", "git config --type=bool x.y true",
+              "git config -f .git/config alias.p push", "git remote add --mirror=push backup /tmp/x", "git remote add origin u",
+              "git remote set-url origin u", "git remote rename a b", "git remote remove a", "git remote rm a",
+              "git remote -v set-url origin u", "git remote set-branches origin x")
+    for cmd in writes:
+        for role, cwd in (("ex-builder", wt), ("ex-operator", main), ("ex-verifier", main)):
+            why = no(cmd, cwd, role)
+            assert why and "the reviewer's own command" in why, (cmd, role, cwd)
+        assert no(cmd, scratch, "ex-operator") is None, cmd           # a scratch repository's own config
+    for cmd, cwd in (("git -C /work/book config alias.p push", scratch), ("git config --global alias.p push", scratch),
+                     ("git config --system x.y z", scratch), ("git config --gl x.y z", scratch),
+                     ("git config -f /work/book/.git/config alias.p push", scratch),
+                     ("git config --file=/work/book/.git/config x.y z", scratch),
+                     ("cd /work/book/.git && git config -f config alias.p push", scratch)):
+        assert no(cmd, cwd, "ex-operator"), cmd
+    for cmd in ("git config --get user.name", "git config user.name", "git config -l", "git config --list",
+                "git config --get-regexp '^alias\\.'", "git config --global --get-regexp '^alias\\.'", "git config get x.y",
+                "git config list", "git config --show-origin --get-regexp x", "git config user.name 2>/dev/null",
+                "git config --get-r x", "git remote -v", "git remote", "git remote show origin", "git remote get-url origin",
+                "git config -f /work/scratch/x.cfg a.b c", "git config --get-all x.y pattern", "git config --type bool x.y"):
+        assert no(cmd, wt) is None, cmd
+    # (c)
+    for line in ("-c remote.origin.mirror=true", "-c url.x.pushInsteadOf=y", "-c alias.x=y", "-c branch.main.pushRemote=r",
+                 "-c push.default=matching", "-c Remote.origin.mirror=true", "-cremote.origin.mirror=true",
+                 "--config-env remote.origin.mirror=V", "--config-env=url.x.insteadOf=V"):
+        why = no(f"git {line} push origin main", main, "ex-operator")
+        assert why and "takes no config from its own line" in why, line
+    for lead in ("GIT_CONFIG_GLOBAL=/tmp/g", "GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=remote.origin.mirror GIT_CONFIG_VALUE_0=true",
+                 "env GIT_CONFIG_PARAMETERS=x"):
+        assert "takes no config" in no(f"{lead} git push origin main", main, "ex-operator"), lead
+    for fine in ("git -c user.name=x push origin main", "git -c core.sshCommand=ssh push origin b"):
+        assert no(fine, main, "ex-operator") is None, fine
+
+
+def test_the_guard_knows_every_command_git_lists():
+    """notes/PLAN-KNOWN-GAPS-SEVEN.md, item 6a: GIT_VERBS is git's own list, written down; a newer git's command fails
+    here before it is refused in use. Skipped where git is not installed."""
+    import shutil
+    import subprocess
+    if not shutil.which("git"):
+        pytest.skip("no git")
+    import role_guard
+    listed = set(subprocess.run(["git", "--list-cmds=main"], capture_output=True, text=True, check=True).stdout.split())
+    assert listed and listed <= role_guard.GIT_VERBS, sorted(listed - role_guard.GIT_VERBS)
+
+
 def test_the_role_guard_lets_a_role_land_through_land_py_only_as_itself():
     """The reviewer, 2026-10-26, Board #86 A (girsa-verifier's MEDIUM 1 on the landing script's plan): tools/land.py runs
     git add, commit and merge as Python subprocesses the guard never sees, and takes the role as its second word. So
@@ -602,6 +740,9 @@ def test_the_commit_check_refuses_a_time_typed_ahead_in_any_commit(tmp_path):
     assert bad.returncode != 0 and "commit refused by the time check" in bad.stderr and "NOTES.md" in bad.stderr
     git("reset", "-q")
     assert commit("draft.txt", f"[{past}-{ahead[-5:]}]\n").returncode != 0, "a range's later end"
+    git("reset", "-q")
+    # an added line that begins "++ " reads "+++ ..." in the diff, as a header (notes/PLAN-KNOWN-GAPS.md, item 9)
+    assert commit("draft.txt", f"++ {ahead}\n").returncode != 0, "a line that begins ++"
     git("reset", "-q")
     assert commit("data.json", f'"{ahead}"\n').returncode == 0, "only .md and .txt"
     assert commit("NOTES.md", "entry\n").returncode == 0, "a line removed is not read"
@@ -1172,6 +1313,21 @@ def test_the_gate_after_a_landing_takes_the_main_tree_whole_with_its_uncommitted
             frozen()
         monkeypatch.setattr(land, "_uncommitted", real)
         git(main, "checkout", "-q", "--", "book.json", "rulings.jsonl")
+    # A FILE MID-WRITE AT THE COPY AND STILL AT THE COMPARE (notes/PLAN-KNOWN-GAPS.md, item 15): both trees hold the
+    # same half-written book, so the compare passes; the write ends during the gate, and the red names it first
+    (main / "book.json").write_text('{"applied": [1, ', encoding="utf-8")         # torn, in both trees
+
+    def finished_during(t, name):
+        (main / "book.json").write_text('{"applied": [1]}\n', encoding="utf-8")
+        return 1
+    monkeypatch.setattr(land, "run_gate", finished_during)
+    with pytest.raises(land.Red, match=r"is red - book.json changed in the main tree during the gate: gate main again "
+                                       r"before the red is yours"):
+        frozen()
+    git(main, "checkout", "-q", "--", "book.json")
+    monkeypatch.setattr(land, "run_gate", lambda t, name: 1)          # nothing moved: the red reads as before
+    with pytest.raises(land.Red, match=r"the gate on main is red - the fix is yours$"):
+        frozen()
 
 
 def test_land_refuses_a_stop_resolved_against_main_after_main_moves_on(tmp_path, monkeypatch):
