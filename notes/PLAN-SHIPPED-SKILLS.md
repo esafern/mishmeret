@@ -17,6 +17,24 @@ two of them on Mishmeret's own code (`landing` for land.py, `operator-sessions` 
 project's words and kept by hand beside the code they describe. They also go stale at each pin bump, because the code
 moves and the skill does not (THE SECOND COPY OF THE TRUTH).
 
+GIRSA-ARCHITECT'S ANSWER (the first project's design-study/MISHMERET-SHIPPED-SKILLS-ARCHITECT.md at 3e30b334), all
+taken; nothing in it goes to the reviewer:
+- Q1, the prefix: agreed. A shipped skill never replaces a project's own; one home for each part. Each description says
+  it is Mishmeret's general procedure, so Claude Code, which chooses a skill by its description, loads the right one.
+  The first project's `landing` and `operator-sessions` keep only its particulars and point to the shipped ones: its
+  owners' cut, at its pin bump, not this piece.
+- Q2, agents.sh writes the links: agreed, on three conditions.
+  - The project's ignore line comes after any un-ignore of the folder: the first project's `.gitignore` re-includes
+    `.claude/skills/`, and a later rule wins. Its step at the bump, with `git check-ignore` as its test.
+  - Only a link is replaced, never a file or folder. A link is the right form: an edit through it lands in the pin,
+    which the guard refuses, where a copied folder would take the edit and lose it at the next start.
+  - Windows is unmeasured, and the README says so: MSYS's `ln -s` makes a copy by default, so an edit there would be
+    lost silently, not refused.
+- Q3, the name check is enough for the prose. What the code can list - land.py's options, agents.sh's modes - is not
+  written into a skill at all; the skill points to the command's own `--help`, so there is no table to drift. Taken
+  too, its optional signal: the drift test also REPORTS, without failing, each skill whose named files changed after
+  the skill last did (git's dates), for the operator of a pin bump to re-read.
+
 THE MEASURE, 2026-11-23, in the scratchpad (skillprobe/). Can a skill kept in a pinned tree reach a session through a
 link? Each tool was pointed at a local capture server that records every request and answers 400, so no model ran
 and no account was charged.
@@ -64,11 +82,17 @@ and no account was charged.
    read.
 3. HOW A PI ROLE GETS THEM: agents.sh's pi line passes `--skill <the tree>/skills` (measured: an explicit path loads,
    trusted or not), and `--skill <the project>/.claude/skills` for the project's own.
-4. THE SKILLS KEPT TRUE (THE SECOND COPY OF THE TRUTH): a test reads each shipped skill and fails on a name it uses
-   that the code lacks: a land.py subcommand or option, an agents.sh mode, a config field, a file under mishmeret/.
-5. Mishmeret's README says what is shipped and how a project gets it.
+4. THE SKILLS KEPT TRUE (THE SECOND COPY OF THE TRUTH): a skill holds the procedure - order and judgment - and no list
+   the code can give: for land.py's options or agents.sh's modes it names the command's own `--help`. A test reads each
+   shipped skill and fails on a name it uses that the code lacks: a land.py subcommand or option, an agents.sh mode, a
+   config field, a file under mishmeret/. It also REPORTS, without failing, a skill whose named files changed after it
+   last did (girsa-architect's Q3).
+5. Each skill's description says it is Mishmeret's general procedure, and that a project's own skill holds its
+   particulars (Q1).
+6. Mishmeret's README says what is shipped and how a project gets it, that only a link is replaced, and that Windows
+   is unmeasured (MSYS's `ln -s` copies).
 
-## Design questions (to girsa-architect)
+## Design questions (to girsa-architect; answered at 3e30b334, the plan's head)
 
 1. THE NAMES AND THE PROJECT'S OWN: shipped with a `mishmeret-` prefix, beside the project's own, which stay its own
    (the first project's `landing` and `operator-sessions` could then point to the shipped ones for the general part).
@@ -104,9 +128,10 @@ and no account was charged.
 
 ## For the first project
 
-At its pin bump to this commit: its `.gitignore` lists `.claude/skills/mishmeret-*`, and the next `bash agents.sh`
-makes the links. Its own nine skills are untouched; whether `landing` and `operator-sessions` keep their copies of the
-general procedure is its owners' to decide.
+At its pin bump to this commit: its `.gitignore` lists `.claude/skills/mishmeret-*` below its `!.claude/skills/`
+un-ignore, checked by `git check-ignore .claude/skills/mishmeret-landing`; and the next `bash agents.sh` makes the
+links. Its own nine skills are untouched by this piece. Its `landing` and `operator-sessions` are then cut to its
+particulars, pointing to the shipped skills for the general part (girsa-architect's Q1): its owners' step.
 
 Not measured: Windows (links there differ), and whether a running session picks up a link changed under it (each tool
 read its skills at start in the measure).
