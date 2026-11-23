@@ -26,9 +26,10 @@ nothing and proposes nothing new.
    for role, r in last.items(): print(role, r["ts"][:16], r.get("state"), "waits for", r.get("waiting_for"), "|", r.get("now", ""))
    '
    ```
-4. EACH PROJECT THAT PINS MISHMERET - each repository in the config's `guard.foreign`, read only: the commit its
-   `.claude/mishmeret.json` names (`mishmeret_commit`) against Mishmeret's main, and the open items on its Board (its
-   config's `board_dir`) that ask about Mishmeret - the reviewer answers those there, not here:
+4. EACH PROJECT THAT PINS MISHMERET - each repository in the config's `guard.foreign` that has a
+   `.claude/mishmeret.json` (the list holds others too: a project's book repositories), read only: the commit it names
+   (`mishmeret_commit`) in its main tree and each worktree, against Mishmeret's main, and the open items on its Board
+   (its config's `board_dir`) that ask about Mishmeret - the reviewer answers those there, not here:
    ```
    python3 -c '
    import json, os, sys
