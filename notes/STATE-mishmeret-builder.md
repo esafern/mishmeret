@@ -27,12 +27,15 @@ Rewritten in place when a piece lands and at the end of a session; the log is `n
 - THE KNOWN GAPS' SEVEN (notes/PLAN-KNOWN-GAPS-SEVEN.md; M15): VERIFIED at 958474f, merged by girsa-operator (main
   958474f, then its dc30cc2, the lane check's half). Not pushed (main 5 ahead of origin: the reviewer's word in
   girsa-operator's pane). The first project's pin bump next, girsa-verifier first; it pins 075f49a.
-- A ROLE RUN BY PI (notes/PLAN-PI-ROLE.md; M16), branch `builder-pi-role` from main dc30cc2: the plan, its measure a
-  prototype in the scratchpad (pi-proto/: guard.ts, guard2.ts, fake.ts, fake_server.py; the appendix holds the
-  extension). Waiting: girsa-architect's answer to its four design questions; then girsa-verifier's review; then the
-  build.
-- MISHMERET'S OWN SKILLS (M16), branch `builder-own-skills`, stacked on 958474f: status-report, ca105a6 and 0ec46be;
-  to rebase onto main before it lands. Its first report: Mishmeret's Board, Q&A #1.
+- ONE BRANCH, `builder-own-skills`, on main dc30cc2: the pi plan (654a562, revised at this commit on girsa-architect's
+  78c32beb answer), and Mishmeret's own skills - status-report (7c48fea, 7203f57; its first report Mishmeret's Board
+  Q&A #1) and guard-measure (59f84a2, its scripts and tests/test_guard_measure.py). `builder-pi-role` is its first
+  commit only.
+- Waiting: girsa-verifier's check of the two skills and review of the pi plan (one HANDOFF). Then the skills go to
+  girsa-operator; the pi build follows on this branch. The prototype stays in the scratchpad (pi-proto/: guard.ts,
+  guard2.ts, fake.ts, fake_server.py); the plan's appendix holds the extension.
+- Waiting on the reviewer: the first project's #303 (may a guarded pi role land there); the push of Mishmeret's main
+  (its word in girsa-operator's pane).
 - Waiting on the reviewer: the first project's Board #302 (the eight git writers in no verb set). With its answer, item
   6a's list becomes the classification (each name in a verb set or in a named set that changes nothing; a test red on
   a name in neither).
@@ -42,12 +45,10 @@ Rewritten in place when a piece lands and at the end of a session; the log is `n
 
 ## Next, in order
 
-1. PI: girsa-architect's answer, girsa-verifier's review, the build (the reviewer: "before the skills do the plan and
-   design question").
-2. THE SKILLS (the reviewer's "Both" and "all of the above"): the guard-measure skill with its scripts (extract,
-   decide, compare, mutate), Mishmeret's own, on `builder-own-skills`; then a plan for the skills shipped to every
-   project - status-report made general, landing, sessions, push and pin - its first measure how a project, and a pi
-   role (`--skill PATH`), takes a pinned skill.
+1. PI: girsa-verifier's review, then the build (the reviewer: "before the skills do the plan and design question").
+2. THE SKILLS SHIPPED TO EVERY PROJECT (the reviewer's "Both" and "all of the above"): a plan - status-report made
+   general, landing, sessions, push and pin - its first measure how a project, and a pi role (`--skill PATH`), takes
+   a pinned skill.
 3. Item 6a's classification, on #302's answer.
 
 ## Open

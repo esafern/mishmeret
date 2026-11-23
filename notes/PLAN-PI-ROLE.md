@@ -17,9 +17,26 @@ installed (`pi list`: none; no `~/.pi/agent/extensions`, no project `.pi/`), so 
   worked as that project's operator. It edited main-tree files and committed through land.py, naming the role by
   putting `CLAUDE_CODE_AGENT=<operator>` in its commands. Judged by the guard at e5a4d40 under that project's config:
   as its operator, 5 refused, each for setting that variable; as its builder, 20 refused (the main-tree edits and the
-  writes, and land.py naming the operator). What it committed is not checked here.
+  writes, and land.py naming the operator). Its commits, by girsa-architect's reading: 2e221b3c, 53391f88 and
+  479aff88, re-checked by girsa-operator afterwards (0d723b2c) and verified by girsa-verifier (that project's Board
+  #2757); two of the three carry no role prefix or co-author line.
 - Two ran in `~/work`: 8 tool calls, none refused.
 So a pi role runs unguarded today, and it lands only by naming its role in a variable any command can set.
+
+GIRSA-ARCHITECT'S ANSWER to the four design questions (the first project's
+design-study/MISHMERET-PI-ROLE-ARCHITECT.md at 78c32beb), all taken:
+- Q1: `--role`, fixed at start, with `--name` set to the same: the guard judges an identity a rename cannot change.
+- Q2: (a). One name; the spawn hook writes the role after the inherited environment, so one the launching shell carried
+  is overwritten; a command's own setting is refused already (SETS_AGENT).
+- Q3: the scope as planned, with one change: the extension names the tools that pass (`read`) and blocks any other
+  tool it does not know, its name in the reason - a later pi's tool, or another extension's that writes, would
+  otherwise run unguarded. 0 such calls on the record.
+- Q4: acceptable, on two conditions. The test skips only where `pi` is not on PATH, and says why. agents.sh refuses to
+  start a `runner: pi` role when the extension file it names is missing - a case nothing measured in pi itself.
+- The README names pi on Windows and Linux as unmeasured.
+- For the first project: its Board #168 A (a session run outside Claude Code only hands off) binds it. Whether a
+  guarded pi role may commit and land there is the reviewer's, on its Board #303. Mishmeret's build does not wait on
+  it: the extension guards a pi role either way.
 
 THE MEASURE, a prototype in the scratchpad: no model called, nothing outside the scratchpad written. A scripted
 provider (an OpenAI-compatible fake server on 127.0.0.1, registered by a second extension) gave pi fixed tool calls.
@@ -54,20 +71,23 @@ Not in this piece, and why (each listed in the README as what a pi role lacks):
 
 1. `mishmeret/pi_guard.ts`, the extension, loaded by `-e` from the pinned tree (never from `.pi/extensions/`, which
    loads only once the project is trusted):
-   - It registers `--role` (design question 1).
+   - It registers `--role` (Q1).
    - On `tool_call`, for bash, edit and write, it runs the role_guard.py beside it in the same tree with the event
-     above. On any exit but 0, a timeout (20 s) or a fault, it blocks with the guard's words. Other tools pass, as
-     Claude Code's hook lets Read through.
-   - It replaces bash with pi's own bash, adding `CLAUDE_CODE_AGENT` (the role) through the spawn hook (design
-     question 2).
+     above. On any exit but 0, a timeout (20 s) or a fault, it blocks with the guard's words.
+   - `read` passes, by name, as Claude Code's hook lets Read through. Any other tool is blocked, its name in the reason
+     (Q3).
+   - It replaces bash with pi's own bash, adding `CLAUDE_CODE_AGENT` (the role) through the spawn hook, after the
+     inherited environment (Q2).
 2. agents.sh: a role whose config entry names `"runner": "pi"` (an OPTIONAL role key; absent means claude) is
    started as `pi --name R --role R -e <the tree>/mishmeret/pi_guard.ts`, plus `--thinking X` for the agent file's
    effort, `--append-system-prompt` with the agent file's body, and the brief's line as its first message. It is
-   started fresh: no `--resume` for a pi role.
+   started fresh: no `--resume` for a pi role. When the extension file is missing, it starts nothing for that role and
+   says why (Q4).
 3. config.py: `runner` in ROLE_KEYS, OPTIONAL, `claude` or `pi`; any other value refused.
-4. README: "A role run by pi" - how it is started, what guards it, and the four things it lacks (above).
+4. README: "A role run by pi" - how it is started, what guards it, the four things it lacks (above), and that pi on
+   Windows and Linux is unmeasured.
 
-## Design questions (to girsa-architect)
+## Design questions (to girsa-architect; answered at 78c32beb, the plan's head)
 
 1. THE ROLE: a flag the extension registers (`--role`, fixed at start), or `--name`, as the reviewer suggests?
    `--name` is also the session's display name, and `/name` or an extension's `setSessionName` can rename the
@@ -96,21 +116,24 @@ Not in this piece, and why (each listed in the README as what a pi role lacks):
 
 ## Tests (each rule's test shown red with it taken out)
 
-- The extension under pi with the fake provider, in a throwaway project:
+- The extension under pi with the fake provider, in a throwaway project; skipped only where `pi` is not on PATH, the
+  skip saying so (Q4):
   - a push and a main-tree write blocked, and the guard's words in the tool's result;
   - `echo` run;
   - no `--role` judged as no role;
   - a missing guard blocking every call;
-  - `CLAUDE_CODE_AGENT` in bash's environment equal to `--role`;
-  - an edit (pi's `path`) resolved against the cwd.
+  - `CLAUDE_CODE_AGENT` in bash's environment equal to `--role`, over one the launching shell carried;
+  - an edit (pi's `path`) resolved against the cwd;
+  - a tool the extension does not know blocked, its name in the reason (registered by a test extension).
 - agents.sh with a stub `pi`: a `runner: pi` role's line holds `-e`, `--role` and `--name`; a claude role's line is
-  unchanged; `--resume` starts the pi role fresh.
+  unchanged; `--resume` starts the pi role fresh; a missing extension file starts nothing for that role.
 - config: `runner` absent, `claude` or `pi` accepted; any other value refused.
 
 ## For the first project
 
 Nothing in its config until it names a role `runner: pi`. Until then a pi session there runs unguarded, as the
-2026-11-22 one did: the reviewer's to know before the next run.
+2026-11-22 one did. Its Board #168 A binds it meanwhile: a session run outside Claude Code only hands off. Whether a
+guarded pi role may commit and land there is the reviewer's, on its Board #303.
 
 ## Appendix: the prototype extension, as measured
 

@@ -34,6 +34,21 @@ M16. **[2026-11-23, skills, the status report, and a role run by pi (notes/PLAN-
       tool.
     * **[18:27]** Branch `builder-pi-role` from main dc30cc2: the plan. To send at its commit, live: its four design
       QUESTIONS to girsa-architect. The review by girsa-verifier follows its answer, so it reads the design settled.
+      Sent, live, at 654a562.
+    * **[18:34]** The reviewer, in this session: "push". Pushing is girsa-operator's, on the reviewer's word in its own
+      pane; relayed to it, live, as a REQUEST with main's five commits, and the reviewer told where to type it.
+    * The reviewer: "go ahead with the guard measure skill". `builder-own-skills` rebased onto `builder-pi-role`, so the
+      skills land first with the plan in them and the pi build starts from main. Built: .claude/skills/guard-measure/
+      (SKILL.md; extract.py, which reads pi's sessions too; decide.py; compare.py; mutate.py; probe.py) and
+      tests/test_guard_measure.py; each script's key line taken out on a copy: 8 of 8 red. One test first could not
+      fail on its own (mutate.py's exit for a green rule, hidden by an absent one in the same run); split. COMMITTED
+      59f84a2 outside the lane on the reviewer's word; land.py ran the suite: 163 passed.
+    * girsa-architect's ANSWER, live: the first project's design-study/MISHMERET-PI-ROLE-ARCHITECT.md at 78c32beb -
+      Q1 `--role`, Q2 (a), Q3 as planned plus an unknown tool blocked, Q4 with two conditions; the 2026-11-22
+      session's three commits re-checked and verified there; its Board #303 for the reviewer (may a guarded pi role
+      land in that project, its #168 A). All taken into the plan. MY SLIP: this entry's first edit failed (the file
+      unread since the rebase), and land.py refused the commit that named it; nothing was committed. To send at this
+      commit, live: the HANDOFF to girsa-verifier - the two skills to check, the pi plan to review.
 
 M15. **[2026-11-23, the known gaps' seven (notes/PLAN-KNOWN-GAPS-SEVEN.md)]**
     * **[16:22]** Session start. Main d9fda25, one ahead of origin f2126a1 (the state commit, merged). The first
