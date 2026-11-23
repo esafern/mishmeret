@@ -75,6 +75,13 @@ def test_every_commit_is_scanned_for_an_address_a_roster_name_and_the_home_folde
         rc, out = check("mishmeret-builder")
         assert rc == 1 and f"notes/bad{i}.md: 1 added line carries" in out and line.strip() not in out, out
         subprocess.run(["git", "-C", str(root), "rm", "-q", "--cached", f"notes/bad{i}.md"], check=True)
+    # AN ADDED LINE THAT BEGINS "++ " reads "+++ ..." in the diff, as a file's header (notes/PLAN-KNOWN-GAPS.md, item 9):
+    # it went unscanned, and the file's next line was filed under a "path" cut from it - its text in the report
+    address = "pp" + "@" + "mail.co"
+    stage("notes/plus.md", f"++ mail {address}\nmail {address}\n")
+    rc, out = check("mishmeret-builder")
+    assert rc == 1 and "notes/plus.md: 2 added lines carry" in out and address not in out, out
+    subprocess.run(["git", "-C", str(root), "rm", "-q", "--cached", "notes/plus.md"], check=True)
     (root / ".claude" / "roster.local.json").write_text(json.dumps(
         {"reviewers": {"r1": {"display": "Placeholder Person", "email": "pp" + "@" + "mail.co"}}}), encoding="utf-8")
     stage("notes/named.md", "as placeholder.person said\n")

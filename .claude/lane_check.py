@@ -72,11 +72,17 @@ def main(argv):
             failed = True
     pattern, why = forbidden()
     carries = lambda line: [a for a in PERSONAL_ADDRESS.findall(line) if not NOT_PERSONAL.search(a)] or pattern.search(line)
-    added, path = {}, None
+    added, path, hunk = {}, None, False
     for line in git("diff", "--cached", "-U0", "--no-color", "--no-renames").splitlines():
-        if line.startswith("+++ "):
+        # a "+++ " line is a header only before the file's first @@: an added line "++ x" reads "+++ x" too, and was
+        # left unscanned, the file's next lines filed under it (notes/PLAN-KNOWN-GAPS.md, item 9)
+        if line.startswith("diff --git "):
+            hunk = False
+        elif line.startswith("@@"):
+            hunk = True
+        elif not hunk and line.startswith("+++ "):
             path = line[6:]
-        elif line.startswith("+") and path:
+        elif hunk and line.startswith("+") and path:
             if carries(line):
                 added[path] = added.get(path, 0) + 1
     for p, n in sorted(added.items()):
