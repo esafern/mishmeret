@@ -413,9 +413,19 @@ def test_a_role_run_by_pi_starts_with_the_guard_extension_and_no_other(tmp_path)
         assert out.returncode == 0 and len(pi_line) == 1, (mode, out.stderr, lines)
         assert (f"&& env -u MISHMERET_CONFIG -u MISHMERET_CONFIG_BY_SHIM pi --no-extensions --name ex-builder "
                 f"--role ex-builder -e '{PKG}/pi_guard.ts' --thinking high --append-system-prompt "
-                f"'{root}/.claude/agents/ex-builder.md' 'Read `BRIEF.md` in full: it'\\''s the brief.' Enter") in pi_line[0], pi_line
+                f"'{root}/.claude/agents/ex-builder.md' --skill '{PKG}/skills' "
+                f"'Read `BRIEF.md` in full: it'\\''s the brief.' Enter") in pi_line[0], pi_line
         assert not [line for line in lines if "claude --" in line and "ex-builder" in line], lines
         assert len([line for line in lines if "claude --" in line]) == 4, lines          # the others, by Claude Code
+    # a project's own skill is given to pi by its own path; the mishmeret-* links agents.sh made are not (no skill twice:
+    # girsa-verifier's NOTE 2 on notes/PLAN-SHIPPED-SKILLS.md)
+    (root / ".claude" / "skills" / "own-skill").mkdir()
+    (root / ".claude" / "skills" / "own-skill" / "SKILL.md").write_text("---\nname: own-skill\n---\n", encoding="utf-8")
+    typed.write_text("")
+    run(os.path.join(PKG, "agents.sh"))
+    pi_line = [line for line in typed.read_text().splitlines() if " pi --" in line]
+    assert f"--skill '{PKG}/skills' --skill '{root}/.claude/skills/own-skill' 'Read" in pi_line[0], pi_line
+    assert pi_line[0].count("--skill") == 2, pi_line
     # the extension missing from the tree agents.sh runs from: that role is not started, and its pane says why
     copy = tmp_path / "mishmeret"
     shutil.copytree(PKG, copy, ignore=shutil.ignore_patterns("pi_guard.ts", "__pycache__"))
@@ -424,6 +434,46 @@ def test_a_role_run_by_pi_starts_with_the_guard_extension_and_no_other(tmp_path)
     lines = typed.read_text().splitlines()
     assert out.returncode == 0 and not [line for line in lines if " pi --" in line], lines
     assert [line for line in lines if "ex-builder: not started - its runner is pi, and the guard extension" in line], lines
+
+
+def test_agents_sh_links_the_shipped_skills_and_only_ever_a_link(tmp_path):
+    """notes/PLAN-SHIPPED-SKILLS.md: at each start agents.sh links each skill of the tree it runs from into the
+    project's .claude/skills/ - an older link replaced, a mishmeret-* link to a skill no longer shipped removed
+    (girsa-verifier's LOW 1 on the plan), and a file or folder of the project's own left as it is, said so
+    (girsa-architect's Q2: only a link). Behind a stub tmux, in a placeholder project."""
+    from conftest import write_project
+    stub = tmp_path / "bin"
+    stub.mkdir()
+    (stub / "tmux").write_text("#!/bin/sh\ncase \"$1\" in has-session) exit 1 ;; new-session|split-window) echo %1 ;; esac\n"
+                               "exit 0\n", encoding="utf-8")
+    (stub / "tmux").chmod(0o755)
+    root = tmp_path / "p"
+    cfg = write_project(root)
+    skills = root / ".claude" / "skills"
+    skills.mkdir()
+    elsewhere = tmp_path / "an-older-pin"
+    (elsewhere / "mishmeret-landing").mkdir(parents=True)
+    (skills / "mishmeret-landing").symlink_to(elsewhere / "mishmeret-landing")         # an older pin's: replaced
+    (skills / "mishmeret-retired").symlink_to(elsewhere / "mishmeret-landing")         # no longer shipped: removed
+    (skills / "mishmeret-sessions").mkdir()                                           # the project's own: left
+    (skills / "mishmeret-old-folder").mkdir()                                         # not a link: left
+    (skills / "mishmeret-a-file").write_text("the project's own\n", encoding="utf-8")  # nor a file
+    env = dict(os.environ, PATH=f"{stub}{os.pathsep}{os.environ['PATH']}", TERM="dumb", MISHMERET_CONFIG=cfg)
+    out = subprocess.run(["bash", os.path.join(PKG, "agents.sh")], env=env, capture_output=True, text=True,
+                         stdin=subprocess.DEVNULL, timeout=60)
+    assert out.returncode == 0, out.stderr
+    shipped = sorted(os.listdir(os.path.join(PKG, "skills")))
+    assert shipped == ["mishmeret-landing", "mishmeret-push-and-pin", "mishmeret-sessions", "mishmeret-status-report"]
+    for name in shipped:
+        if name != "mishmeret-sessions":
+            assert (skills / name).is_symlink(), name
+            assert os.path.realpath(skills / name) == os.path.realpath(os.path.join(PKG, "skills", name)), name
+    assert not os.path.lexists(skills / "mishmeret-retired"), "a link to a skill no longer shipped is removed"
+    assert (skills / "mishmeret-old-folder").is_dir() and not (skills / "mishmeret-old-folder").is_symlink()
+    assert (skills / "mishmeret-a-file").read_text(encoding="utf-8") == "the project's own\n"
+    assert (skills / "mishmeret-sessions").is_dir() and not (skills / "mishmeret-sessions").is_symlink()
+    assert "mishmeret-sessions is the project's own - left as it is" in out.stdout, out.stdout
+    assert "mishmeret-retired is no longer shipped - its link removed" in out.stdout, out.stdout
 
 
 def test_the_agents_scripts_share_one_clone_one_role_list_and_one_pane_lookup():

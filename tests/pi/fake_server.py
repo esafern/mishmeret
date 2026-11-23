@@ -17,7 +17,7 @@ class Handler(BaseHTTPRequestHandler):
         body = json.loads(self.rfile.read(int(self.headers.get("Content-Length") or 0)) or b"{}")
         results = [m for m in body.get("messages", []) if m.get("role") == "tool"]
         with open(log, "a", encoding="utf-8") as fh:
-            fh.write(json.dumps({"results": [str(m.get("content")) for m in results]}) + "\n")
+            fh.write(json.dumps({"results": [str(m.get("content")) for m in results], "body": json.dumps(body)}) + "\n")
         n = len(results)
         if n < len(script):
             name, args = script[n]

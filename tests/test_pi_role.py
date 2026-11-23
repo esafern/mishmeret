@@ -39,7 +39,7 @@ def project(root, hook=True):
     return str(root)
 
 
-def pi_run(tmp_path, proj, script, *extra, role="ex-builder", agent_env="ex-operator"):
+def pi_run(tmp_path, proj, script, *extra, role="ex-builder", agent_env="ex-operator", more=(), first_body=False):
     """pi's tool results, in the script's order, for `script` run in `proj` with the guard extension (and `extra`)."""
     port = socket.socket()
     port.bind(("127.0.0.1", 0))
@@ -56,7 +56,7 @@ def pi_run(tmp_path, proj, script, *extra, role="ex-builder", agent_env="ex-oper
                 "--no-session", "-e", os.path.join(HERE, "pi", "fake.ts"), "-e", os.path.join(PKG, "pi_guard.ts")]
         for e in extra:
             args += ["-e", e]
-        args += ["--provider", "fake", "--model", "fake-chat", "--name", "ex-builder"]
+        args += ["--provider", "fake", "--model", "fake-chat", "--name", "ex-builder"] + list(more)
         args += ["--role", role] if role else []
         env = {k: v for k, v in os.environ.items() if not k.startswith("MISHMERET_")}
         env.update(FAKE_PORT=str(number), HOOK_LOG=str(tmp_path / "hook.log"), CLAUDE_CODE_AGENT=agent_env,
@@ -68,7 +68,7 @@ def pi_run(tmp_path, proj, script, *extra, role="ex-builder", agent_env="ex-oper
         server.wait()
     rows = [json.loads(line) for line in log.read_text().splitlines()]
     assert out.returncode == 0 and rows, (out.returncode, out.stderr[-800:])
-    return rows[-1]["results"]
+    return rows[-1]["results"] if not first_body else rows[0]["body"]
 
 
 def test_the_guard_extension_judges_each_pi_tool_call_by_the_projects_own_hook(tmp_path):
@@ -121,3 +121,16 @@ def test_no_role_is_judged_as_no_role_and_no_hook_runs_nothing(tmp_path):
     (tmp_path / "hook.log").unlink(missing_ok=True)
     echo, = pi_run(tmp_path, bare, [["bash", {"command": "echo should-not-run"}]])
     assert "should-not-run" not in echo and echo.strip(), echo                     # fail closed: no hook, no command
+
+
+def test_the_shipped_skills_reach_pi_by_their_tree(tmp_path):
+    """notes/PLAN-SHIPPED-SKILLS.md: pi reads a skill by an explicit `--skill` path, trusted or not, as agents.sh's pi
+    line gives the shipped ones (measured on 2026-11-23: a link in .agents/skills/ is not read untrusted). Each shipped
+    skill's description is in pi's first request, once."""
+    proj = project(tmp_path / "proj")
+    body = pi_run(tmp_path, proj, [], more=("--skill", os.path.join(PKG, "skills")), first_body=True)
+    for name in sorted(os.listdir(os.path.join(PKG, "skills"))):
+        head = open(os.path.join(PKG, "skills", name, "SKILL.md"), encoding="utf-8").read().split("---")[1]
+        said = head.split("description: ", 1)[1].split("\n")[0][:60].replace("'", "&apos;")    # pi's list escapes it
+        assert said in body, name
+    assert body.count("<name>mishmeret-landing</name>") == 1, "each shipped skill once"

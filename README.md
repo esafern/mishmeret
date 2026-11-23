@@ -83,6 +83,17 @@ in the pane's prompt, and does not start a role twice in ten minutes; what it di
 While a night run is going it stands down and the run closes the session itself: at night nothing is started again,
 and `bash agents.sh` starts each closed role in its pane when you are back.
 
+## Skills shipped to every project
+
+`mishmeret/skills/` holds four Claude Code skills, Mishmeret's general procedures, pinned with the code they describe:
+`mishmeret-status-report`, `mishmeret-landing`, `mishmeret-sessions` and `mishmeret-push-and-pin`. At each start
+`agents.sh` links each into the project's `.claude/skills/` from the tree it runs from, so a pin bump moves them at the
+next start. It replaces or removes only a link - a link to a skill the tree no longer ships is removed - and never a
+file or folder of the project's own. The links hold this machine's path and are not committed: the project's
+`.gitignore` lists `.claude/skills/mishmeret-*`, below any line that un-ignores the folder. A role run by pi gets them
+by `--skill`, and the project's own skills one by one. A project's own skill holds its particulars and points to the
+shipped one for the rest. Windows is unmeasured (its `ln -s` may copy, and an edit to a copy is lost at the next start).
+
 ## A role run by pi
 
 A role whose config entry names `"runner": "pi"` runs under pi (the coding agent `@earendil-works/pi-coding-agent`) instead of Claude Code. pi has

@@ -42,6 +42,13 @@ pi_line() {   # role -> the command that starts it under pi
   local line="cd '$DIR' && $CLEAN pi --no-extensions --name $1 --role $1 -e '$HERE/pi_guard.ts'"
   line="$line$(sed -n 's/^effort: *\([^ ][^ ]*\).*/ --thinking \1/p' "$agent" 2>/dev/null | head -1)"
   [ -f "$agent" ] && line="$line --append-system-prompt '$agent'"
+  # the skills: pi reads no .claude/skills/, and a link in its own folder only in a trusted project (measured,
+  # notes/PLAN-SHIPPED-SKILLS.md) - so the shipped ones by their tree, and the project's own one by one, its
+  # mishmeret-* links left out (girsa-verifier's NOTE 2 on the plan: no skill twice)
+  line="$line --skill '$HERE/skills'"
+  local d; for d in "$DIR"/.claude/skills/*/; do
+    [ -d "$d" ] && [ ! -L "${d%/}" ] && line="$line --skill '${d%/}'"
+  done
   first=$(sed -n 's/^initialPrompt: *"\{0,1\}\(.*[^"]\)"\{0,1\} *$/\1/p' "$agent" 2>/dev/null | head -1)
   [ -n "$first" ] && line="$line '${first//\'/\'\\\'\'}'"
   echo "$line"
@@ -52,6 +59,31 @@ pi_line() {   # role -> the command that starts it under pi
 # started on 2026-10-09 ran on tmux's defaults. Loaded into the server whenever this script starts or attaches.
 TMUX_CONF="$MM_TMUX_CONF"
 load_tmux_conf() { [ -f "$TMUX_CONF" ] && tmux source-file "$TMUX_CONF"; return 0; }
+
+# THE SKILLS MISHMERET SHIPS (notes/PLAN-SHIPPED-SKILLS.md): each skill of the tree this script runs from is linked into
+# the project's .claude/skills/ at every start, so a pin bump moves them all at the next start. Only a link is replaced
+# or removed, never a file or folder of the project's own; a mishmeret-* link to a skill this tree no longer ships is
+# removed (girsa-verifier's LOW 1 on the plan: it kept loading the old procedure from the old pin). Not committed - a
+# link holds this machine's path: the project's .gitignore lists .claude/skills/mishmeret-*.
+link_skills() {
+  local into="$DIR/.claude/skills" s t name
+  mkdir -p "$into" || return 0
+  for t in "$into"/mishmeret-*; do
+    if [ -L "$t" ] && [ ! -f "$HERE/skills/$(basename "$t")/SKILL.md" ]; then
+      rm -f "$t" && echo "skills: $(basename "$t") is no longer shipped - its link removed"
+    fi
+  done
+  for s in "$HERE"/skills/*/; do
+    [ -f "${s}SKILL.md" ] || continue
+    name=$(basename "$s"); t="$into/$name"
+    if [ -e "$t" ] && [ ! -L "$t" ]; then
+      echo "skills: $t is the project's own - left as it is, the shipped $name not linked"
+    else
+      ln -sfn "${s%/}" "$t"
+    fi
+  done
+}
+link_skills
 
 # RESUME (the reviewer, 2026-10-11: "build the agents.sh resume option"): each role's last session in this clone, from
 # role_sessions.py - "ROLE<tab>ID<tab>WHEN", "ROLE<tab>live<tab>ID" or "ROLE<tab>none".
