@@ -42,8 +42,15 @@ M20. **[2026-11-24, a ref judged by the repository, not the folder (notes/PLAN-P
     * Sent, live, at c29502e. girsa-verifier's ANSWER, live (its #3203): VERIFIED but for LOWs 1-2 and NOTEs 1-2 -
       eval, trap and coproc running git unread by every rule; a worktree's own git dir not mapped to the worktree;
       the README to say a role's subagent is refused in its parent's worktree; `xargs git checkout --` refused. Fixed
-      in one round: 65 rules red, suite 178, rule 45 byte-equal. To send at the commits, live: the round to
-      girsa-verifier, LANDED-READY to girsa-operator.
+      in one round: 65 rules red, suite 178, rule 45 byte-equal. Sent, live, at 4715362: the round to girsa-verifier
+      and, too early, LANDED-READY to girsa-operator - girsa-verifier's ANSWER: a code round on its findings comes back
+      to it once before it merges (the first project's rule); girsa-operator held the merge.
+    * girsa-verifier's ANSWER, live (its #3231): the round VERIFIED, rule 45 with its side 0/0/0 against the build; a
+      NOTE for the known gaps (eval of a variable or a substitution, none git on the record), in the state's Open.
+      Sent, live: LANDED-READY stands. girsa-operator's ANSWER, live: MERGED, main 4715362 by fast-forward, its scan
+      clean; 8 ahead of origin, the push the reviewer's word.
+    * **[15:33]** No piece open. `builder-protected-refs` deleted (merged). The state file rewritten on branch
+      `builder-state-2026-11-24`. To send at its commit, live: LANDED-READY to girsa-operator.
 
 M19. **[2026-11-23, skills shipped to every project (notes/PLAN-SHIPPED-SKILLS.md)]**
     * The pi piece, after M18: girsa-verifier's ANSWERS, live - fa53cb2 VERIFIED (its #3091), then the pi build
