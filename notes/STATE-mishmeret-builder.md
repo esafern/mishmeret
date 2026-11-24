@@ -2,7 +2,7 @@
 
 Rewritten in place when a piece lands and at the end of a session; the log is `notes/LOG.md`, by item.
 
-## Built, on main (main a7e060e, pushed; each verified by girsa-verifier, merged by girsa-operator)
+## Built, on main (main 9b979d3, 1 ahead of origin; each verified by girsa-verifier, merged by girsa-operator)
 
 - To 2026-11-13 (M01-M13): own `.claude/`, open messages, copy-on-select, the start scripts, finishing a session, the
   guard's mask, M07's items, `LESSONS.md`, the audit's fixes, /expiring.ics, the land.py race, the frozen gate, the
@@ -20,14 +20,14 @@ Rewritten in place when a piece lands and at the end of a session; the log is `n
 
 ## Now
 
-- No piece is open. Main a7e060e is pushed (origin at it, 2026-11-23).
+- OPEN: #304 A on `builder-protected-refs` (notes/PLAN-PROTECTED-REFS.md, M20) - the plan, its three design
+  questions with girsa-architect; girsa-verifier's review after its answer. The measure's scratch scripts are in this
+  session's scratchpad (refs304/); the plan's item 6 makes them the skill's.
+- Main 9b979d3 (the notes on the first project's rewritten ids) is 1 ahead of origin: its push is the reviewer's word.
 - THE FIRST PROJECT'S PIN BUMP (075f49a to main), girsa-verifier first, brings: the seven's refusals, the
   classification (girsa-builder's 3 measured writes refused), the pi guard (`runner: pi` named with the bump, then
   #303 A), and the shipped skills - with its own steps: its `.gitignore` line for `.claude/skills/mishmeret-*` below
   its `!.claude/skills/` un-ignore, and its `landing` and `operator-sessions` cut to its particulars.
-- Waiting on the reviewer: the first project's Board #304 (a ref judged by the repository, not the folder: main's
-  branch, `known-good`, release tags to their owners; with it branch -D/-f, worktree remove, replace, reflog delete,
-  gc --prune, maintenance register, branch -m, init --separate-git-dir).
 - Every old builder branch is deleted (2026-11-23): 37 merged by `git branch -d`; and, on the reviewer's "delete",
   four whose content had landed under other ids (`git branch -D`; tips 7e0e8b3, 3bc9c49, 96454a1, 4b9133b), each read
   first.
@@ -36,7 +36,7 @@ Rewritten in place when a piece lands and at the end of a session; the log is `n
 
 ## Next, in order
 
-1. #304, when the reviewer answers it: its plan, measured with the guard-measure skill.
+1. #304: girsa-architect's answer into the plan, then girsa-verifier's review, then the build (the skill's steps 3-6).
 
 ## Open
 
@@ -52,4 +52,4 @@ Rewritten in place when a piece lands and at the end of a session; the log is `n
 - A required config key cannot be added or renamed: Mishmeret pins itself (M05).
 - Not pinned by a test (A2): `land()`'s restart line and ledger copy with the field absent.
 - The 5 s refresh redraws the corners, so a focused pill loses focus (girsa-ui-steward: leave it).
-- The first project's older worktree `...-mishmeret` is finished with; its removal is the reviewer's.
+- The first project's older worktree `...-mishmeret`: unused (told girsa-operator, #307); its removal is #307's.

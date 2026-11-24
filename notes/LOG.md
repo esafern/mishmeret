@@ -3,6 +3,21 @@
 Findings, decisions and open work, each the moment it is known; a time from `date`. One item per run of work, newest
 first (`M01.`, `M02.` ...); what git records (what each commit did) is not repeated here.
 
+M20. **[2026-11-24, a ref judged by the repository, not the folder (notes/PLAN-PROTECTED-REFS.md; the first project's
+    #304 A)]**
+    * After M19: girsa-operator's ANSWER, live - MERGED 9b979d3 by fast-forward, its scan clean; 1 ahead of origin.
+    * The reviewer: "304 answered. do you have a watch-loop in place?" None was: #304 was girsa-architect's item, and
+      its answer (A, 2026-11-23 20:32) stood on the Board a day while my state said "waiting on the reviewer" - I had
+      not read the record before writing that line. Told the reviewer so; from now on a Board item a piece waits on
+      gets `board.py wait <id>` in the background.
+    * girsa-operator's QUESTION, live (#307, the reviewer's cleanup): is the first project's `-mishmeret` worktree used?
+      ANSWERED, live: no; remove it on #307.
+    * **[08:37]** Branch `builder-protected-refs` from main 9b979d3: the plan, with the guard-measure skill's steps 1
+      and 2 and a prototype's rule 45 by role (scratch decide and extract versions; the plan's item 6 makes them the
+      skill's). My first-run faults, in the prototype: git's words read past a `$(...)`'s end, and a variable in a ref
+      name refused outright - 5 false refusals, fixed. To send at its commit, live: its three design QUESTIONS to
+      girsa-architect; girsa-verifier's review after its answer.
+
 M19. **[2026-11-23, skills shipped to every project (notes/PLAN-SHIPPED-SKILLS.md)]**
     * The pi piece, after M18: girsa-verifier's ANSWERS, live - fa53cb2 VERIFIED (its #3091), then the pi build
       VERIFIED with no finding (its #3098, 170 passed with pi installed, the 14 mutations re-run red). Sent, live:
