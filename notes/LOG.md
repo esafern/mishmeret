@@ -51,6 +51,12 @@ M20. **[2026-11-24, a ref judged by the repository, not the folder (notes/PLAN-P
       clean; 8 ahead of origin, the push the reviewer's word.
     * **[15:33]** No piece open. `builder-protected-refs` deleted (merged). The state file rewritten on branch
       `builder-state-2026-11-24`. To send at its commit, live: LANDED-READY to girsa-operator.
+    * Sent, live, at e7c1c6d; girsa-operator's ANSWER, live: MERGED, main e7c1c6d, 9 ahead of origin.
+    * girsa-verifier's NOTE, live (its check of the first project's bump to e7c1c6d, #3247): the shipped landing
+      skill's line 8 names `.claude/land.py`, Mishmeret's own path - for its next touch; the bump lands in two steps.
+      In the state's Open and Now.
+    * **[19:38]** The reviewer: "finish then continue". The state file rewritten at the session's end; the next
+      session continues with its Next 1, the reference-transaction hook's plan.
 
 M19. **[2026-11-23, skills shipped to every project (notes/PLAN-SHIPPED-SKILLS.md)]**
     * The pi piece, after M18: girsa-verifier's ANSWERS, live - fa53cb2 VERIFIED (its #3091), then the pi build
