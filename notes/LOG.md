@@ -21,6 +21,9 @@ M20. **[2026-11-24, a ref judged by the repository, not the folder (notes/PLAN-P
       eb343d42 - Q1 agreed (a parked branch named in the README); Q2 the reviewer's, as the first project's Board #310
       (it recommends A); Q3 follows it; a `reference-transaction` hook measured, not for this piece. Into the plan's
       head. A watcher on #310 running (`board.py wait 310`); girsa-verifier's review after its answer.
+    * **[10:36]** The reviewer, the first project's Board #310: A (the operator may move a role's branch and remove its
+      worktree, on the reviewer's word; the named tags their owners' alone). Q3 so: all but the operator. Into the
+      plan's head. To send at its commit, live: the plan's HANDOFF to girsa-verifier.
 
 M19. **[2026-11-23, skills shipped to every project (notes/PLAN-SHIPPED-SKILLS.md)]**
     * The pi piece, after M18: girsa-verifier's ANSWERS, live - fa53cb2 VERIFIED (its #3091), then the pi build

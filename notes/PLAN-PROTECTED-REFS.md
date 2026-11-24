@@ -23,9 +23,9 @@ before any review of this plan):
 - Q2 departs from #304 A's words ("Another role's branch and worktree are that role's"), so it is the reviewer's: the
   first project's Board #310 - A, the operator may also move a role's branch and remove or move its worktree, on the
   reviewer's word, the named tags their owners' alone; B, as written, each such step the reviewer's own command. It
-  recommends A. WAITING ON THE REVIEWER; the plan follows the answer.
-- Q3 follows Q2: under A, the forms the guard cannot read and the repository-wide writes refused to every role but the
-  operator (agreed); under B, to every role, the operator too - an unreadable form could move a role's branch.
+  recommends A. THE REVIEWER'S ANSWER, 2026-11-24 10:36: A. The plan is built so.
+- Q3 follows Q2: under A (answered), the forms the guard cannot read and the repository-wide writes refused to every
+  role but the operator (agreed); under B it would have been every role, the operator too.
 - Measured there, not proposed for this piece: git's `reference-transaction` hook refused a protected tag's move by
   `tag -f`, `update-ref`, `update-ref --stdin` and a forced fetch - guarding the ref, not each writer (Lesson 57) - but
   `-c core.hooksPath=/dev/null` passes it, it judges by the role variable (unset on about 70 commands of the record,
@@ -124,8 +124,8 @@ THE MEASURE, a prototype on a scratch copy of `mishmeret/` (the change below, as
    - worktree remove and move: the worktree named.
    Each, where the command runs in a guarded repository (the main clone or any worktree, the places `_git_trees`
    reads; not a copy), is refused to every role but its owner. The operator may also move a role's branch and remove
-   or move a role's worktree (design question 2); a `guard.refs` ref stays its owner's alone.
-3. WHAT THE GUARD CANNOT READ, refused in a guarded repository to every role but the operator (design question 3):
+   or move a role's worktree (#310 A); a `guard.refs` ref stays its owner's alone.
+3. WHAT THE GUARD CANNOT READ, refused in a guarded repository to every role but the operator (Q3, under #310 A):
    `update-ref --stdin`, `rebase --update-refs`, `filter-branch`, `fast-import`, `replay` but `--ref-action=print`, and
    a worktree named by a variable the command does not set. A ref so named is read with `*` for the variable, and
    judged as a glob: refused where it may cover a protected ref.
@@ -143,7 +143,7 @@ Not in this piece: a protected branch already checked out a second time before t
 `--ignore-other-worktrees`, none on the record) - a commit there moves it, and those commands are judged by folder; a
 branch checked out nowhere (a role's parked branch) is no one's; writes into another role's worktree's files.
 
-## Design questions (to girsa-architect; answered at eb343d42, the plan's head: Q2 the reviewer's, #310)
+## Design questions (to girsa-architect; answered at eb343d42, the plan's head: Q2 the reviewer's, #310 A)
 
 1. THE OWNERS IN THE CONFIG: `guard.refs` by glob, and each role's worktrees, the branch checked out there its own. Or
    a role's branches by name globs (`builder-*`), which would also cover a parked branch? My recommendation: the

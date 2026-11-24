@@ -21,8 +21,8 @@ Rewritten in place when a piece lands and at the end of a session; the log is `n
 ## Now
 
 - OPEN: #304 A on `builder-protected-refs` (notes/PLAN-PROTECTED-REFS.md, M20) - the plan; girsa-architect's answer
-  in (eb343d42); its Q2 the reviewer's, the first project's Board #310 (a watcher on it, `board.py wait 310`);
-  girsa-verifier's review after #310's answer. The measure's scratch scripts are in this
+  in (eb343d42); its Q2 the reviewer's, the first project's Board #310, answered A (the operator may); with
+  girsa-verifier for its review. The measure's scratch scripts are in this
   session's scratchpad (refs304/); the plan's item 6 makes them the skill's.
 - Main 9b979d3 (the notes on the first project's rewritten ids) is 1 ahead of origin: its push is the reviewer's word.
 - THE FIRST PROJECT'S PIN BUMP (075f49a to main), girsa-verifier first, brings: the seven's refusals, the
