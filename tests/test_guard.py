@@ -758,7 +758,19 @@ REF_CASES = [
     # the build's rule 45: a deletion by names unread is judged by guard.refs alone (git refuses a checked-out one)
     (False, 'ex-builder', '/work/book-builder', "git branch --merged main --list 'builder-*' | xargs git branch -d", 'attached'),
     (False, 'ex-builder', '/work/book-builder', 'for b in builder-a builder-b; do git branch -D $b; done', 'attached'),
-    (True, 'ex-builder', '/work/book-builder', 'echo known-good | xargs git tag -d', 'attached')
+    (True, 'ex-builder', '/work/book-builder', 'echo known-good | xargs git tag -d', 'attached'),
+    # girsa-verifier's LOW 1 and NOTE 2 on 110415f: eval's words, trap's string and coproc are commands; `xargs git
+    # checkout --` reads paths
+    (True, 'ex-builder', '/work/book-builder', 'eval "git push --force origin main"', 'attached'),
+    (True, 'ex-builder', '/work/book', 'eval git reset --hard HEAD~1', 'attached'),
+    (True, 'ex-builder', '/work/book', "trap 'git reset --hard HEAD~1' EXIT", 'attached'),
+    (True, 'ex-builder', '/work/book-builder', 'coproc git push origin main', 'attached'),
+    (True, 'ex-builder', '/work/book-builder', 'coproc P { git push origin main; }', 'attached'),
+    (True, 'ex-verifier', '/work/book-verifier', "eval 'git tag -f known-good HEAD~1'", 'attached'),
+    (False, 'ex-builder', '/work/book-builder', "trap 'rm -f /tmp/x' EXIT", 'attached'),
+    (False, 'ex-builder', '/work/book-builder', 'eval "$(ssh-agent -s)"', 'attached'),
+    (False, 'ex-builder', '/work/book-builder', 'git diff --name-only | xargs git checkout --', 'attached'),
+    (True, 'ex-builder', '/work/book-builder', 'echo main | xargs git checkout', 'attached')
 ]
 
 
@@ -825,6 +837,11 @@ def test_a_ref_s_owner_is_read_from_git_in_a_real_repository(tmp_path):
     assert "refs/heads/builder-x" in no("ex-verifier", f"git -C {wt} update-ref HEAD HEAD~1", main)
     assert no("ex-builder", "git branch -m builder-x builder-y", wt) is None
     assert no("ex-builder", "git update-ref HEAD HEAD~1", wt) is None
+    # girsa-verifier's LOW 2 on 110415f: the worktree's own git dir, named from outside every tree
+    admin = main / ".git" / "worktrees" / "book-builder"
+    for cmd in (f"git --git-dir={admin} reset --soft HEAD~1", f"GIT_DIR={admin} git reset --soft HEAD~1"):
+        assert "ex-builder's worktree" in no("ex-verifier", cmd, tmp_path), cmd
+        assert no("ex-builder", cmd, tmp_path) is None, cmd
 
 
 def test_the_role_guard_lets_a_role_land_through_land_py_only_as_itself():

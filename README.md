@@ -78,7 +78,8 @@ worktree, or run a git write in it. The forms the guard cannot read for the ref 
 --update-refs`, `filter-branch`, `fast-import`, `replay`, xargs) and the shared repository's own writes (`replace`,
 `reflog delete/expire`, `gc --prune`, `prune`) are the operator's alone - and so they reach a `guard.refs` ref of
 another owner too. `git maintenance register` and `git init --separate-git-dir` in a guarded tree are refused to every
-role. A branch checked out nowhere (a role's branch while its worktree holds another) is no one's. The guard reads the
+role. A branch checked out nowhere (a role's branch while its worktree holds another) is no one's. A subagent is no
+role, so a role's own subagent is refused a git write in its parent's worktree too. The guard reads the
 command's words; git's own `reference-transaction` hook, which sees every ref update whatever makes it, is the next
 piece.
 

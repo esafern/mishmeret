@@ -65,7 +65,7 @@ WORD = r"""(?:"[^"]*"|'[^']*'|\$\([^()]*\)|`[^`]*`|\\.|[^\s"';&|()<>`])+"""
 # COMMAND POSITION (M07 item 1, notes/PLAN-GUARD-KEYWORDS.md): after a separator, and after any run of the shell's
 # keywords - `if true; then git push; fi`, `{ git push; }`, `! git push` had gone through every check built on it
 BASE_BOUNDARY = r"(?:^|[;&|(`]|\$\()\s*"
-KEYWORDS = ("if", "!", "then", "else", "elif", "do", "while", "until", "{")
+KEYWORDS = ("if", "!", "then", "else", "elif", "do", "while", "until", "{", "coproc")
 KEYWORD = r"(?:(?:" + "|".join(KEYWORDS) + r")\s+)"
 # A CASE ARM (notes/PLAN-KNOWN-GAPS-SEVEN.md, item 5): after `in`, `;;`, `;&` or `;;&`, a pattern - its words, `|`
 # between them - and its `)`. `case x in x) git push origin main;; esac` had gone through every check built on BOUNDARY;
@@ -75,7 +75,7 @@ CASE_ARM = r"(?:\bin|;;&?|;&)\s+" + CASE_PATTERN + r"\s*"
 # A FUNCTION'S BODY (found at notes/PLAN-PROTECTED-REFS.md's build, in girsa-verifier's LOW 1 case `f(){ git tag -f
 # "$@"; }`): after a definition's `()` or `function NAME`, before its `{` or `(`. `f(){ git push --force origin main;
 # }; f` had gone through every check built on BOUNDARY; a body may not run, so a cd in one is read as after a keyword
-FUNC = r"(?:\bfunction\s+[\w.:-]+\s*(?:\(\s*\)\s*)?|\(\s*\)\s*)(?=[{(])"
+FUNC = r"(?:\b(?:function|coproc)\s+[\w.:-]+\s*(?:\(\s*\)\s*)?|\(\s*\)\s*)(?=[{(])"     # coproc NAME { ... } too
 BOUNDARY = r"(?:" + BASE_BOUNDARY + "|" + CASE_ARM + "|" + FUNC + ")" + KEYWORD + "*"
 # the names the guard reads in command position: `mask` gives each back written `\name`, `"name"` or `'name'` (a
 # path inside the quotes too), as the shell runs it
@@ -96,7 +96,11 @@ GIT = re.compile(BOUNDARY + PREFIX + r"(?:\S*/)?git"
                  r"((?:\s+-[Cc]\s+" + WORD + r"|\s+--(?:git-dir|work-tree|namespace|config-env|attr-source)\s+" + WORD
                  + r"|\s+-" + WORD + r")*)[ \t]+(?!-)(" + WORD + r")([^;&|\n]*)", re.M)
 SHELL_C = re.compile(r"(?<![\w-])" + SHELL + r"\s+(?:-\w+\s+)*-c\s+(\"(?:[^\"\\]|\\.)*\"|'[^']*')"
-                     r"|(?<![\w-])" + SHELL + r"(?:\s+-\w+)*\s*<<<\s*(\"(?:[^\"\\]|\\.)*\"|'[^']*')")
+                     r"|(?<![\w-])" + SHELL + r"(?:\s+-\w+)*\s*<<<\s*(\"(?:[^\"\\]|\\.)*\"|'[^']*')"
+                     # eval's words and trap's string are a command too (girsa-verifier's LOW 1 on 110415f: `eval "git
+                     # push --force origin main"` and `trap 'git reset --hard' EXIT` passed every rule)
+                     r"|(?<![\w-])eval\s+((?:[^;&|\n\"']|\"(?:[^\"\\]|\\.)*\"|'[^']*')+)"
+                     r"|(?<![\w-])trap\s+(?:--\s+)?(\"(?:[^\"\\]|\\.)*\"|'[^']*'|[^\s;&|]+)")
 # a heredoc that a shell reads as its script (girsa-verifier, 2026-10-11): `bash <<'EOF'`, `sh -s <<EOF`, `. /dev/stdin
 # <<EOF`, or `cat <<EOF | bash` - its body is commands, not words
 STDIN_SHELL = re.compile(r"^\s*(?:[A-Za-z_]\w*=(?:" + WORD + r")?\s+|env(?:\s+-" + WORD + r")*\s+|exec\s+|command\s+)*"
@@ -105,8 +109,11 @@ PIPED_TO_SHELL = re.compile(r"\|\s*" + SHELL + r"(?:\s+-\w+)*\s*(?:$|[;&|)])")
 
 
 def shell_arg(m):
-    """The command text of a SHELL_C match: `bash -c '...'`'s argument, or `bash <<< '...'`'s string."""
-    return _unquote(m.group(1) or m.group(2))
+    """The command text of a SHELL_C match: `bash -c '...'`'s argument, `bash <<< '...'`'s string, eval's words as the
+    shell joins them, or trap's command."""
+    if m.group(3) is not None:
+        return " ".join(_split(m.group(3)))
+    return _unquote(m.group(1) or m.group(2) or m.group(4))
 
 
 def shell_c(command, masked):
@@ -740,8 +747,17 @@ def _head(where):
 
 
 def worktree_owner(path):
-    """The role whose worktree (`roles[].worktrees`) `path` is in, or None."""
+    """The role whose worktree (`roles[].worktrees`) `path` is in, or None - a worktree's own git dir too,
+    `<main>/.git/worktrees/<name>`, by its `gitdir` file (girsa-verifier's LOW 2 on 110415f: `git
+    --git-dir=<that> reset` from outside every tree had moved the worktree's branch)."""
     real = os.path.realpath(path)
+    admin = re.match(r"(.*/\.git/worktrees/[^/]+)(?:/|$)", real)
+    if admin:
+        try:
+            with open(os.path.join(admin.group(1), "gitdir"), encoding="utf-8") as fh:
+                real = os.path.dirname(os.path.realpath(fh.read().strip()))
+        except OSError:
+            pass
     return next((r for w, r in WORKTREES.items() if real == w or real.startswith(w + os.sep)), None)
 
 
@@ -861,7 +877,7 @@ def _written(verb, words, xargs):
     deleting = verb == "branch" and _has(flags, "-d", "-D", "--delete")
     if xargs and deleting:
         return [("*", "deleted")], None
-    if xargs and verb in REF_VERBS:
+    if xargs and verb in REF_VERBS and not (verb == "checkout" and "--" in rest):     # after --, paths (its NOTE 2)
         return [], "takes more of its words from its input (xargs)"
     names = [w for w in rest if w != "--"]
     if verb == "update-ref":
