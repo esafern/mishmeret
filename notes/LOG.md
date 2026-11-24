@@ -24,6 +24,21 @@ M20. **[2026-11-24, a ref judged by the repository, not the folder (notes/PLAN-P
     * **[10:36]** The reviewer, the first project's Board #310: A (the operator may move a role's branch and remove its
       worktree, on the reviewer's word; the named tags their owners' alone). Q3 so: all but the operator. Into the
       plan's head. To send at its commit, live: the plan's HANDOFF to girsa-verifier.
+    * Sent, live, at 4ac714c. girsa-verifier's ANSWER, live (its #3179): READY on MEDIUMs 1-2 and LOWs 1-2, built in
+      with a test each (its review at the first project's 5ffe155f8). Its NOTE 3 to girsa-architect, live; ANSWERED,
+      live (350e01e37): the reference-transaction hook a piece of its own, next.
+    * BUILT. Found at the build: git in a function's body stood in no command position (on main's guard a builder's
+      `f(){ git push --force origin main; }; f` ran) - every rule's, fixed; `merge --ff-only` in another role's
+      worktree. My faults: the backtick of git's own substitution counted after the match began; the config's owner
+      check before its table check; extract.py reading agentSetting alone (180 transcripts hold only agentName: 219
+      false "no role" refusals in rule 45's first run); a builder's `xargs git branch -d` of its own branches refused
+      (rule 45 on Mishmeret's record) - a deletion by unread names now judged by guard.refs alone. Five dead parts
+      deleted (mutations GREEN).
+    * **[13:45]** The reviewer, in this pane, on MEDIUM 1's cost: "Refuse it" (a session with no role in a role's
+      worktree). Rule 45 by role: 7 newly refused, each intended.
+    * The lane check refused the skill's 4 files (`.claude/` is the operator's lane). The reviewer, in this pane: "Your
+      word, --because (Recommended)". COMMITTED 110415f under those words, 178 passed; its landing carries the same
+      `--because`. To send at the notes commit, live: the build's HANDOFF to girsa-verifier.
 
 M19. **[2026-11-23, skills shipped to every project (notes/PLAN-SHIPPED-SKILLS.md)]**
     * The pi piece, after M18: girsa-verifier's ANSWERS, live - fa53cb2 VERIFIED (its #3091), then the pi build

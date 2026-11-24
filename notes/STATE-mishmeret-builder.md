@@ -20,10 +20,10 @@ Rewritten in place when a piece lands and at the end of a session; the log is `n
 
 ## Now
 
-- OPEN: #304 A on `builder-protected-refs` (notes/PLAN-PROTECTED-REFS.md, M20) - the plan; girsa-architect's answer
-  in (eb343d42); its Q2 the reviewer's, the first project's Board #310, answered A (the operator may); with
-  girsa-verifier for its review. The measure's scratch scripts are in this
-  session's scratchpad (refs304/); the plan's item 6 makes them the skill's.
+- OPEN: #304 A on `builder-protected-refs` (notes/PLAN-PROTECTED-REFS.md, M20) - BUILT, with girsa-verifier for its
+  check: its review's MEDIUMs 1-2 and LOWs 1-2 built in; #310 A; the reviewer's "Refuse it" (a session with no role in
+  a role's worktree). The scratch scripts and decision files: this session's scratchpad, refs304/ (the HANDOFF names
+  them). The guard-measure skill now measures by role (`each`).
 - Main 9b979d3 (the notes on the first project's rewritten ids) is 1 ahead of origin: its push is the reviewer's word.
 - THE FIRST PROJECT'S PIN BUMP (075f49a to main), girsa-verifier first, brings: the seven's refusals, the
   classification (girsa-builder's 3 measured writes refused), the pi guard (`runner: pi` named with the bump, then
@@ -32,12 +32,16 @@ Rewritten in place when a piece lands and at the end of a session; the log is `n
 - Every old builder branch is deleted (2026-11-23): 37 merged by `git branch -d`; and, on the reviewer's "delete",
   four whose content had landed under other ids (`git branch -D`; tips 7e0e8b3, 3bc9c49, 96454a1, 4b9133b), each read
   first.
-- To resume: `git -C ~/work/mishmeret log --oneline -3`; `git -C ~/work/mishmeret-builder status -sb`; the Board; the
-  first project's Board record (`~/work/girsa-board/board.jsonl`) for #304.
+- THE PIN BUMP, girsa-verifier's NOTE 4 on this piece: run the older-worktree landing on the bump's patch before it
+  lands (an older pin refuses the config's `guard.refs` and `roles[].worktrees`).
+- To resume: `git -C ~/work/mishmeret log --oneline -3`; `git -C ~/work/mishmeret-builder status -sb`; the Board, and
+  a watcher (`board.py wait <id>`) on any Board item a piece waits on.
 
 ## Next, in order
 
-1. #304: girsa-architect's answer into the plan, then girsa-verifier's review, then the build (the skill's steps 3-6).
+1. #304: girsa-verifier's check of the build, its findings fixed in one round, girsa-operator's merge.
+2. Git's `reference-transaction` hook, a piece of its own (girsa-architect, the first project's 350e01e37: main's branch
+   and `guard.refs` by the ref, whatever writes it; its four measured points in the plan's head).
 
 ## Open
 
@@ -46,6 +50,8 @@ Rewritten in place when a piece lands and at the end of a session; the log is `n
 - A GIT_INDEX_FILE set from a variable is taken as temporary (114 such on the record, the scratch-index pattern): the
   classification's accepted cost.
 - A shell write through a link into a pin meets no file-target rule (as for any pinned file; girsa-verifier's NOTE 3).
+- `export GIT_DIR=<main>/.git` before git is not read by `_git_trees`, so by no rule built on it (girsa-verifier's
+  NOTE 1 on the protected-refs plan); the file tools' edits into another role's worktree are not refused.
 - Not measured: a pi session whose folder differs from its start folder; pi and the shipped skills on Windows and Linux;
   a skill's link changed under a running session.
 - Not run live: the night and morning runs as changed (stubs only). The session scripts are macOS-only.

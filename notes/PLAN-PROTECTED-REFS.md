@@ -32,6 +32,80 @@ before any review of this plan):
   clean-environment runs), and it would see land.py's own fast-forward of main. The design to plan if the list of
   unreadable forms grows.
 
+GIRSA-VERIFIER'S REVIEW (the first project's design-study/step5-verification/mishmeret-protected-refs-plan-2026-11-24/
+REVIEW.md at 5ffe155f8; its message #3179): READY on MEDIUMs 1-2 and LOWs 1-2, built in with a test each. It re-ran the
+measure on its copies (the probes and rule 45 byte-equal). Each built:
+- MEDIUM 1: a git write run in another role's worktree moved its branch (`git -C <its worktree> reset --hard`), or
+  left it no one's (`checkout --detach`, then `branch -D`). The main tree's CHANGES_MAIN rule now holds also for a
+  tree in another role's `roles[].worktrees`, for every role but its owner and the operator - `merge --ff-only` too,
+  as in a pin - and so does land.py commit's.
+- MEDIUM 2, 14 forms in 6 verbs, in their class form: `symbolic-ref HEAD <a branch>` a second checkout; fetch's and
+  pull's `--prune-tags`/`-P`, `tag <name>`, refspecs and forced `--tags` (pull read as fetch); a long option by any
+  unique prefix, by the push rule's own reading (`_long`, Lesson 60); a short cluster whose last letter takes a value
+  (`-fam x`); names after `--`; a worktree by a unique last part of its path.
+- LOW 1, in its class form: git's words read as the shell gives them (a `$(...)` or backtick inside them one word,
+  ending only at the `)` or backtick of a substitution the git call stands in; a value with spaces split); a part
+  the guard cannot read - a substitution, a variable the command does not set, `$@` and its kind, a brace list - read
+  as `*`; xargs before git, a form the guard cannot read.
+- LOW 2: a worktree list git cannot give, or a checked-out branch it cannot name, refuses a ref move to every role but
+  the operator.
+- NIT 1: `branch -c/-C` reads its first name. NIT 2: the owner's kind returned with the role, not read from the text.
+- NOTE 2 in the README (the operator's unreadable forms reach `demo-good` too). NOTE 1 (`export GIT_DIR=<main>/.git`
+  before git: an older gap of every rule reading `_git_trees`) in the state file's Open. NOTE 3 to girsa-architect,
+  below. NOTE 4 for the first project's pin bump: the older-worktree landing run on the bump's patch before it lands.
+- It asked the reviewer's question if MEDIUM 1 newly refused a session with no role (below).
+
+GIRSA-ARCHITECT'S FOLLOW-UP (the same document, "Follow-up, 2026-11-24", at 350e01e37), on NOTE 3: git's
+`reference-transaction` hook is a piece of its own, planned next - the condition it set is met; this piece stays as
+planned with the review's fixes in their class form. Its points for that plan, measured: the hook reads the ref's
+value itself (`update-ref <ref> <older>` with no old value hands it zeros); main needs no landing mark (refuse a
+deletion or a move to a non-descendant, for all but the operator); one function of who may move which ref, called by
+the Bash guard and by the hook; the escapes to close (`core.hooksPath` by `-c` or `GIT_CONFIG_*`, or in the config,
+and the role variable unset before git).
+
+THE REVIEWER, 2026-11-24, in mishmeret-builder's pane, on MEDIUM 1's cost to a session with no role: "Refuse it" - a
+session with no role writes only in a worktree of its own or a copy, never in a role's. Its message says so.
+
+THE BUILD (110415f; the skill's 4 files under `--because`, the reviewer's answer in mishmeret-builder's pane: "Your
+word, --because (Recommended)"): the change below, as the prototype, with the review's fixes. Found at the build:
+- A FUNCTION'S BODY, AN OLDER HOLE OF EVERY RULE: in the review's case `f(){ git tag -f "$@"; }; f known-good`, git
+  after a function's `()` (or `function NAME`) and its `{` stood in no command position. On main's guard,
+  `f(){ git push --force origin main; }; f` was let through to a builder, and `f(){ git reset --hard HEAD~1; }; f`
+  in the main tree. BOUNDARY and the keyword cd now read a function's body; all six function forms probed refused.
+- `merge --ff-only` in another role's worktree, which the main tree's rule took as leaving it: refused.
+- THE MEASURE BY ROLE (item 6): extract.py reads a session's role from its agentSetting, else its agentName - the
+  first project's 180 transcripts of October and November hold only the name. The first run read agentSetting
+  alone, and gave 223 newly refused, 219 of them those roles in their own worktrees read as sessions with no role.
+- A deletion of branches by names the guard cannot read (`... | xargs git branch -d`, a loop's `$b`) is judged by
+  `guard.refs` alone: git itself refuses to delete a branch checked out in any worktree - main's and each role's
+  (measured) - and the record's one such command was mine, deleting my own merged branches. A deletion that names
+  another role's branch is still refused.
+- Five parts no case could see, deleted rather than kept (THE MUTATION THAT DID NOT FAIL): `branch -r`'s early
+  return, fetch's `--all/--multiple`, symbolic-ref's `-d`, the detached-HEAD skip, and a names-after-`--` flag.
+- My faults on the way: a backtick that opens git's own substitution was counted before the match began, so its
+  close read as an opening; and the owner check ran before the config's table check.
+- Tests: REF_CASES, 172 cases (120 refused, 52 let through) - the probes', the review's 72 and the build's - each as
+  read; a real repository's (main's branch and a worktree's branch read from git); the config's fields; the measure
+  by role. 58 rules each red with it taken out over a passing baseline (mutate.py); the skill's self-check 18 of 18
+  red. Suite 178 passed.
+
+THE BUILD'S RUN OF RULE 45 (main 9b979d3's guard against the build, by the skill's extract.py: the first project's
+1,066 transcripts with its pi sessions, 166,882 command-cwd-role triples; Mishmeret's 11, 1,909):
+- BY ROLE, the first project: newly refused 7, newly let through 0, faults 0. 4 release tags made in the shared
+  repository by no operator (`alpha-rc9`, `alpha-rc10` with no role, before the roles; `alpha-rc14` twice by a session
+  named girsa-verifier) - the refusal intended; 3 by a session with no role in girsa-architect's worktree, 2026-10-01,
+  the day the roles began (`merge --ff-only`, `add`) - refused on the reviewer's answer above. Mishmeret: no change.
+- AS girsa-builder for every command: newly refused 1,863, newly let through 0, faults 0 - each another role's
+  command judged as a builder's: 1,323 roles' writes in their own worktrees (girsa-verifier 585, girsa-ui-steward 522,
+  girsa-architect 171, the demo operator 45), the operator's 28 in roles' worktrees and its 2 removals of a role's
+  worktree, 497 of the operator's protected tags and 6 of the demo operator's `demo-good`, the 4 release tags above,
+  the 2 of no role in the architect's worktree, and girsa-ui-steward's `switch` of its own branch. As
+  mishmeret-builder on Mishmeret's: no change.
+- AS girsa-operator: newly refused 6, newly let through 0, faults 0 - each the demo operator's own `demo-good`,
+  refused the operator by #310 A. As mishmeret-operator: no change.
+The decision files and comparisons: this session's scratchpad, refs304/ (x-*.jsonl, cmp4-*.txt), the build's code
+as committed; the run before its last line (`_has` by `_long`) gave the same comparisons, byte for byte.
+
 THE HOLE, on main's guard (9b979d3; the guard-measure skill's probe.py, placeholder paths, as a builder in its
 worktree unless named): 42 cases, 2 of them owners' own (the operator's `tag -f known-good`, the demo operator's
 `tag -f demo-good`); of the other 40, 38 let through. Refused already: only `git push . HEAD:main` (push is the
@@ -139,9 +213,15 @@ THE MEASURE, a prototype on a scratch copy of `mishmeret/` (the change below, as
    its parent session; pi's none), and decide.py takes `each` for ROLE, judging every command as the role that ran it.
    Its self-check gains the rows.
 
+7. AT THE BUILD (the plan's head: girsa-verifier's review, the reviewer's answer, what the build found): a git write
+   in another role's worktree, and land.py commit there, refused to all but its owner and the operator, a session with
+   no role too; the review's forms in their class form; an unreadable worktree list or HEAD refusing; a function's
+   body read in command position, by every rule.
+
 Not in this piece: a protected branch already checked out a second time before this rule (by `worktree add -f` or
-`--ignore-other-worktrees`, none on the record) - a commit there moves it, and those commands are judged by folder; a
-branch checked out nowhere (a role's parked branch) is no one's; writes into another role's worktree's files.
+`--ignore-other-worktrees`, none on the record) - a commit there moves it; a branch checked out nowhere (a role's
+parked branch) is no one's; an edit by the file tools into another role's worktree; `export GIT_DIR=` before git (the
+review's NOTE 1, an older gap); and git's `reference-transaction` hook, the next piece.
 
 ## Design questions (to girsa-architect; answered at eb343d42, the plan's head: Q2 the reviewer's, #310 A)
 
