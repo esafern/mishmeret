@@ -106,6 +106,25 @@ THE BUILD'S RUN OF RULE 45 (main 9b979d3's guard against the build, by the skill
 The decision files and comparisons: this session's scratchpad, refs304/ (x-*.jsonl, cmp4-*.txt), the build's code
 as committed; the run before its last line (`_has` by `_long`) gave the same comparisons, byte for byte.
 
+GIRSA-VERIFIER'S CHECK (the first project's design-study/step5-verification/mishmeret-protected-refs-build-2026-11-24/
+BUILD.md; its message #3203): VERIFIED but for LOWs 1-2 and NOTEs 1-2. It re-ran the suite, the 58 mutations, the
+self-check, the probe and both sides of rule 45 on its own copies, each byte-equal. Fixed in one round:
+- LOW 1, the siblings of a function's body: `eval "git ..."`, `eval git ...`, `trap 'git ...' EXIT` and `coproc git
+  ...` passed every rule (a push --force, a reset --hard in the main tree). `shell_c`, which the four command rules
+  read, now gives eval's words (joined as the shell joins them) and trap's string as a command, as it gives `bash -c`'s;
+  `coproc` is a keyword, and `coproc NAME { ... }` a function's body.
+- LOW 2: `git --git-dir=<main>/.git/worktrees/<name> reset` (or GIT_DIR=) from outside every tree moved that
+  worktree's branch. `worktree_owner` reads a worktree's own git dir as the worktree, by its `gitdir` file.
+- NOTE 1: a role's own subagent is no role (M07 item 2), so it is refused a git write in its parent's worktree - in
+  the README. Its count: the record's 7,402 subagent commands, judged as subagents, newly refused 0, let through 0,
+  faults 0 - so the run by role, which credits a subagent to its parent's role, stands.
+- NOTE 2: `git diff --name-only | xargs git checkout --` in one's own worktree was refused; after `--`, xargs gives
+  paths, and is read so.
+- The round's tests: 10 cases more in REF_CASES (182) and the git dir in the real repository's; 65 rules red with it
+  taken out over a passing baseline; suite 178 passed. Rule 45 again, every rule reading the new `shell_c`: each of
+  the six comparisons byte-equal to the build's (cmp5-*.txt) - by role 7, as a builder 1,863, as the operator 6;
+  Mishmeret's 0, 0, 0.
+
 THE HOLE, on main's guard (9b979d3; the guard-measure skill's probe.py, placeholder paths, as a builder in its
 worktree unless named): 42 cases, 2 of them owners' own (the operator's `tag -f known-good`, the demo operator's
 `tag -f demo-good`); of the other 40, 38 let through. Refused already: only `git push . HEAD:main` (push is the

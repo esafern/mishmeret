@@ -39,6 +39,11 @@ M20. **[2026-11-24, a ref judged by the repository, not the folder (notes/PLAN-P
     * The lane check refused the skill's 4 files (`.claude/` is the operator's lane). The reviewer, in this pane: "Your
       word, --because (Recommended)". COMMITTED 110415f under those words, 178 passed; its landing carries the same
       `--because`. To send at the notes commit, live: the build's HANDOFF to girsa-verifier.
+    * Sent, live, at c29502e. girsa-verifier's ANSWER, live (its #3203): VERIFIED but for LOWs 1-2 and NOTEs 1-2 -
+      eval, trap and coproc running git unread by every rule; a worktree's own git dir not mapped to the worktree;
+      the README to say a role's subagent is refused in its parent's worktree; `xargs git checkout --` refused. Fixed
+      in one round: 65 rules red, suite 178, rule 45 byte-equal. To send at the commits, live: the round to
+      girsa-verifier, LANDED-READY to girsa-operator.
 
 M19. **[2026-11-23, skills shipped to every project (notes/PLAN-SHIPPED-SKILLS.md)]**
     * The pi piece, after M18: girsa-verifier's ANSWERS, live - fa53cb2 VERIFIED (its #3091), then the pi build

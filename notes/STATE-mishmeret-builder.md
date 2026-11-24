@@ -20,9 +20,9 @@ Rewritten in place when a piece lands and at the end of a session; the log is `n
 
 ## Now
 
-- OPEN: #304 A on `builder-protected-refs` (notes/PLAN-PROTECTED-REFS.md, M20) - BUILT, with girsa-verifier for its
-  check: its review's MEDIUMs 1-2 and LOWs 1-2 built in; #310 A; the reviewer's "Refuse it" (a session with no role in
-  a role's worktree). The scratch scripts and decision files: this session's scratchpad, refs304/ (the HANDOFF names
+- OPEN: #304 A on `builder-protected-refs` (notes/PLAN-PROTECTED-REFS.md, M20) - BUILT (110415f), VERIFIED but for
+  LOWs 1-2 and NOTEs 1-2, fixed in one round (6bb1caf); with girsa-operator to land, under the `--because` words the
+  skill's 4 files carry. #310 A; the reviewer's "Refuse it" (a session with no role in a role's worktree). The scratch scripts and decision files: this session's scratchpad, refs304/ (the HANDOFF names
   them). The guard-measure skill now measures by role (`each`).
 - Main 9b979d3 (the notes on the first project's rewritten ids) is 1 ahead of origin: its push is the reviewer's word.
 - THE FIRST PROJECT'S PIN BUMP (075f49a to main), girsa-verifier first, brings: the seven's refusals, the
