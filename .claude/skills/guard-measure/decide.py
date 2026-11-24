@@ -1,6 +1,7 @@
 """Rule 45's one side: the guard in GUARD_DIR (a folder holding role_guard.py and config.py - a `git archive` extract
 of the old commit, or a copy of the new `mishmeret/`, never the tree being edited) judges every command in CMDS
-(extract.py's output) at its cwd, as ROLE, under the project config CONFIG, with the Bash rules the hook runs
+(extract.py's output) at its cwd, as ROLE - or, ROLE `each`, as the role that ran it (extract.py's; with none, a
+session with no role) - under the project config CONFIG, with the Bash rules the hook runs
 (rules.py, held to role_guard.check by a test). Writes one JSON line per command to OUT: {"i", "why"} (the refusal or
 null) or {"i", "fault"}. Git's tree lookups and the scripts it reads are memoized; each side runs in its own process.
 
@@ -20,13 +21,17 @@ def main(folder, cfg, cmds, role, out):
     from rules import judge
     rg._git_dirs = functools.lru_cache(maxsize=None)(rg._git_dirs)
     rg.guarded_git_dirs = functools.lru_cache(maxsize=None)(rg.guarded_git_dirs)
+    for name in ("_checked_out", "_head"):           # a newer guard's reads of the refs (notes/PLAN-PROTECTED-REFS.md)
+        if hasattr(rg, name):
+            setattr(rg, name, functools.lru_cache(maxsize=None)(getattr(rg, name)))
     read = functools.lru_cache(maxsize=None)(rg._read)
     with open(cmds, encoding="utf-8") as fh, open(out, "w", encoding="utf-8") as w:
         for i, line in enumerate(fh):
             r = json.loads(line)
             c, cwd = r["command"], r["cwd"] or os.path.expanduser("~")
+            who = (r.get("role") or rg.NO_ROLE) if role == "each" else role
             try:
-                w.write(json.dumps({"i": i, "why": judge(rg, role, c, cwd, read)}) + "\n")
+                w.write(json.dumps({"i": i, "why": judge(rg, who, c, cwd, read)}) + "\n")
             except Exception as e:
                 w.write(json.dumps({"i": i, "fault": f"{type(e).__name__}: {e}"}) + "\n")
 

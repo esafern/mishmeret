@@ -22,15 +22,33 @@ def test_rule_45s_scripts_read_both_runners_transcripts_and_list_each_changed_de
     (claude / "a.jsonl").write_text("\n".join([use("git push origin main", "/work/book-builder"),
                                                use("git push origin main", "/work/book-builder"),     # once
                                                use("echo hi", "/work/book-builder"), "not json"]) + "\n")
+    # a session with its role on the record, and its subagent's transcript under it: each command with that role
+    setting = json.dumps({"type": "agent-setting", "agentSetting": "ex-operator"})
+    (claude / "b.jsonl").write_text(setting + "\n" + use("git push origin main", "/work/book") + "\n")
+    (claude / "b" / "subagents").mkdir(parents=True)
+    (claude / "b" / "subagents" / "agent-1.jsonl").write_text(use("git tag -l", "/work/book") + "\n")
+    (claude / "c.jsonl").write_text(json.dumps({"type": "agent-name", "agentName": "ex-verifier"}) + "\n"
+                                    + use("git tag -l", "/work/book") + "\n")        # only the name on the record
     (pi / "s.jsonl").write_text(json.dumps({"type": "session", "cwd": "/work/book"}) + "\n" + json.dumps(
         {"type": "message", "message": {"content": [{"type": "toolCall", "name": "bash",
                                                      "arguments": {"command": "git status"}}]}}) + "\n")
     cmds = tmp_path / "cmds.jsonl"
     r = run("extract.py", str(cmds), str(claude), str(pi))
-    assert r.returncode == 0 and "transcripts: 2, distinct command-and-cwd pairs: 3" in r.stdout, (r.stdout, r.stderr)
+    assert r.returncode == 0 and "transcripts: 5, distinct command-cwd-role triples: 6" in r.stdout, (r.stdout, r.stderr)
     rows = [json.loads(line) for line in cmds.read_text().splitlines()]
-    assert {(x["command"], x["cwd"]) for x in rows} == {("git push origin main", "/work/book-builder"),
-                                                        ("echo hi", "/work/book-builder"), ("git status", "/work/book")}
+    assert {(x["command"], x["cwd"], x["role"]) for x in rows} == {
+        ("git push origin main", "/work/book-builder", None), ("echo hi", "/work/book-builder", None),
+        ("git status", "/work/book", None), ("git push origin main", "/work/book", "ex-operator"),
+        ("git tag -l", "/work/book", "ex-operator"), ("git tag -l", "/work/book", "ex-verifier")}
+    # each command as the role that ran it: the operator's push lets through, the role-less one is refused
+    each = tmp_path / "each.jsonl"
+    r = run("decide.py", PKG, os.environ["MISHMERET_CONFIG"], str(cmds), "each", str(each))
+    assert r.returncode == 0, r.stderr
+    by = {(rows[d["i"]]["command"], rows[d["i"]]["role"]): d.get("why") for d in map(json.loads, each.read_text().splitlines())}
+    assert by[("git push origin main", "ex-operator")] is None, by
+    assert "operator's" in by[("git push origin main", None)], by
+    rows = [x for x in rows if x["role"] is None]
+    cmds.write_text("".join(json.dumps(x) + "\n" for x in rows))
     new = tmp_path / "new.jsonl"
     r = run("decide.py", PKG, os.environ["MISHMERET_CONFIG"], str(cmds), "ex-builder", str(new))
     assert r.returncode == 0, r.stderr

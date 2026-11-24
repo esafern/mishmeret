@@ -30,7 +30,8 @@ FIELDS = {
     "mishmeret_commit": str,    # the shim: the commit whose pinned tree every hook runs
     "project": str,             # board_server (the page's title), agents-morning (the morning alert)
     "roles": list,              # board, board_server, agents-lib, agents: [{name, short, colour, page_light, page_dark,
-                                # corner, tmux, runner (OPTIONAL: "claude", absent, or "pi")}]
+                                # corner, tmux, runner (OPTIONAL: "claude", absent, or "pi"), worktrees (OPTIONAL: its
+                                # worktrees' paths - each, and the branch checked out there, the role's own)}]
     "page_order": list,         # board_server: the corners' order on the page, by short name
     "operator": str,            # agents (the pane selected last), and the guard and the landing tool when they move
     "board_dir": str,           # board: the Board's record and its files
@@ -50,14 +51,15 @@ FIELDS = {
                                 # its timeout in seconds (under the project's own hook timeout, so it fires first)
     "guard": dict,              # role_guard, time_precommit: the trees only the operator changes, the repositories no
                                 # role changes in any tree (`foreign`), the remotes never pushed to, the checks whose
-                                # status decides a commit, the pre-commit hook's own path
+                                # status decides a commit, the pre-commit hook's own path, the refs only their owner
+                                # moves (`refs`, OPTIONAL: {ref glob: role})
     "land": dict,               # land: the role whose code landing names a plan, the verifier a round goes back to, the
                                 # lane check it runs, the live ledger, what a review server loads, the gate's lists
     "budget": dict,             # board, statusline: the plan window's percent at which each session is told once
     "expiring": list,           # expiring (board_server's feed): what expires - [{name, who, how, source}]
 }
 GUARD = {"homes": str, "fallback_roots": list, "trees": list, "foreign": list, "retired_remotes": list, "checks": list,
-         "precommit": str}
+         "precommit": str, "refs": dict}
 LAND = {"planned": str, "verifier": str, "lane_check": str, "ledger": str, "server": dict, "gate_sets": dict,
         "gate_env": dict, "hand_run": dict}
 SERVER = {"entry": str, "folders": list, "page": str}
@@ -66,7 +68,8 @@ SERVER = {"entry": str, "folders": list, "page": str}
 # project can fill is that project's field in Mishmeret's code), and repositories no role changes (girsa-verifier's
 # review of that plan: a project's config then gains no field at its pin bump). Absent, its reader takes it as off.
 OPTIONAL = {"python", "drafts", "guard.homes", "guard.precommit", "guard.foreign", "land.ledger", "land.server",
-            "night.finish_command", "night.finish_exit_command", "expiring", "roles.runner"}
+            "night.finish_command", "night.finish_exit_command", "expiring", "roles.runner", "guard.refs",
+            "roles.worktrees"}
 # WHAT EXPIRES (notes/PLAN-EXPIRING.md): each item's keys, and each source's kind with the kinds of its value -
 # expiring.READERS reads one each (a test holds the two to one list); a name given twice is refused (girsa-architect:
 # its events' UIDs would be one)
@@ -89,7 +92,7 @@ START_READS = {"briefs": str, "logs": list}
 BUDGET = {"warn_percent": int}
 DRAFTS = {"pattern": str, "check": str, "passed": str, "failed": str, "timeout": int}
 ROLE_KEYS = {"name": str, "short": str, "colour": str, "page_light": str, "page_dark": str, "corner": bool,
-             "tmux": bool, "runner": str}
+             "tmux": bool, "runner": str, "worktrees": list}
 # WHAT STARTS A ROLE (notes/PLAN-PI-ROLE.md): Claude Code, absent or "claude"; or pi, guarded by mishmeret/pi_guard.ts.
 # A pin older than this commit refuses the key (its role keys are exact): it is named with the pin bump that brings it
 RUNNERS = ("claude", "pi")
@@ -197,6 +200,13 @@ def load(p=None):
         for k, t in keys.items():
             if k in table:
                 _typed(f"{field}.{k}", t, table[k], p)
+    # whose a ref or a worktree is (notes/PLAN-PROTECTED-REFS.md): a role of this config, a path a string
+    for pattern, owner in cfg["guard"].get("refs", {}).items():
+        if owner not in {r["name"] for r in cfg["roles"]}:
+            raise ConfigError(f"{p}: guard.refs gives {pattern!r} to {owner!r}, which is not one of the roles")
+    for i, r in enumerate(cfg["roles"]):
+        if not all(isinstance(w, str) and w for w in r.get("worktrees", [])):
+            raise ConfigError(f"{p}: roles[{i}].worktrees must be a list of paths")
     for k in ("planned", "verifier"):
         if cfg["land"][k] not in {r["name"] for r in cfg["roles"]}:
             raise ConfigError(f"{p}: land.{k} {cfg['land'][k]!r} is not one of the roles")

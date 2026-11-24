@@ -38,6 +38,9 @@ thought of; the record shows what sessions actually type.
    - For each project, for a non-operator role and for the operator, one process per side:
      `python3 -I decide.py <scratch>/old/mishmeret <its config> <its cmds> <role> <scratch>/r45-old-<side>.jsonl`, and
      the same for new. They are independent: run them in the background, together.
+   - And as the role that ran each command, `each` for ROLE (extract.py records each command's role, from its
+     transcript's agentSetting): a fixed role judges an operator's command as a builder's, so a rule about who may
+     run what shows its true cost only this way (notes/PLAN-PROTECTED-REFS.md).
    - `python3 -I compare.py <its cmds> <old> <new>`.
    - Read every changed decision. A newly refused command must be the plan's named cost or a refusal the plan
      intends. A newly let-through one must be a false refusal fixed. Anything else is a finding, and a fault is a
@@ -55,7 +58,8 @@ thought of; the record shows what sessions actually type.
   `echo "rc=$?"`, then the file is read.
 - A long run works on a snapshot, never on the tree being edited (DO NOT MUTATE A TREE YOU ARE EDITING). `decide.py`
   memoizes git's answers within one run only.
-- pi and other runners: `extract.py` reads pi's sessions too, and a pi role's commands are judged like any other.
+- pi and other runners: `extract.py` reads pi's sessions too, and a pi role's commands are judged like any other -
+  under `each`, as a session with no role's, since pi's sessions record none.
 - ONE LIST OF RULES: `decide.py` and `probe.py` judge by `rules.py`'s RULES - every Bash rule `role_guard.check` runs,
   in its order. A test reads check()'s own calls and fails on a rule in neither RULES nor LEFT_OUT, so a new rule is
   placed before any measure runs.

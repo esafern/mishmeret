@@ -1,6 +1,8 @@
-"""Every distinct (command, cwd) pair a session ran in a shell, from the transcripts under the folders given: Claude
-Code's (`~/.claude/projects/<folder>`, its Bash tool_use) and pi's (`~/.pi/agent/sessions/<folder>`, its bash
-toolCall, the cwd from the session's header). Written as JSON lines {"command", "cwd", "folder"} to OUT.
+"""Every distinct (command, cwd, role) a session ran in a shell, from the transcripts under the folders given: Claude
+Code's (`~/.claude/projects/<folder>`, its Bash tool_use; the role its transcript's agentSetting or agentName, a
+subagent's its parent session's) and pi's (`~/.pi/agent/sessions/<folder>`, its bash toolCall, the cwd from the session's header; no
+role). Written as JSON lines {"command", "cwd", "folder", "role"} to OUT - the role null where none is on the record,
+for decide.py's `each` (notes/PLAN-PROTECTED-REFS.md: rule 45 by the role that ran each command).
 
     python3 -I extract.py OUT FOLDER...
 
@@ -38,20 +40,41 @@ def commands(path):
                     yield cmd, where
 
 
+def role_of(path):
+    """The role a Claude Code transcript's session ran as: its agentSetting, else its agentName (the first project's
+    October and November transcripts hold only the name, 180 of them), or None."""
+    found = {}
+    with open(path, encoding="utf-8", errors="replace") as fh:
+        for line in fh:
+            if '"agent-setting"' in line or '"agent-name"' in line:
+                try:
+                    rec = json.loads(line)
+                except ValueError:
+                    continue
+                found.setdefault(rec.get("type"), rec.get("agentSetting") or rec.get("agentName"))
+    return found.get("agent-setting") or found.get("agent-name")
+
+
 def main(out, folders):
     seen, files = set(), 0
     with open(out, "w", encoding="utf-8") as fh:
         for folder in folders:
+            sessions = {n[:-len(".jsonl")]: role_of(os.path.join(folder, n)) for n in os.listdir(folder)
+                        if n.endswith(".jsonl")}
             for dp, _, names in os.walk(folder):
                 for name in sorted(names):
                     if not name.endswith(".jsonl"):
                         continue
                     files += 1
+                    # a subagent's transcript, under <session>/, runs as its parent session's role
+                    role = sessions.get(name[:-len(".jsonl")] if dp == folder else
+                                        os.path.relpath(dp, folder).split(os.sep)[0])
                     for cmd, cwd in commands(os.path.join(dp, name)):
-                        if (cmd, cwd) not in seen:
-                            seen.add((cmd, cwd))
-                            fh.write(json.dumps({"command": cmd, "cwd": cwd, "folder": os.path.basename(folder)}) + "\n")
-    print(f"transcripts: {files}, distinct command-and-cwd pairs: {len(seen)}")
+                        if (cmd, cwd, role) not in seen:
+                            seen.add((cmd, cwd, role))
+                            fh.write(json.dumps({"command": cmd, "cwd": cwd, "folder": os.path.basename(folder),
+                                                 "role": role}) + "\n")
+    print(f"transcripts: {files}, distinct command-cwd-role triples: {len(seen)}")
 
 
 if __name__ == "__main__":

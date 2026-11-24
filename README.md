@@ -55,7 +55,8 @@ effort per role (`effort`), and which files are drafts, their check and its two 
 and the landing's - the list of the project's homes (its corpus roots) with a fallback, the other trees whose main
 tree is the operator's (the Mishmeret checkout: nothing is written into its `.pins/`, by any role), the repositories
 no role changes in any tree, their main clone or any worktree (another project's), the remotes never
-pushed to, the checks whose own status must decide a commit, the pre-commit hook's path (`guard`); the role whose code
+pushed to, the checks whose own status must decide a commit, the pre-commit hook's path, and the refs only their owner
+moves (`guard.refs`, `{"<ref glob>": "<role>"}`); each role's worktrees (`roles[].worktrees`); the role whose code
 landing names its plan, the verifier a round goes back to, the project's lane check (a script run with ROLE,
 `--doc-only`, `--range`, `--because`, `--plan`, read by its exit status), the live rulings file, what a review server
 loads, and the gate's lists (`land`).
@@ -65,6 +66,21 @@ the transcripts folder itself, and `MISHMERET_NIGHT_DRY_RUN=1` makes the night r
 `board.py` by, for the commands the Board prints. The start scripts (`agents.sh`, `agents-morning.sh`) run only with
 a project named - through the project's own, whose shim sets `MISHMERET_CONFIG` and marks it as the shim's, or with
 `MISHMERET_CONFIG` set by hand; with neither, they stop and say so.
+
+## A ref is judged by the repository
+
+A branch or a tag belongs to the shared repository, which the main clone and every worktree read, so the guard judges a
+git command that moves one by the ref it moves, wherever in that repository it runs (not in a copy, which has its own
+refs). Main's branch - the one checked out in the main clone - is the operator's. A ref `guard.refs` names is its
+owner's alone, the operator too refused it. The branch checked out in a role's worktree (`roles[].worktrees`) is that
+role's and the operator's, and so is the worktree: another role may not move or delete that branch, remove or move that
+worktree, or run a git write in it. The forms the guard cannot read for the ref they move (`update-ref --stdin`, `rebase
+--update-refs`, `filter-branch`, `fast-import`, `replay`, xargs) and the shared repository's own writes (`replace`,
+`reflog delete/expire`, `gc --prune`, `prune`) are the operator's alone - and so they reach a `guard.refs` ref of
+another owner too. `git maintenance register` and `git init --separate-git-dir` in a guarded tree are refused to every
+role. A branch checked out nowhere (a role's branch while its worktree holds another) is no one's. The guard reads the
+command's words; git's own `reference-transaction` hook, which sees every ref update whatever makes it, is the next
+piece.
 
 ## What the project's sessions must say
 

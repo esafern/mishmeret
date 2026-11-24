@@ -37,7 +37,8 @@ def sample():
         "drafts": {"pattern": r"^draft_.*\.txt$", "check": "tools/check.py", "passed": "passed", "failed": "{path}", "timeout": 20},
         "guard": {"homes": "homes.json", "fallback_roots": ["~/book"], "trees": ["~/checkout"], "foreign": [],
                   "retired_remotes": [],
-                  "checks": ["pytest"], "precommit": ".claude/hooks/time_check.py"},
+                  "checks": ["pytest"], "precommit": ".claude/hooks/time_check.py",
+                  "refs": {"refs/tags/known-good": "ex-operator"}},
         "land": {"planned": "ex-builder", "verifier": "ex-operator", "lane_check": "tools/lanes.py",
                  "ledger": "rulings.jsonl", "server": {"entry": "app/server.py", "folders": ["app"], "page": "page/"},
                  "gate_sets": {"landing": ["tests/test_a.py"]}, "gate_env": {}, "hand_run": {}},
@@ -193,6 +194,31 @@ def test_a_role_may_name_its_runner_and_the_shell_form_lists_the_pi_roles(write)
         write(cfg)
         with pytest.raises(config.ConfigError, match=r"roles\[1\]\.runner"):
             config.load()
+
+
+def test_the_refs_owners_and_the_roles_worktrees_are_checked(write):
+    """notes/PLAN-PROTECTED-REFS.md: `guard.refs` gives each ref glob to a role, and `roles[].worktrees` lists a role's
+    worktree paths, both OPTIONAL; an owner that is no role, a worktree that is no path, refused by name."""
+    cfg = sample()
+    cfg["roles"][1]["worktrees"] = ["~/book-builder"]
+    write(cfg)
+    loaded = config.load()
+    assert loaded["guard"]["refs"] == {"refs/tags/known-good": "ex-operator"}
+    assert [r.get("worktrees") for r in loaded["roles"]] == [None, ["~/book-builder"], None]
+    probe = "import role_guard as rg, os; print(rg.REFS, rg.WORKTREES == {os.path.realpath(os.path.expanduser('~/book-builder')): 'ex-builder'})"
+    out = subprocess.run([sys.executable, "-c", probe], capture_output=True, text=True, env=os.environ, cwd=PKG)
+    assert out.stdout.split("\n")[0] == "{'refs/tags/known-good': 'ex-operator'} True", (out.stdout, out.stderr)
+    for change, said in ((lambda c: c["guard"]["refs"].update({"refs/tags/x": "nobody"}),
+                          "guard.refs gives 'refs/tags/x' to 'nobody', which is not one of the roles"),
+                         (lambda c: c["guard"].update(refs=["refs/tags/x"]), "guard.refs must be dict"),
+                         (lambda c: c["roles"][1].update(worktrees="~/book-builder"), "roles[1].worktrees must be list"),
+                         (lambda c: c["roles"][1].update(worktrees=[""]), "roles[1].worktrees must be a list of paths")):
+        cfg = sample()
+        change(cfg)
+        write(cfg)
+        with pytest.raises(config.ConfigError) as e:
+            config.load()
+        assert said in str(e.value), str(e.value)
 
 
 def test_every_field_is_read_by_some_module_or_the_projects_shim():

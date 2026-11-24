@@ -39,6 +39,7 @@ a settings hook ran, an agent file's did not) - hence the settings file.
 usage:  python3 "$CLAUDE_PROJECT_DIR/.claude/hooks/role_guard.py" [ROLE]   (ROLE overrides agent_type, for a probe)
 Exit 2 refuses the command and says why; exit 0 lets it run. Needs only Python's standard library.
 """
+import fnmatch
 import json
 import os
 import re
@@ -71,7 +72,11 @@ KEYWORD = r"(?:(?:" + "|".join(KEYWORDS) + r")\s+)"
 # an arm may not run, so a cd in one is read as a cd after a keyword (KEYWORD_CD)
 CASE_PATTERN = r"\(?\s*" + WORD + r"(?:\s*\|\s*" + WORD + r")*\s*\)"
 CASE_ARM = r"(?:\bin|;;&?|;&)\s+" + CASE_PATTERN + r"\s*"
-BOUNDARY = r"(?:" + BASE_BOUNDARY + "|" + CASE_ARM + ")" + KEYWORD + "*"
+# A FUNCTION'S BODY (found at notes/PLAN-PROTECTED-REFS.md's build, in girsa-verifier's LOW 1 case `f(){ git tag -f
+# "$@"; }`): after a definition's `()` or `function NAME`, before its `{` or `(`. `f(){ git push --force origin main;
+# }; f` had gone through every check built on BOUNDARY; a body may not run, so a cd in one is read as after a keyword
+FUNC = r"(?:\bfunction\s+[\w.:-]+\s*(?:\(\s*\)\s*)?|\(\s*\)\s*)(?=[{(])"
+BOUNDARY = r"(?:" + BASE_BOUNDARY + "|" + CASE_ARM + "|" + FUNC + ")" + KEYWORD + "*"
 # the names the guard reads in command position: `mask` gives each back written `\name`, `"name"` or `'name'` (a
 # path inside the quotes too), as the shell runs it
 NAMES = ("git", "tmux", "pkill", "killall", "cp", "cd", "bash", "sh", "zsh", "dash", "ksh", "env", "time", "command",
@@ -122,7 +127,8 @@ def shell_c(command, masked):
 # notes/PLAN-KNOWN-GAPS-SEVEN.md: a bare cd and a popd had not been read, `cd -` had been a folder named "-")
 CD_TO = r"""(cd|pushd|popd)(?![\w.-])(?:\s+(?:-[LPe@]+|--))*(?:\s+((?:"[^"]*"|'[^']*'|[^\s;&|)`"'<>])+))?"""
 CD = re.compile(BASE_BOUNDARY + CD_TO, re.M)
-KEYWORD_CD = re.compile(r"(?:" + BASE_BOUNDARY + KEYWORD + "+|" + CASE_ARM + KEYWORD + "*)" + CD_TO, re.M)
+KEYWORD_CD = re.compile(r"(?:" + BASE_BOUNDARY + KEYWORD + "+|(?:" + CASE_ARM + "|" + FUNC + ")" + KEYWORD + "*)" + CD_TO,
+                        re.M)
 SCRIPT = re.compile(BOUNDARY + r"(?:(?:bash|sh|zsh)\s+(?:-\w+\s+)*)?(\S+\.sh)(?![\w.])", re.M)
 ASSIGN = re.compile(r"(?<![\w$])([A-Za-z_]\w*)=(\"[^\"]*\"|'[^']*'|[^\s;&|]+)")
 HEREDOC = re.compile(r"<<-?\s*(['\"]?)([A-Za-z_]\w*)\1")
@@ -674,6 +680,330 @@ def _config_refusal(command, masked, m, cwd, verb, guarded):
     return None
 
 
+# A REF IS JUDGED BY THE REPOSITORY, NOT THE FOLDER (notes/PLAN-PROTECTED-REFS.md; the first project's Board #304 A, and
+# #310 A): a branch or a tag is the shared repository's, read by the main clone and every worktree, so a command that
+# moves one is judged by the ref it moves, wherever in that repository it runs - not in a copy, which has its own refs.
+# Main's branch (the one checked out in the main clone) is the operator's; each ref `guard.refs` names is its owner's
+# alone; the branch checked out in a role's worktree (`roles[].worktrees`) is that role's, and so is the worktree - and
+# the operator's too, for its cleanups and rewrites on the reviewer's word (#310 A). A branch checked out nowhere is
+# no one's (girsa-architect's Q1: its named cost).
+REFS = dict(GUARD.get("refs", {}))      # {ref glob: owner role}; absent (config.OPTIONAL): none
+WORKTREES = {os.path.realpath(os.path.expanduser(w)): r["name"] for r in _CFG["roles"] for w in r.get("worktrees", ())}
+REF_VERBS = ("update-ref", "tag", "branch", "checkout", "switch", "worktree", "symbolic-ref", "fetch", "pull", "push")
+# each verb's options whose value is the next word (or, short, the rest of its word): long, short letters
+VALUED = {"update-ref": (("--message",), "m"),
+          "tag": (("--message", "--file", "--local-user", "--cleanup", "--trailer", "--sort", "--format", "--contains",
+                   "--no-contains", "--points-at", "--merged", "--no-merged", "--color"), "mFu"),
+          "branch": (("--set-upstream-to", "--sort", "--format", "--contains", "--no-contains", "--points-at",
+                      "--merged", "--no-merged", "--color"), "u"),
+          "checkout": (("--orphan", "--conflict", "--pathspec-from-file"), "bB"),
+          "switch": (("--create", "--force-create", "--orphan", "--conflict"), "cC"),
+          "worktree": (("--reason", "--orphan"), "bB"),
+          "fetch": (("--depth", "--deepen", "--shallow-since", "--shallow-exclude", "--jobs", "--upload-pack",
+                     "--refmap", "--server-option", "--negotiation-tip", "--filter"), "jo"),
+          "pull": (("--depth", "--deepen", "--shallow-since", "--shallow-exclude", "--jobs", "--upload-pack",
+                    "--refmap", "--server-option", "--negotiation-tip", "--strategy", "--strategy-option",
+                    "--filter"), "jsXo"),
+          "push": (("--push-option", "--receive-pack", "--exec", "--repo"), "o")}
+# a part of a name the guard cannot read - a substitution, a variable the command does not set, a brace list - may be
+# any name: read as `*`, and refused where it may cover a protected ref (girsa-verifier's LOW 1 on the plan)
+UNREAD = re.compile(r"\$\{[^}]*\}|\$\([^()]*\)|`[^`]*`|\$\w+|\$[@*#?!$0-9-]|\{[^{}]*(?:,|\.\.)[^{}]*\}")
+
+
+def _checked_out(where):
+    """[(worktree, refs/heads/<branch> or None)] of the repository `where` is in, the main clone first - or None when
+    git cannot say (the guard never opens wider for what it cannot read)."""
+    try:
+        out = subprocess.run(["git", "-C", where, "worktree", "list", "--porcelain"], capture_output=True, text=True,
+                             timeout=10)
+    except (OSError, subprocess.SubprocessError):
+        return None
+    if out.returncode != 0:
+        return None
+    found = []
+    for line in out.stdout.splitlines():
+        if line.startswith("worktree "):
+            found.append([os.path.realpath(line[len("worktree "):]), None])
+        elif line.startswith("branch ") and found:
+            found[-1][1] = line[len("branch "):]
+    return [tuple(f) for f in found] or None
+
+
+def _head(where):
+    """The branch checked out where `where` is (refs/heads/...), "HEAD" when detached, None when git cannot say."""
+    try:
+        out = subprocess.run(["git", "-C", where, "rev-parse", "--symbolic-full-name", "HEAD"], capture_output=True,
+                             text=True, timeout=10)
+    except (OSError, subprocess.SubprocessError):
+        return None
+    return out.stdout.strip() if out.returncode == 0 and out.stdout.strip() else None
+
+
+def worktree_owner(path):
+    """The role whose worktree (`roles[].worktrees`) `path` is in, or None."""
+    real = os.path.realpath(path)
+    return next((r for w, r in WORKTREES.items() if real == w or real.startswith(w + os.sep)), None)
+
+
+def _owner(ref, listing):
+    """(role, kind) - the role that may move `ref` and why: "main" (main's branch, the operator's), "refs" (a
+    `guard.refs` ref, its owner's alone), "worktree" (the branch checked out in a role's worktree) - or None."""
+    if listing[0][1] == ref:
+        return OPERATOR, "main"
+    for pattern, owner in REFS.items():
+        if fnmatch.fnmatchcase(ref, pattern):
+            return owner, "refs"
+    for path, r in listing[1:]:
+        if r == ref and worktree_owner(path):
+            return worktree_owner(path), "worktree"
+    return None
+
+
+def _overlap(a, b):
+    """True when the ref globs (or names) `a` and `b` may name one ref."""
+    pa, pb = a.split("*")[0], b.split("*")[0]
+    return a == b if "*" not in a + b else pa.startswith(pb) or pb.startswith(pa)
+
+
+def _owners(name, kind, listing):
+    """Each (ref, role, kind) the written `name` may be: as given (`refs/...`), or a short name of kind heads, tags or
+    either (None); a glob every protected ref it may cover."""
+    found = []
+    for ref in [name] if name.startswith("refs/") else [f"refs/{k}/{name}" for k in ((kind,) if kind else ("heads", "tags"))]:
+        if "*" not in ref:
+            o = _owner(ref, listing)
+            found += [(ref, *o)] if o else []
+            continue
+        for r in list(REFS) + [r for _, r in listing if r]:
+            o = _overlap(r, ref) and _owner(r.replace("*", "x") if "*" in r else r, listing)
+            found += [(r, *o)] if o else []
+    return found
+
+
+def _git_words(command, masked, m):
+    """git's words after the verb, as the shell gives them: each WORD of the masked text read in the original and
+    expanded (`_expand`), one the shell splits (an unquoted variable holding spaces) split, no redirection; ending at
+    the `)` or backtick that closes a substitution the git call stands in (the prototype's 3 false refusals) - not at
+    one inside its words (girsa-verifier's LOW 1)."""
+    a, span, before = m.start(3), masked[m.start(3):m.end(3)], command[:m.start()]
+    in_tick, depth, i, end = masked[:m.start(2)].count("`") % 2 == 1, 0, 0, len(span)   # its boundary's own too
+    while i < len(span):
+        ch = span[i]
+        if ch == "`":
+            if in_tick:
+                end = i
+                break
+            close = span.find("`", i + 1)
+            i = close if close > i else len(span)
+        elif ch == "(":
+            depth += 1
+        elif ch == ")":
+            depth -= 1
+            if depth < 0:
+                end = i
+                break
+        i += 1
+    words = []
+    for w in re.finditer(WORD, span[:end]):
+        lead = span[:w.start()].rstrip()
+        if re.search(r"[<>]&?$", lead) or (span[w.end():w.end() + 1] in ("<", ">") and w.group().isdigit()):
+            continue                        # a redirection's target, or its descriptor
+        raw = command[a + w.start():a + w.end()]
+        val = _expand(_word(raw), before)
+        split = "$" in raw and not re.search(r"[\"'`]|\$\(", raw) and re.search(r"\s", val)
+        words += val.split() if split else [val]
+    return words
+
+
+def _parse(words, verb):
+    """(the options given, each a short letter `-x` or a long one without its value; the values of the valued ones as
+    [(option, value)]; the other words, with "--" kept where it stands)."""
+    long_valued, short_valued = VALUED.get(verb, ((), ""))
+    flags, values, rest, i = [], [], [], 0
+    while i < len(words):
+        w = words[i]
+        if w in ("-", "--") or not w.startswith("-"):      # git's names go on after `--` (the review's MEDIUM 2)
+            rest.append(w)
+        elif w.startswith("--"):
+            opt = w.split("=", 1)[0]
+            flags.append(opt)
+            if "=" in w:
+                values.append((opt, w.split("=", 1)[1]))
+            elif _long(opt, long_valued) and i + 1 < len(words):
+                values.append((opt, words[i + 1]))
+                i += 1
+        else:                               # a cluster (`-fam x`): up to a letter whose value follows (the review's MEDIUM 2)
+            for j, c in enumerate(w[1:]):
+                flags.append("-" + c)
+                if c in short_valued:
+                    if j == len(w) - 2:
+                        values.append(("-" + c, words[i + 1] if i + 1 < len(words) else ""))
+                        i += 1
+                    else:
+                        values.append(("-" + c, w[j + 2:]))
+                    break
+        i += 1
+    return flags, values, rest
+
+
+def _has(flags, *options):
+    """True when an option of `options` is given: itself, or a long one by a unique prefix as git takes it."""
+    return any(f == o or _long(f, (o,)) for f in flags for o in options)       # the push rule's reading (Lesson 60)
+
+
+def _written(verb, words, xargs):
+    """(the refs the command writes as [(name, kind)], why the guard cannot read them or None). kind: heads, tags,
+    None (either), deleted (a branch deleted), HEAD (the branch checked out where it runs), or wt (a worktree, by its
+    path)."""
+    flags, values, rest = _parse(words, verb)
+    if _has(flags, "-h", "--help"):
+        return [], None
+    deleting = verb == "branch" and _has(flags, "-d", "-D", "--delete")
+    if xargs and deleting:
+        return [("*", "deleted")], None
+    if xargs and verb in REF_VERBS:
+        return [], "takes more of its words from its input (xargs)"
+    names = [w for w in rest if w != "--"]
+    if verb == "update-ref":
+        if _has(flags, "--stdin"):
+            return [], "reads the refs it moves from its input"
+        head = names[:1] == ["HEAD"] and not _has(flags, "--no-deref")
+        return [(names[0], "HEAD" if head else None)] if names else [], None
+    if verb == "tag":
+        writes = _has(flags, "-f", "--force", "-d", "--delete", "-a", "--annotate", "-s", "--sign", "-m", "--message",
+                      "-F", "--file", "-u", "--local-user", "-e", "--edit", "--create-reflog")
+        reads = _has(flags, "-l", "--list", "-v", "--verify", "--contains", "--no-contains", "--points-at", "--merged",
+                     "--no-merged", "-n", "--sort", "--format", "--column", "-i", "--ignore-case")
+        if not names or (reads and not writes):
+            return [], None
+        return [(n, "tags") for n in (names if _has(flags, "-d", "--delete") else names[:1])], None
+    if verb == "branch":
+        if deleting:
+            return [(n, "deleted") for n in names], None
+        if _has(flags, "-m", "-M", "--move"):
+            return ([("HEAD", "HEAD")] if len(names) == 1 else []) + [(n, "heads") for n in names[:2]], None
+        if _has(flags, "-c", "-C", "--copy"):
+            return [(names[-1], "heads")] if names[:2] else [], None     # a copy reads its first name (the review's NIT 1)
+        reads = _has(flags, "-l", "--list", "-a", "--all", "-v", "--verbose", "--contains", "--no-contains", "--merged",
+                     "--no-merged", "--points-at", "--show-current", "--format", "--sort", "--column", "-u",
+                     "--set-upstream-to", "--unset-upstream", "--edit-description")
+        return ([(names[0], "heads")] if names and not (reads and not _has(flags, "-f", "--force")) else []), None
+    if verb in ("checkout", "switch"):
+        made = [v for o, v in values if o in ("-b", "-B", "-c", "-C", "--create", "--force-create", "--orphan")]
+        paths = rest.index("--") if "--" in rest else len(rest)
+        second = [(rest[0], "heads")] if _has(flags, "--ignore-other-worktrees") and rest[:paths] and not made else []
+        return [(n, "heads") for n in made] + second, None
+    if verb == "worktree" and names[:1] == ["add"]:
+        made = [v for o, v in values if o in ("-b", "-B")]
+        forced = _has(flags, "-f", "--force") and len(names) > 2 and not made
+        return [(n, "heads") for n in made] + ([(names[2], "heads")] if forced else []), None
+    if verb == "worktree" and names[:1] in (["remove"], ["move"]) and len(names) > 1:
+        return [(names[1], "wt")], None
+    if verb == "symbolic-ref":
+        if len(names) > 1 and names[0] == "HEAD":
+            return [(names[1], None)], None     # a branch checked out here a second time (the review's MEDIUM 2)
+        return [(names[0], None)] if len(names) > 1 and names[0].startswith("refs/") else [], None
+    if verb in ("fetch", "pull", "push"):
+        if verb == "push" and not (names and (names[0] == "." or names[0].startswith(("/", "~", "./", "../")))):
+            return [], None                 # a push to a remote is the push rule's
+        specs, dst = names[1:], []
+        for k, s in enumerate(specs):
+            if s == "tag" and k + 1 < len(specs):
+                dst.append(("refs/tags/" + specs[k + 1], None))
+            elif ":" in s and s.split(":", 1)[1]:
+                dst.append((s.split(":", 1)[1], None))
+        forced = _has(flags, "-f", "--force") or any(s.startswith("+") for s in specs)
+        tags = verb != "push" and (_has(flags, "--prune-tags", "-P")
+                                   or forced and _has(flags, "--tags", "-t"))
+        return dst + ([("refs/tags/*", None)] if tags else []), None
+    if verb == "rebase" and _has(flags, "--update-refs"):
+        return [], "moves every branch that points into the commits it rebases"
+    if verb in ("filter-branch", "fast-import"):
+        return [], "writes whatever refs its arguments or its input name"
+    if verb == "replay" and ("--ref-action", "print") not in values:
+        return [], "moves the refs its range reaches (all but `--ref-action=print`)"
+    return [], None
+
+
+def _ref_refusal(role, verb, command, masked, m, cwd, guarded):
+    """For a GIT match: the reason to refuse it as `role` - a ref or a worktree another role's, a form the guard
+    cannot read, a repository-wide write - or None."""
+    words = _git_words(command, masked, m)
+    flags, _, rest = _parse(words, verb)
+    names = [w for w in rest if w != "--"]
+    if verb == "maintenance" and names[:1] in (["register"], ["unregister"], ["start"], ["stop"]):
+        return ("refused by the role guard: `git maintenance register`, `start` and their undoing write the global "
+                "config, which every repository on this machine reads - the reviewer's own command: `! git "
+                "maintenance ...` in the operator's pane")
+    places = _git_trees(command, masked, m, cwd)
+    trees = [t for t in places if guarded(t)]
+    if verb in ("init", "init-db") and _has(flags, "--separate-git-dir"):
+        named = [os.path.join(t, n) for t in places for n in names[:1]]
+        if trees or any(guarded(p) for p in named if os.path.isdir(p)):
+            return ("refused by the role guard: `git init --separate-git-dir` in a guarded tree moves the repository "
+                    "its main clone and every worktree share - no role's, the reviewer's own command")
+    if not trees:
+        return None
+    if role != OPERATOR:
+        wide = (verb == "replace" and bool(words) and not _has(flags, "-l", "--list", "--format")
+                or verb == "reflog" and names[:1] in (["delete"], ["expire"], ["drop"])
+                or verb == "gc" and _has(flags, "--prune")
+                or verb == "prune" and not _has(flags, "-n", "--dry-run"))
+        if wide:
+            return (f"refused by the role guard: `git {verb}` here changes the shared repository's objects or the "
+                    f"history of its refs, for every worktree - the operator's ({OPERATOR}), on the reviewer's word")
+    xargs = bool(re.search(r"(?<![\w-])xargs(?![\w-])", masked[m.start():m.start(1)]))
+    refs, unreadable = _written(verb, words, xargs)
+    if unreadable and role != OPERATOR:
+        return (f"refused by the role guard: `git {verb}` here {unreadable}, and a ref in this repository is judged by "
+                f"the ref it moves - name each ref, or ask the operator ({OPERATOR})")
+    for where in trees:
+        listing = _checked_out(where) if refs else []
+        for name, kind in refs:
+            name = UNREAD.sub("*", name.lstrip("+"))
+            if kind == "wt":
+                if "*" in name:
+                    if role != OPERATOR and WORKTREES:
+                        return (f"refused by the role guard: `git {verb}` here names a worktree by a part the guard "
+                                "cannot read - name the worktree")
+                    continue
+                # a worktree by its path, or by a unique last part of it, as git takes it (the review's MEDIUM 2)
+                path = os.path.realpath(os.path.join(where, name))
+                tail = os.sep + os.path.normpath(name).lstrip(os.sep)
+                owner = WORKTREES.get(path) or next((r for w, r in WORKTREES.items() if w.endswith(tail)), None)
+                if owner and role not in (owner, OPERATOR):
+                    return (f"refused by the role guard: {name} is {owner}'s worktree - its own, and the operator's to "
+                            f"remove or move on the reviewer's word; send {owner} a REQUEST")
+                continue
+            if listing is None:
+                if role != OPERATOR:
+                    return (f"refused by the role guard: `git {verb}` here moves a ref, and git could not list this "
+                            "repository's worktrees to say whose it is - try again, or ask the operator")
+                continue
+            if kind == "HEAD":               # detached, "HEAD" is no one's
+                name, kind = _head(where), None
+                if name is None:
+                    if role != OPERATOR:
+                        return (f"refused by the role guard: `git {verb}` here moves the branch checked out here, and "
+                                "git could not say which it is - name the ref")
+                    continue
+            for ref, owner, why in _owners(name, "heads" if kind == "deleted" else kind, listing):
+                if role == owner or (role == OPERATOR and why == "worktree"):
+                    continue
+                # git itself refuses to delete a branch checked out in any worktree (measured, git 2.56.1) - main's and
+                # each role's - so a deletion by names the guard cannot read is judged by `guard.refs` alone (the
+                # build's rule 45: a builder's `... | xargs git branch -d` of its own merged branches)
+                if kind == "deleted" and "*" in name and why != "refs":
+                    continue
+                whose = {"main": "main's branch", "refs": f"a ref `guard.refs` gives to {owner}",
+                         "worktree": f"the branch checked out in {owner}'s worktree"}[why]
+                return (f"refused by the role guard: `git {verb}` here {'may move' if '*' in name else 'moves'} {ref}, "
+                        f"{whose} - {owner}'s alone, from any worktree of this repository"
+                        + (" (and the operator's, on the reviewer's word)" if why == "worktree" else "")
+                        + f"; name another ref, or send {owner} a REQUEST")
+    return None
+
+
 def refusal(role, command, cwd, main_tree=is_main_tree, read=_read, depth=0, project_tree=is_project_tree,
             guarded=in_guarded_repo):
     """None to let `command` run as `role` from `cwd`, or the reason to refuse it."""
@@ -694,7 +1024,7 @@ def refusal(role, command, cwd, main_tree=is_main_tree, read=_read, depth=0, pro
         if why:
             return why
     no_role = (f" (this session was started without a role: for the main clone start it as {OPERATOR}; a one-off "
-               "session works in a worktree, where nothing is refused)") if role == NO_ROLE else ""
+               "session works in a worktree of its own, not a role's)") if role == NO_ROLE else ""
     for m in GIT.finditer(masked):
         verb, rest = _expand(_word(command[m.start(2):m.end(2)]), command[:m.start()]), m.group(3).split()
         if verb not in GIT_VERBS:
@@ -710,6 +1040,9 @@ def refusal(role, command, cwd, main_tree=is_main_tree, read=_read, depth=0, pro
             why = _config_refusal(command, masked, m, cwd, verb, guarded)
             if why:
                 return why + no_role
+        why = _ref_refusal(role, verb, command, masked, m, cwd, guarded)
+        if why:
+            return why + no_role
         # a pin or a foreign repository: refused to every role, merge --ff-only too, but a form that changes nothing
         if verb in CHANGES_MAIN and not (verb != "merge" and _leaves_it(verb, rest, command, masked, m,
                                                                         _git_trees(command, masked, m, cwd))):
@@ -755,7 +1088,16 @@ def refusal(role, command, cwd, main_tree=is_main_tree, read=_read, depth=0, pro
             return ("refused by the role guard: `git stash` in this repository - its stash list is shared by the main "
                     "clone and every worktree, so a pop can take another role's work - set the work aside as a patch: `git diff > <file>.patch`" + no_role)
         elif verb in CHANGES_MAIN and role != OPERATOR:
-            if _leaves_it(verb, rest, command, masked, m, _git_trees(command, masked, m, cwd)):
+            # another role's worktree, its branch, index and files (girsa-verifier's MEDIUM 1 on
+            # notes/PLAN-PROTECTED-REFS.md: a reset there moved its branch, a `checkout --detach` left it no one's);
+            # `merge --ff-only` moves its branch too, as in a pin
+            leaves = _leaves_it(verb, rest, command, masked, m, _git_trees(command, masked, m, cwd))
+            owner = next((o for o in map(worktree_owner, _git_trees(command, masked, m, cwd)) if o and o != role), None)
+            if owner and not (leaves and verb != "merge"):
+                return (f"refused by the role guard: `git {verb}` would change {owner}'s worktree - its branch, index "
+                        f"and files are its own (and the operator's, on the reviewer's word); work in your own "
+                        f"worktree, or send {owner} a REQUEST" + no_role)
+            if leaves:
                 continue
             if any(map(main_tree, _git_trees(command, masked, m, cwd))):
                 return (f"refused by the role guard: `git {verb}` would change the main tree or a root the "
@@ -780,6 +1122,10 @@ def refusal(role, command, cwd, main_tree=is_main_tree, read=_read, depth=0, pro
         if verb == "commit" and role != OPERATOR and main_tree(_dir_before(command, masked, m.start(), cwd)):
             return ("refused by the role guard: `land.py commit` in the main tree is the operator's alone - commit in "
                     "your worktree and land with `land.py land`" + no_role)
+        owner = worktree_owner(_dir_before(command, masked, m.start(), cwd))
+        if verb == "commit" and role != OPERATOR and owner and owner != role:
+            return (f"refused by the role guard: `land.py commit` here commits onto {owner}'s branch, in its worktree - "
+                    "commit in your own" + no_role)
     return None
 
 

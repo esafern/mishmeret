@@ -578,6 +578,255 @@ def test_the_eight_git_writers_and_the_found_ones_are_refused_where_reset_hard_i
     assert no("git symbolic-ref --short HEAD", pin, "ex-operator") is None
 
 
+# notes/PLAN-PROTECTED-REFS.md's cases, each read at its build (its probe's, girsa-verifier's review's and the build's
+# own): (refused, role, cwd, command, the git state). Placeholder paths - main checked out in the main tree /work/book,
+# builder-x in ex-builder's worktree /work/book-builder, verifier in ex-verifier's /work/book-verifier; the tags
+# known-good and alpha-rc* the operator's, demo-good the demo operator's. The state: "attached"; "detached", the
+# builder's worktree detached; "unreadable", git's worktree list not to be had; "headless", git cannot say which
+# branch is checked out where the command runs.
+REF_CASES = [
+    (True, 'ex-builder', '/work/book-builder', 'git update-ref refs/heads/main HEAD~1', 'attached'),
+    (True, 'ex-builder', '/work/book-builder', 'git update-ref -d refs/heads/main', 'attached'),
+    (True, 'ex-builder', '/work/book-builder', 'git update-ref --stdin < moves.txt', 'attached'),
+    (True, 'ex-builder', '/work/book-builder', 'git tag -f known-good HEAD~1', 'attached'),
+    (True, 'ex-builder', '/work/book', 'git tag -f known-good HEAD~1', 'attached'),
+    (True, 'ex-builder', '/work/book-builder', 'git tag -d known-good', 'attached'),
+    (True, 'ex-builder', '/work/book-builder', 'git tag known-good', 'attached'),
+    (True, 'ex-builder', '/work/book-builder', 'git tag -f alpha-rc21', 'attached'),
+    (True, 'ex-operator', '/work/book', 'git tag -f demo-good HEAD~1', 'attached'),
+    (True, 'ex-demo-operator', '/work/book-web', 'git tag -f known-good HEAD~1', 'attached'),
+    (False, 'ex-demo-operator', '/work/book-web', 'git tag -f demo-good HEAD~1', 'attached'),
+    (False, 'ex-operator', '/work/book', 'git tag -f known-good HEAD~1', 'attached'),
+    (True, 'ex-builder', '/work/book-builder', 'git branch -f main HEAD~1', 'attached'),
+    (True, 'ex-builder', '/work/book-builder', 'git branch -D main', 'attached'),
+    (True, 'ex-builder', '/work/book-builder', 'git branch -m main old-main', 'attached'),
+    (True, 'ex-builder', '/work/book-builder', 'git branch -M topic main', 'attached'),
+    (True, 'ex-builder', '/work/book-builder', 'git branch -C topic main', 'attached'),
+    (True, 'ex-builder', '/work/book-builder', 'git fetch . HEAD:main', 'attached'),
+    (True, 'ex-builder', '/work/book-builder', "git fetch -f origin 'refs/tags/*:refs/tags/*'", 'attached'),
+    (True, 'ex-builder', '/work/book-builder', 'git fetch --tags -f origin', 'attached'),
+    (True, 'ex-builder', '/work/book-builder', 'git push . HEAD:main', 'attached'),
+    (True, 'ex-verifier', '/work/book-verifier', 'git branch -D builder-x', 'attached'),
+    (True, 'ex-verifier', '/work/book-verifier', 'git branch -f builder-x HEAD', 'attached'),
+    (True, 'ex-verifier', '/work/book-verifier', 'git worktree remove --force /work/book-builder', 'attached'),
+    (True, 'ex-verifier', '/work/book-verifier', 'git worktree move /work/book-builder /tmp/x', 'attached'),
+    (False, 'ex-verifier', '/work/book-verifier', 'git worktree prune', 'attached'),
+    (True, 'ex-builder', '/work/book-builder', 'git replace HEAD~1 HEAD', 'attached'),
+    (True, 'ex-builder', '/work/book-builder', 'git reflog delete main@{1}', 'attached'),
+    (True, 'ex-builder', '/work/book-builder', 'git reflog expire --expire=now --all', 'attached'),
+    (True, 'ex-builder', '/work/book-builder', 'git gc --prune=now', 'attached'),
+    (True, 'ex-builder', '/work/book-builder', 'git prune --expire=now', 'attached'),
+    (True, 'ex-builder', '/work/book-builder', 'git maintenance register', 'attached'),
+    (True, 'ex-builder', '/work/book-builder', 'git maintenance start', 'attached'),
+    (True, 'ex-builder', '/work/book-builder', 'git init --separate-git-dir /tmp/g', 'attached'),
+    (True, 'ex-builder', '/work/book-builder', 'git checkout --ignore-other-worktrees -B main', 'attached'),
+    (True, 'ex-builder', '/work/book-builder', 'git switch --ignore-other-worktrees -C main', 'attached'),
+    (True, 'ex-builder', '/work/book-builder', 'git rebase --update-refs main', 'attached'),
+    (True, 'ex-builder', '/work/book-builder', 'git filter-branch -- --all', 'attached'),
+    (True, 'ex-builder', '/work/book-builder', 'git fast-import < stream', 'attached'),
+    (True, 'ex-builder', '/work/book-builder', 'git symbolic-ref refs/heads/main refs/heads/topic', 'attached'),
+    (True, 'ex-builder', '/work/book-builder', 'git replay --ref-action=update --onto main topic~2..topic', 'attached'),
+    (True, 'ex-builder', '/work/book-builder', 'git -C /work/book update-ref refs/heads/main HEAD~1', 'attached'),
+    (True, 'ex-builder', '/work/book-builder', 'git worktree add -f /tmp/x main', 'attached'),
+    (False, 'ex-builder', '/work/book-builder', "git tag -l 'alpha-rc*'", 'attached'),
+    (False, 'ex-builder', '/work/book-builder', 'git tag --points-at HEAD', 'attached'),
+    (False, 'ex-builder', '/work/book-builder', 'git tag -f my-test HEAD', 'attached'),
+    (False, 'ex-builder', '/work/book-builder', 'git branch -D builder-old', 'attached'),
+    (False, 'ex-builder', '/work/book-builder', 'git branch -m builder-x builder-y', 'attached'),
+    (False, 'ex-builder', '/work/book-builder', 'git branch -m builder-y', 'attached'),
+    (False, 'ex-builder', '/work/book-builder', 'git branch -f builder-x HEAD~1', 'attached'),
+    (False, 'ex-builder', '/work/book-builder', 'git update-ref refs/heads/builder-x HEAD~1', 'attached'),
+    (False, 'ex-builder', '/work/book-builder', 'git checkout -B builder-z', 'attached'),
+    (False, 'ex-builder', '/work/book-builder', 'git fetch origin', 'attached'),
+    (False, 'ex-builder', '/work/book-builder', 'git fetch origin main', 'attached'),
+    (False, 'ex-builder', '/work/book-builder', 'git worktree remove /tmp/my-scratch-wt', 'attached'),
+    (False, 'ex-builder', '/work/book-builder', 'git replay --ref-action=print --onto main x..y', 'attached'),
+    (False, 'ex-builder', '/work/book-builder', 'git gc', 'attached'),
+    (False, 'ex-builder', '/work/book-builder', 'git prune -n', 'attached'),
+    (False, 'ex-builder', '/work/book-builder', 'git replace -l', 'attached'),
+    (False, 'ex-builder', '/work/book-builder', 'git reflog show main', 'attached'),
+    (False, 'ex-builder', '/work/book-builder', 'git maintenance run', 'attached'),
+    (False, 'ex-builder', '/tmp/scratch', 'git init --separate-git-dir /tmp/g2', 'attached'),
+    (False, 'ex-builder', '/tmp/scratch', 'git tag -f known-good HEAD', 'attached'),
+    (True, 'ex-builder', '/work/book-builder', 'git update-ref refs/heads/$b HEAD', 'attached'),
+    (False, 'ex-operator', '/work/book', 'git worktree remove /work/book-builder', 'attached'),
+    (False, 'ex-operator', '/work/book', 'git branch -m builder-x old', 'attached'),
+    (False, 'ex-operator', '/work/book-builder', 'git update-ref refs/heads/main HEAD~1', 'attached'),
+    (False, 'ex-operator', '/work/book', "git tag -a alpha-rc22 -m 'rc22'", 'attached'),
+    (True, 'ex-verifier', '/work/book-verifier', "git fetch -f origin 'refs/tags/*:refs/tags/*'", 'attached'),
+    (True, 'ex-verifier', '/work/book-verifier', 'git -C /work/book-builder branch -m builder-x z', 'attached'),
+    (False, 'ex-demo-operator', '/work/book-web', 'git tag -f -a demo-good -F msg.txt HEAD', 'attached'),
+    (False, 'girsa-x', '/work/book-builder', 'echo "b: $(git -C $W branch --show-current) h: $(git rev-parse HEAD)"', 'attached'),
+    (False, 'ex-builder', '/work/book-builder', 'git fetch -q origin "refs/heads/audit/x-$L:refs/remotes/origin/audit/x-$L"', 'attached'),
+    (False, 'ex-builder', '/work/book-builder', 'git tag -f "rc-$N"', 'attached'),
+    (True, 'ex-builder', '/work/book-builder', 'git tag -f "alpha-rc$N"', 'attached'),
+    (True, 'ex-verifier', '/work/book-verifier', 'git worktree remove --force $W', 'attached'),
+    (False, 'ex-builder', '/work/book-builder', 'W=/tmp/wt; git worktree remove --force $W', 'attached'),
+    (True, 'ex-verifier', '/work/book-verifier', 'git tag -f known-good HEAD~1', 'attached'),
+    (True, 'ex-verifier', '/work/book-verifier', 'git tag -fam x known-good HEAD~1', 'attached'),
+    (True, 'ex-verifier', '/work/book-verifier', 'git tag -fm x known-good HEAD~1', 'attached'),
+    (True, 'ex-verifier', '/work/book-verifier', 'git tag -d -- known-good', 'attached'),
+    (True, 'ex-verifier', '/work/book-verifier', 'git update-ref -- refs/tags/known-good HEAD~1', 'attached'),
+    (True, 'ex-verifier', '/work/book-verifier', 'git fetch -f origin tag known-good', 'attached'),
+    (True, 'ex-verifier', '/work/book-verifier', 'git fetch --prune --prune-tags origin', 'attached'),
+    (True, 'ex-verifier', '/work/book-verifier', 'git fetch -pP origin', 'attached'),
+    (True, 'ex-verifier', '/work/book-verifier', 'git pull -f origin tag known-good', 'attached'),
+    (True, 'ex-verifier', '/work/book-verifier', 'git pull origin +HEAD:refs/tags/known-good', 'attached'),
+    (True, 'ex-verifier', '/work/book-verifier', 'git pull --tags -f origin', 'attached'),
+    (True, 'ex-verifier', '/work/book-verifier', 'git worktree add -fB main /tmp/x', 'attached'),
+    (True, 'ex-verifier', '/work/book-verifier', 'git worktree add -f -B main /tmp/x', 'attached'),
+    (True, 'ex-verifier', '/work/book-verifier', 'git worktree remove --force book-builder', 'attached'),
+    (True, 'ex-verifier', '/work/book-verifier', 'git worktree move book-builder /tmp/y', 'attached'),
+    (True, 'ex-verifier', '/work/book-verifier', 'git -C /work/book-builder reset --hard HEAD~3', 'attached'),
+    (True, 'ex-verifier', '/work/book-verifier', 'cd /work/book-builder && git reset --hard HEAD~3', 'attached'),
+    (True, 'ex-verifier', '/work/book-verifier', 'git -C /work/book-builder merge --ff-only main', 'attached'),
+    (True, 'ex-verifier', '/work/book-verifier', 'git -C /work/book-builder rebase main', 'attached'),
+    (True, 'ex-verifier', '/work/book-verifier', 'git -C /work/book-builder pull', 'attached'),
+    (True, 'ex-verifier', '/work/book-verifier', 'git -C /work/book-builder cherry-pick abc123', 'attached'),
+    (True, 'ex-verifier', '/work/book-verifier', 'git -C /work/book-builder commit --allow-empty -m x', 'attached'),
+    (True, 'ex-verifier', '/work/book-verifier', 'git -C /work/book-builder update-ref HEAD HEAD~1', 'attached'),
+    (True, 'ex-verifier', '/work/book-verifier', 'git -C /work/book-builder checkout --detach', 'attached'),
+    (False, 'ex-verifier', '/work/book-verifier', 'git branch -D builder-x', 'detached'),
+    (True, 'ex-verifier', '/work/book-verifier', 'git symbolic-ref HEAD refs/heads/main', 'attached'),
+    (True, 'ex-verifier', '/work/book-verifier', 'git tag -f $(echo known-good) HEAD~1', 'attached'),
+    (True, 'ex-verifier', '/work/book-verifier', 'git tag -f `echo known-good` HEAD~1', 'attached'),
+    (True, 'ex-verifier', '/work/book-verifier', 'git tag -f {known-good,HEAD~1}', 'attached'),
+    (True, 'ex-verifier', '/work/book-verifier', "T='-f known-good'; git tag $T HEAD~1", 'attached'),
+    (True, 'ex-verifier', '/work/book-verifier', 'git tag -f "$@"', 'attached'),
+    (True, 'ex-verifier', '/work/book-verifier', 'git tag -f "${@}"', 'attached'),
+    (True, 'ex-verifier', '/work/book-verifier', 'echo known-good | xargs git tag -f', 'attached'),
+    (False, 'ex-verifier', '/tmp', 'export GIT_DIR=/work/book/.git; git tag -f known-good HEAD~1', 'attached'),
+    (True, 'ex-verifier', '/tmp', 'GIT_DIR=/work/book/.git git tag -f known-good HEAD~1', 'attached'),
+    (True, 'ex-verifier', '/tmp', 'git --git-dir=/work/book/.git tag -f known-good HEAD~1', 'attached'),
+    (False, 'ex-verifier', '/work/book-verifier', 'git tag -f rc-$N', 'attached'),
+    (True, 'ex-verifier', '/work/book-verifier', 'git tag -f alpha-rc$N', 'attached'),
+    (True, 'ex-verifier', '/work/book-verifier', 'git tag -f a$N', 'attached'),
+    (True, 'ex-verifier', '/work/book-verifier', 'for t in known-good; do git tag -f "$t" HEAD~1; done', 'attached'),
+    (False, 'ex-builder', '/work/book-builder', 'git branch -c main main-copy', 'attached'),
+    (True, 'ex-builder', '/work/book-builder', 'git tag -am rc22 alpha-rc22', 'attached'),
+    (True, 'ex-builder', '/work/book-builder', 'git tag -a -m rc22 alpha-rc22', 'attached'),
+    (False, 'ex-builder', '/work/book-builder', 'git fetch --tags origin', 'attached'),
+    (True, 'ex-operator', '/work/book-verifier', 'git tag -f demo-good HEAD~1', 'attached'),
+    (False, 'ex-operator', '/work/book-verifier', 'git update-ref --stdin < moves.txt', 'attached'),
+    (True, 'ex-operator', '/work/book-verifier', 'git fetch --tags -f origin', 'attached'),
+    (False, 'ex-operator', '/work/book-verifier', 'git branch -D builder-x', 'attached'),
+    (False, 'ex-operator', '/work/book-verifier', 'git worktree remove --force /work/book-builder', 'attached'),
+    (False, 'ex-operator', '/work/book-verifier', 'git -C /work/book-builder reset --hard HEAD~3', 'attached'),
+    (True, 'ex-demo-operator', '/work/book-verifier', 'git tag -f known-good HEAD~1', 'attached'),
+    (False, 'ex-demo-operator', '/work/book-verifier', 'git tag -f demo-good HEAD~1', 'attached'),
+    (True, 'ex-demo-operator', '/work/book-verifier', 'git update-ref --stdin < moves.txt', 'attached'),
+    (True, 'ex-verifier', '/work/book-verifier', 'git fetch --tag -f origin', 'attached'),
+    (True, 'ex-verifier', '/work/book-verifier', 'git update-ref --std < moves.txt', 'attached'),
+    (True, 'ex-verifier', '/work/book-verifier', 'git update-ref refs/heads/main HEAD~1', 'unreadable'),
+    (True, 'ex-verifier', '/work/book-verifier', 'git branch -D builder-x', 'unreadable'),
+    (True, 'ex-verifier', '/work/book-verifier', 'git pull -f --no-rebase origin tag known-good', 'attached'),
+    (True, 'ex-verifier', '/work/book-verifier', 'git pull --no-rebase origin +HEAD:refs/tags/known-good', 'attached'),
+    (True, 'ex-verifier', '/work/book-verifier', 'git pull --no-rebase --tags -f origin', 'attached'),
+    (True, 'ex-verifier', '/work/book-verifier', 'git worktree move book-builder ../moved', 'attached'),
+    (True, 'ex-verifier', '/work/book-verifier', 'git -C ../book-builder reset -q --hard HEAD~3', 'attached'),
+    (True, 'ex-verifier', '/work/book-verifier', 'git -C ../book-builder checkout -q --detach && git branch -D builder-x', 'detached'),
+    (True, 'ex-verifier', '/work/book-verifier', 'git symbolic-ref HEAD refs/heads/main && git commit -q --allow-empty -m via-second-checkout', 'attached'),
+    (True, 'ex-verifier', '/work/book-verifier', 'f(){ git tag -f "$@"; }; f known-good HEAD~1', 'attached'),
+    (True, 'ex-verifier', '/work/book-verifier', 'echo known-good HEAD~1 | xargs git tag -f', 'attached'),
+    (False, 'ex-verifier', '/tmp', 'export GIT_DIR=/work/book/.git; cd /tmp && git tag -f known-good main~1', 'attached'),
+    (True, 'ex-verifier', '/work/book-verifier', 'echo "update refs/tags/known-good $(git rev-parse HEAD~1)" | git update-ref --std', 'attached'),
+    (True, 'ex-verifier', '/work/book-verifier', 'git symbolic-ref HEAD refs/heads/main && git reset -q --soft HEAD~1', 'attached'),
+    (True, 'ex-builder', '/work/book-builder', 'f(){ git push --force origin main; }; f', 'attached'),
+    (True, 'ex-builder', '/work/book-builder', 'f() { git push origin main; }; f', 'attached'),
+    (True, 'ex-builder', '/work/book-builder', 'function f { git push origin main; }; f', 'attached'),
+    (True, 'ex-builder', '/work/book-builder', 'function f() { git push origin main; }; f', 'attached'),
+    (True, 'ex-builder', '/work/book', 'f(){ git reset --hard HEAD~1; }; f', 'attached'),
+    (True, 'ex-builder', '/work/book-builder', '{ git push origin main; }', 'attached'),
+    (True, 'ex-verifier', '/work/book-builder', 'python3 tools/land.py commit ex-verifier notes -F m.txt a.md', 'attached'),
+    (False, 'ex-builder', '/work/book-builder', 'python3 tools/land.py commit ex-builder notes -F m.txt a.md', 'attached'),
+    (True, 'ex-builder', '/work/book-builder', 'f(){ cd /work/book && git reset --hard HEAD~1; }; f', 'attached'),
+    (True, 'a session with no role', '/tmp', 'git -C /work/book-builder reset --hard HEAD~1', 'attached'),
+    # the build's, one for each rule its mutation run found no case for
+    (True, 'ex-builder', '/work/book-builder', 'git tag -d my-test known-good', 'attached'),
+    (True, 'ex-verifier', '/work/book-verifier', 'git branch -D my-old builder-x', 'attached'),
+    (True, 'ex-verifier', '/work/book-verifier', 'git -C /work/book-builder branch -m other', 'attached'),
+    (False, 'ex-verifier', '/work/book-verifier', "git branch --list 'builder-*'", 'attached'),
+    (True, 'ex-verifier', '/work/book-verifier', 'git checkout --ignore-other-worktrees main', 'attached'),
+    (True, 'ex-operator', '/work/book', 'git push . HEAD:refs/tags/demo-good', 'attached'),
+    (False, 'ex-operator', '/work/book', 'git gc --prune=now', 'attached'),
+    (True, 'ex-builder', '/work/book-builder', 'git update-ref HEAD HEAD~1', 'headless'),
+    (False, 'ex-operator', '/work/book-builder', 'git update-ref HEAD HEAD~1', 'headless'),
+    (False, 'ex-builder', '/work/book-builder', 'git update-ref HEAD HEAD~1', 'detached'),
+    (False, 'ex-builder', '/work/book-builder', 'echo $(git tag) known-good', 'attached'),
+    (False, 'ex-builder', '/work/book-builder', 'echo `git tag` known-good', 'attached'),
+    (True, 'ex-verifier', '/work/book-verifier', 'git -C /work/book-builder branch -m other 2>/dev/null', 'attached'),
+    # the build's rule 45: a deletion by names unread is judged by guard.refs alone (git refuses a checked-out one)
+    (False, 'ex-builder', '/work/book-builder', "git branch --merged main --list 'builder-*' | xargs git branch -d", 'attached'),
+    (False, 'ex-builder', '/work/book-builder', 'for b in builder-a builder-b; do git branch -D $b; done', 'attached'),
+    (True, 'ex-builder', '/work/book-builder', 'echo known-good | xargs git tag -d', 'attached')
+]
+
+
+def test_a_ref_is_judged_by_the_repository_not_the_folder():
+    """notes/PLAN-PROTECTED-REFS.md (the first project's Board #304 A, #310 A): a command that moves a ref is judged by
+    the ref it moves, wherever in the shared repository it runs - main's branch the operator's, a `guard.refs` ref its
+    owner's alone, the branch checked out in a role's worktree that role's and the operator's, and the worktree too; the
+    forms the guard cannot read and the repository-wide writes to the operator alone; `maintenance register` and `init
+    --separate-git-dir` to no role. With girsa-verifier's MEDIUM 1 (a git write in another role's worktree), MEDIUM 2
+    (fetch's and pull's forms, a prefix, a cluster, `--`, a worktree's last part), LOW 1 (a substitution, a brace list,
+    a split value, `$@`, xargs), LOW 2 (an unreadable worktree list refused) and NIT 1 (a copy reads its first name);
+    and a function's body, read at last. Each case of REF_CASES, as the probe judged it."""
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("role_guard", os.path.join(PKG, "role_guard.py"))
+    rg = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(rg)
+    rg.REFS = {"refs/tags/known-good": "ex-operator", "refs/tags/alpha-rc*": "ex-operator",
+               "refs/tags/demo-good": "ex-demo-operator"}
+    rg.WORKTREES = {"/work/book-builder": "ex-builder", "/work/book-verifier": "ex-verifier"}
+    states = {"attached": [("/work/book", "refs/heads/main"), ("/work/book-builder", "refs/heads/builder-x"),
+                           ("/work/book-verifier", "refs/heads/verifier")],
+              "detached": [("/work/book", "refs/heads/main"), ("/work/book-builder", None),
+                           ("/work/book-verifier", "refs/heads/verifier")],
+              "unreadable": None, "headless": "headless"}
+    norm = lambda p: os.path.normpath(p) + "/"
+    ours = lambda p: norm(p).startswith(("/work/book/", "/work/book-"))
+    is_main = lambda p: norm(p).startswith("/work/book/") and "/work/book/.git" not in p
+    wrong = []
+    for refused, role, cwd, cmd, state in REF_CASES:
+        listing = states[state] if state != "headless" else states["attached"]     # headless: git cannot say HEAD
+        rg._checked_out = lambda where, s=listing: s
+        rg._head = lambda where, s=listing, h=state == "headless": None if s is None or h else next(
+            ((b or "HEAD") for p, b in s if norm(where).startswith(p + "/")), None)
+        why = rg.refusal(role, cmd, cwd, main_tree=is_main, read={}.get, project_tree=ours, guarded=ours)
+        if bool(why) != refused:
+            wrong.append((role, cmd, state, why))
+    assert not wrong, wrong
+
+
+def test_a_ref_s_owner_is_read_from_git_in_a_real_repository(tmp_path):
+    """notes/PLAN-PROTECTED-REFS.md, with git itself (no fake): main's branch read from the main clone, and the branch
+    checked out in a role's worktree read as that role's - from the worktree and from the main clone."""
+    import importlib.util
+    import subprocess
+    spec = importlib.util.spec_from_file_location("role_guard", os.path.join(PKG, "role_guard.py"))
+    rg = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(rg)
+    main, wt = tmp_path / "book", tmp_path / "book-builder"
+    git = lambda *a, cwd=main: subprocess.run(["git", *a], cwd=cwd, check=True, capture_output=True, text=True)
+    main.mkdir()
+    git("init", "-q", "-b", "trunk")
+    for i in (1, 2):
+        (main / "f").write_text(str(i))
+        git("add", "f")
+        git("-c", "user.name=x", "-c", "user.email=x@example.org", "commit", "-qm", f"c{i}")
+    git("worktree", "add", "-q", str(wt), "-b", "builder-x")
+    rg.WORKTREES = {os.path.realpath(str(wt)): "ex-builder"}
+    rg.REFS = {}
+    no = lambda role, cmd, cwd: rg.refusal(role, cmd, str(cwd), main_tree=lambda p: False, read={}.get,
+                                           project_tree=lambda p: False, guarded=lambda p: True)
+    assert "refs/heads/trunk, main's branch" in no("ex-builder", "git update-ref refs/heads/trunk HEAD~1", wt)
+    assert no("ex-operator", "git update-ref refs/heads/trunk HEAD~1", wt) is None
+    assert "ex-builder's worktree" in no("ex-verifier", "git branch -m builder-x other", main)
+    assert "refs/heads/builder-x" in no("ex-verifier", f"git -C {wt} update-ref HEAD HEAD~1", main)
+    assert no("ex-builder", "git branch -m builder-x builder-y", wt) is None
+    assert no("ex-builder", "git update-ref HEAD HEAD~1", wt) is None
+
+
 def test_the_role_guard_lets_a_role_land_through_land_py_only_as_itself():
     """The reviewer, 2026-10-26, Board #86 A (girsa-verifier's MEDIUM 1 on the landing script's plan): tools/land.py runs
     git add, commit and merge as Python subprocesses the guard never sees, and takes the role as its second word. So
