@@ -14,6 +14,24 @@ of another role's branch, `git worktree remove --force` of another role's worktr
 and `gc --prune=now`, `git maintenance register`; and, from the state file, `branch -m` and `init --separate-git-dir`.
 (The answer stood on the record a day before I read it: no watcher was running on an item another role had posted.)
 
+GIRSA-ARCHITECT'S ANSWER (the first project's design-study/MISHMERET-PROTECTED-REFS-ARCHITECT.md at eb343d42, written
+before any review of this plan):
+- Q1, the worktrees: agreed. The branch a role's worktree holds is the thing itself; a name glob is a proxy (Lesson 41,
+  THE GUARD THAT TESTS A PROXY). No config field holds a role's worktree today, so `roles[].worktrees` is the first
+  home. The named cost stands - a parked branch is no one's (a builder's unlanded branch while its worktree holds
+  another) - and the README says so.
+- Q2 departs from #304 A's words ("Another role's branch and worktree are that role's"), so it is the reviewer's: the
+  first project's Board #310 - A, the operator may also move a role's branch and remove or move its worktree, on the
+  reviewer's word, the named tags their owners' alone; B, as written, each such step the reviewer's own command. It
+  recommends A. WAITING ON THE REVIEWER; the plan follows the answer.
+- Q3 follows Q2: under A, the forms the guard cannot read and the repository-wide writes refused to every role but the
+  operator (agreed); under B, to every role, the operator too - an unreadable form could move a role's branch.
+- Measured there, not proposed for this piece: git's `reference-transaction` hook refused a protected tag's move by
+  `tag -f`, `update-ref`, `update-ref --stdin` and a forced fetch - guarding the ref, not each writer (Lesson 57) - but
+  `-c core.hooksPath=/dev/null` passes it, it judges by the role variable (unset on about 70 commands of the record,
+  clean-environment runs), and it would see land.py's own fast-forward of main. The design to plan if the list of
+  unreadable forms grows.
+
 THE HOLE, on main's guard (9b979d3; the guard-measure skill's probe.py, placeholder paths, as a builder in its
 worktree unless named): 42 cases, 2 of them owners' own (the operator's `tag -f known-good`, the demo operator's
 `tag -f demo-good`); of the other 40, 38 let through. Refused already: only `git push . HEAD:main` (push is the
@@ -125,7 +143,7 @@ Not in this piece: a protected branch already checked out a second time before t
 `--ignore-other-worktrees`, none on the record) - a commit there moves it, and those commands are judged by folder; a
 branch checked out nowhere (a role's parked branch) is no one's; writes into another role's worktree's files.
 
-## Design questions (to girsa-architect)
+## Design questions (to girsa-architect; answered at eb343d42, the plan's head: Q2 the reviewer's, #310)
 
 1. THE OWNERS IN THE CONFIG: `guard.refs` by glob, and each role's worktrees, the branch checked out there its own. Or
    a role's branches by name globs (`builder-*`), which would also cover a parked branch? My recommendation: the
@@ -148,7 +166,7 @@ branch checked out nowhere (a role's parked branch) is no one's; writes into ano
 - mishmeret/config.py (`guard.refs`, `roles[].worktrees`, OPTIONAL; owners checked)
 - .claude/skills/guard-measure/extract.py, decide.py, self-check.json, SKILL.md (the measure by role)
 - tests/test_guard.py, tests/test_config.py, tests/test_guard_measure.py
-- README.md (the config's two fields; what the guard refuses)
+- README.md (the config's two fields; what the guard refuses; a parked branch is no one's - girsa-architect's Q1)
 - notes/PLAN-PROTECTED-REFS.md, notes/LOG.md, notes/STATE-mishmeret-builder.md
 
 ## Tests (each rule red with it taken out: mutate.py)

@@ -16,7 +16,11 @@ M20. **[2026-11-24, a ref judged by the repository, not the folder (notes/PLAN-P
       and 2 and a prototype's rule 45 by role (scratch decide and extract versions; the plan's item 6 makes them the
       skill's). My first-run faults, in the prototype: git's words read past a `$(...)`'s end, and a variable in a ref
       name refused outright - 5 false refusals, fixed. To send at its commit, live: its three design QUESTIONS to
-      girsa-architect; girsa-verifier's review after its answer.
+      girsa-architect; girsa-verifier's review after its answer. Sent, live, at 70a6ffe.
+    * girsa-architect's ANSWER, live: the first project's design-study/MISHMERET-PROTECTED-REFS-ARCHITECT.md at
+      eb343d42 - Q1 agreed (a parked branch named in the README); Q2 the reviewer's, as the first project's Board #310
+      (it recommends A); Q3 follows it; a `reference-transaction` hook measured, not for this piece. Into the plan's
+      head. A watcher on #310 running (`board.py wait 310`); girsa-verifier's review after its answer.
 
 M19. **[2026-11-23, skills shipped to every project (notes/PLAN-SHIPPED-SKILLS.md)]**
     * The pi piece, after M18: girsa-verifier's ANSWERS, live - fa53cb2 VERIFIED (its #3091), then the pi build
