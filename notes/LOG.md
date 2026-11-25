@@ -3,11 +3,28 @@
 Findings, decisions and open work, each the moment it is known; a time from `date`. One item per run of work, newest
 first (`M01.`, `M02.` ...); what git records (what each commit did) is not repeated here.
 
+M23. **[2026-11-25, the guard alone (notes/PLAN-GUARD-ONLY.md)]**
+    * The reviewer, in this pane: "what needs to be done to sep girsa from mish? what is inv. in using mish on a new
+      proj?" - answered here: the code's ties (the Board's page a Girsa template filled at start, Girsa's paths in
+      usage lines, tests of two shapes only, 21 of 24 fields required) and the process's (Mishmeret's reviews,
+      questions and merges by the first project's roles and on its Board). Then "yes, plan the guard-only minimal
+      config piece", and "references to claude should go - files with claude names - renamed": the plan's design
+      questions 5 and 6.
+    * **[11:07]** The prototype measured on a scratch copy of the normalizer (its record: 380 commands, none with a
+      role): six fields load; each other module stops with its part's sentence; as the operator 7 of 380 refused (5
+      into `rav-shvat-blog`, a stash, a remote branch's deletion), with no role 34. Mishmeret's record by role
+      unchanged. The board's corner cannot say "waiting for" a role of the first project (`--waiting-for` takes this
+      config's roles): another of the ties.
+
 M22. **[2026-11-25, the Board's tab icon (notes/PLAN-FAVICON.md; the first project's Board #249 B)]**
     * **[10:51]** The reviewer, in this pane: "add the favicon". girsa-ui-steward's REQUEST for it, from 2026-11-16,
       had never reached me (kept in its worktree's scratch for "when mishmeret-builder next runs"): its icon taken as
       made. Built on branch `builder-favicon`, M21's uncommitted log lines set aside as a patch on `builder-ref-hook`
       (never a stash). Three parts, each red with it taken out.
+    * Sent, live, at 43a9d97: the build's HANDOFF to girsa-verifier (plan and build one check, for its size), and to
+      girsa-ui-steward the ANSWER that its REQUEST is built. girsa-verifier's ANSWER, live (its #3368): VERIFIED, one
+      NIT for the next touch - the test's docstring to quote the reviewer as typed, "needfavicons [need favicons]".
+      girsa-operator's ANSWER, live: MERGED, main 43a9d97 by fast-forward, not pushed.
 
 M21. **[2026-11-25, git's reference-transaction hook (notes/PLAN-REF-HOOK.md; girsa-architect's follow-up at the first
     project's 350e01e37)]**
