@@ -128,6 +128,10 @@ def test_a_roles_session_writes_to_the_board_only_as_itself(tmp_path, monkeypatc
             monkeypatch.setenv("CLAUDE_CODE_AGENT", me)
         assert bd.main(forms(me)[cmd]) == 0, (cmd, capsys.readouterr().err)
     monkeypatch.delenv("CLAUDE_CODE_AGENT")
+    monkeypatch.setenv("MISHMERET_ROLE", me)                # Mishmeret's own name for it (config.session_role)
+    assert bd.main(["status", "--role", other, "--now", "by MISHMERET_ROLE: refused"]) == 2
+    assert f"this session is {me}: it writes to the Board as itself" in capsys.readouterr().err
+    monkeypatch.delenv("MISHMERET_ROLE")
     assert bd.main(["status", "--role", other, "--now", "unset: taken"]) == 0
 
 
@@ -241,7 +245,7 @@ def test_the_reviewer_can_change_an_answer_on_the_board(tmp_path, monkeypatch):
 
 
 def test_the_boards_pages_name_its_icon_and_the_server_serves_it(tmp_path, monkeypatch):
-    """The tab's icon (the reviewer: "girsa and mishmeret need favicons"; the first project's Board #249 B, made by
+    """The tab's icon (the reviewer: "girsa and mishmeret needfavicons [need favicons]"; the first project's Board #249 B, made by
     girsa-ui-steward: mem, white on slate): both pages link /favicon.png, served as the file's own bytes."""
     import importlib.util
     import threading

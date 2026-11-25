@@ -54,6 +54,14 @@ def project_config(root, **over):
     return cfg
 
 
+def minimal_config(**over):
+    """A project that takes the guard alone (notes/PLAN-GUARD-ONLY.md): the six fields it needs, no part."""
+    cfg = {"repository": "https://example.org/mishmeret.git", "mishmeret_commit": "0" * 40, "project": "Example",
+           "roles": [{"name": "ex-operator"}, {"name": "ex-builder"}], "operator": "ex-operator", "guard": {}}
+    cfg.update(over)
+    return cfg
+
+
 # the placeholder project's draft check (its `drafts.check`): a draft holding "BAD" fails, with a line naming it
 DRAFT_CHECK = 'import sys\ntext = open(sys.argv[1], encoding="utf-8").read()\nif "BAD" in text:\n' \
               '    print("BAD found in the draft")\n    sys.exit(1)\n'

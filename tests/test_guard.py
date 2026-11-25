@@ -901,7 +901,7 @@ def test_the_role_guard_lets_a_role_land_through_land_py_only_as_itself():
     """The reviewer, 2026-10-26, Board #86 A (girsa-verifier's MEDIUM 1 on the landing script's plan): tools/land.py runs
     git add, commit and merge as Python subprocesses the guard never sees, and takes the role as its second word. So
     the guard refuses (1) a `land.py commit` or `land.py land` naming a role other than the session's, (2) a command
-    that sets CLAUDE_CODE_AGENT, the variable land.py reads for the role, and (3) `land.py commit` in the main tree for
+    that sets MISHMERET_ROLE or CLAUDE_CODE_AGENT, the variables land.py reads for the role, and (3) `land.py commit` in the main tree for
     any session but the operator's. land.py's other subcommands, and the words in quotes or a heredoc, are not
     commands. Placeholder paths; the main tree is a fake predicate."""
     import importlib.util
@@ -923,11 +923,13 @@ def test_the_role_guard_lets_a_role_land_through_land_py_only_as_itself():
         why = no("ex-builder", other)
         assert why and "only as itself" in why, other
     assert "only as itself" in no(rg.NO_ROLE, "python3 tools/land.py land ex-builder code")
-    # (2) setting the variable land.py reads, in any form
-    for sets in ("CLAUDE_CODE_AGENT=ex-operator python3 tools/land.py land ex-operator code",
-                 "export CLAUDE_CODE_AGENT=ex-operator", "env CLAUDE_CODE_AGENT=ex-operator python3 x.py"):
-        assert "CLAUDE_CODE_AGENT" in no("ex-builder", sets), sets
-        assert "CLAUDE_CODE_AGENT" in no("ex-operator", sets), sets
+    # (2) setting either variable land.py reads (config.session_role: MISHMERET_ROLE, else Claude Code's), in any form
+    for var in ("CLAUDE_CODE_AGENT", "MISHMERET_ROLE"):
+        for sets in (f"{var}=ex-operator python3 tools/land.py land ex-operator code", f"export {var}=ex-operator",
+                     f"env {var}=ex-operator python3 x.py", f"X=1 {var}=ex-builder python3 tools/land.py land ex-builder code"):
+            for role in ("ex-builder", "ex-operator"):
+                why = no(role, sets)
+                assert why and f"may not set {var} -" in why, (role, sets)
     # (3) a commit through land.py in the main tree: the operator's alone
     assert "operator's alone" in no("ex-builder", "python3 tools/land.py commit ex-builder code -F m a.py",
                                     cwd="/work/book")
@@ -937,7 +939,8 @@ def test_the_role_guard_lets_a_role_land_through_land_py_only_as_itself():
     for fine in ("python3 tools/land.py gate --set landing", "python3 tools/land.py check-conflict a.py",
                  'grep -n "land.py commit ex-operator" x.md', "cat tools/land.py",
                  "git commit -q -F - <<'M'\nland.py land ex-operator code; CLAUDE_CODE_AGENT=x\nM\n",
-                 "echo $CLAUDE_CODE_AGENT"):
+                 "echo $CLAUDE_CODE_AGENT", "echo $MISHMERET_ROLE", "env -u MISHMERET_ROLE python3 x.py",
+                 "echo ${MISHMERET_ROLE}=x"):
         assert no("ex-builder", fine) is None, fine
 
 
@@ -977,6 +980,50 @@ def test_the_role_guard_sends_every_commit_and_landing_in_this_repository_throug
             assert no("ex-operator", "git " + verb, cwd) is None, (verb, cwd)
     for fine in ("git rebase --abort", "git cherry-pick --abort", "git am --abort", "git revert --abort"):
         assert no("ex-operator", fine, "/work/book") is None, fine
+
+
+def test_the_guard_alone_lets_git_commit_and_merge_be_and_keeps_every_other_rule(tmp_path):
+    """notes/PLAN-GUARD-ONLY.md: a project that takes the guard alone - six fields, no landing part, its config in
+    `.mishmeret/config.json`, found with no MISHMERET_CONFIG (CLAUDE_PROJECT_DIR the project, as the hook runs). `git
+    commit` and a landing `git merge` are not sent through land.py: the operator commits and merges in the main clone as
+    git does (item 3). Every other rule stands: the main clone the operator's, a push not the builder's and never a
+    delete, a foreign repository no role's, the stash, a check whose failure cannot stop the commit, the live tmux
+    server the reviewer's (no roles' session to name); and the role is the hook input's alone - MISHMERET_ROLE in the
+    hook's own environment makes no session a role (girsa-architect's Q7)."""
+    import subprocess as sp
+    from conftest import minimal_config
+    book, other = tmp_path / "book", tmp_path / "other"
+    for repo in (book, other):
+        sp.run(["git", "init", "-q", str(repo)], check=True)
+    (book / ".mishmeret").mkdir()
+    (book / ".mishmeret" / "config.json").write_text(json.dumps(minimal_config(
+        guard={"foreign": [str(other)], "checks": ["pytest"]})), encoding="utf-8")
+    env = {k: v for k, v in os.environ.items() if not k.startswith(("MISHMERET_", "CLAUDE_"))}
+    env["CLAUDE_PROJECT_DIR"] = str(book)
+
+    def hook(role, cmd, **more):
+        event = {"tool_name": "Bash", "tool_input": {"command": cmd}, "cwd": str(book),
+                 **({"agent_type": role} if role else {})}
+        out = sp.run([sys.executable, os.path.join(PKG, "role_guard.py")], input=json.dumps(event), capture_output=True,
+                     text=True, env=dict(env, **more))
+        assert out.returncode in (0, 2), out.stderr
+        return out.stderr if out.returncode else None
+    for fine in ("git commit -q -m x", "git merge --ff-only builder-x", "git push origin main", "git tag -f v1",
+                 "pytest -q && git commit -q -m x", "git rebase main", "git cherry-pick abc"):
+        assert hook("ex-operator", fine) is None, (fine, hook("ex-operator", fine))
+    for role, cmd, said in (
+            ("ex-builder", "git commit -q -m x", "the operator's alone"),
+            ("ex-builder", "git push origin main", "pushing is the operator's (ex-operator)"),
+            ("ex-operator", "git push origin --delete b", "never pushes --all, --mirror, a force or a delete"),
+            ("ex-operator", f"git -C {other} commit -q -m x", "a repository no role of this project changes"),
+            ("ex-operator", "git stash", "`git stash` in this repository"),
+            ("ex-operator", "pytest -q | tail -3; git commit -q -m x", "cannot stop `git commit`"),
+            ("ex-operator", "tmux kill-server", "the live server is the reviewer's to stop"),
+            (None, "git commit -q -m x", "the operator's alone")):
+        why = hook(role, cmd)
+        assert why and said in why, (role, cmd, why)
+    why = hook(None, "git commit -q -m x", MISHMERET_ROLE="ex-operator", CLAUDE_CODE_AGENT="ex-operator")
+    assert why and "the operator's alone" in why, why
 
 
 def test_the_role_guard_refuses_a_check_whose_failure_cannot_stop_the_commit_after_it():
@@ -1280,6 +1327,14 @@ def test_land_commit_stages_what_it_names_and_refuses_the_rest(tmp_path, monkeyp
     monkeypatch.delenv("CLAUDE_CODE_AGENT")
     with pytest.raises(land.Refused, match="no role's session"):
         land.commit("ex-builder", "code", str(message), ["placeholder.py"], tests="none", cwd=str(tree))
+    # the role by Mishmeret's own name (config.session_role), and two names that differ: no role's
+    monkeypatch.setenv("MISHMERET_ROLE", "ex-builder")
+    with pytest.raises(land.Refused, match="this session is ex-builder, not ex-verifier"):
+        land.commit("ex-verifier", "code", str(message), ["placeholder.py"], tests="none", cwd=str(tree))
+    monkeypatch.setenv("CLAUDE_CODE_AGENT", "ex-verifier")
+    with pytest.raises(land.Refused, match=r"MISHMERET_ROLE \(ex-builder\) and CLAUDE_CODE_AGENT \(ex-verifier\) differ"):
+        land.commit("ex-verifier", "code", str(message), ["placeholder.py"], tests="none", cwd=str(tree))
+    monkeypatch.delenv("MISHMERET_ROLE")
     monkeypatch.setenv("CLAUDE_CODE_AGENT", "ex-builder")
     assert git(tree, "diff", "--cached", "--name-only") == ""
     with pytest.raises(land.Refused, match="collected no test"):        # pytest's exit 5 (the plan's rehearsal)

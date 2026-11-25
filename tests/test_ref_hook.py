@@ -329,6 +329,26 @@ def test_the_hooks_shell_judges_at_prepared_alone_and_refuses_with_its_shim_miss
     assert gone.returncode == 1 and "is missing, so nothing is checked" in gone.stderr, gone.stderr
 
 
+def test_the_hook_takes_the_role_by_mishmeret_role_and_two_names_that_differ_as_no_role(live):
+    """notes/PLAN-GUARD-ONLY.md, item 5: the hook's text passes MISHMERET_ROLE beside CLAUDE_CODE_AGENT, and the hook
+    reads them by config.session_role - a protected tag moved by its owner named only so is let through, by a builder so
+    named refused, and with the two names differing refused as no role's, naming both."""
+    env, B = live, live["B"]
+    with open(os.path.join(B, ".git", "hooks", "reference-transaction"), encoding="utf-8") as fh:
+        assert 'MISHMERET_ROLE="${MISHMERET_ROLE-}" CLAUDE_CODE_AGENT="${CLAUDE_CODE_AGENT-}"' in fh.read()
+    root = _git(B, "rev-list", "--max-parents=0", "main")
+    back = _git(B, "rev-parse", "known-good")
+    to = root if back != root else _git(B, "rev-parse", "main")
+    tag = f"git tag -f known-good {to}"
+    rc, before, after, out = _run(env, None, "W", tag, {"MISHMERET_ROLE": "ex-builder"})
+    assert rc and before == after and "refused by the ref hook" in out, out
+    rc, before, after, out = _run(env, None, "W", tag, {"MISHMERET_ROLE": "ex-operator", "CLAUDE_CODE_AGENT": "ex-builder"})
+    assert rc and before == after and "MISHMERET_ROLE (ex-operator) and CLAUDE_CODE_AGENT (ex-builder) differ" in out, out
+    rc, before, after, out = _run(env, None, "B", tag, {"MISHMERET_ROLE": "ex-operator"})
+    assert rc == 0 and after["known-good"] == to, out
+    _run(env, None, "B", f"git tag -f known-good {back}", {"MISHMERET_ROLE": "ex-operator"})
+
+
 def test_a_repository_git_cannot_name_is_refused(tmp_path):
     """girsa-architect's answer, Q3: the hook fails closed - a repository it cannot resolve (a stand-in git named none)
     refuses the transaction."""

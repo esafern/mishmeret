@@ -47,7 +47,8 @@ export default function (pi: any) {
   pi.registerFlag("role", { description: "the Mishmeret role this session runs as", type: "string", default: "" });
   const role = () => pi.getFlag("role") || "";
   const bash = createBashTool(PROJECT, {
-    spawnHook: ({ command, cwd, env }: any) => ({ command, cwd, env: { ...env, CLAUDE_CODE_AGENT: role() } }),
+    spawnHook: ({ command, cwd, env }: any) => ({ command, cwd,
+                                                  env: { ...env, MISHMERET_ROLE: role(), CLAUDE_CODE_AGENT: role() } }),
   });
   pi.registerTool({ ...bash, execute: (...args: any[]) => (bash.execute as any)(...args) });
   pi.on("tool_call", async (event: any, ctx: any) => {

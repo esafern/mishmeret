@@ -82,7 +82,8 @@ def test_the_guard_extension_judges_each_pi_tool_call_by_the_projects_own_hook(t
               ["write", {"path": str(outside / "late.md"), "content": "at 10:3x\n"}],
               ["edit", {"path": str(outside / "ok.md"), "edits": [{"oldText": "fine", "newText": "finer"},
                                                                   {"oldText": "\n", "newText": " at 10:3x\n"}]}],
-              ["bash", {"command": "echo pwd=$(pwd -P) sid=${PI_SESSION_ID:-none} agent=$CLAUDE_CODE_AGENT"}],
+              ["bash", {"command": "echo pwd=$(pwd -P) sid=${PI_SESSION_ID:-none} role=$MISHMERET_ROLE "
+                                   "agent=$CLAUDE_CODE_AGENT"}],
               ["probe_tool", {}]]
     results = pi_run(tmp_path, proj, script, os.path.join(HERE, "pi", "extra_tool.ts"))
     assert len(results) == len(script), results
@@ -98,7 +99,7 @@ def test_the_guard_extension_judges_each_pi_tool_call_by_the_projects_own_hook(t
     # bash ran in is the one the guard judged (girsa-verifier's NOTE 1)
     real = os.path.realpath(proj)
     assert env_line.strip().startswith(f"pwd={real} sid=") and " sid=none" not in env_line, env_line
-    assert env_line.strip().endswith("agent=ex-builder"), env_line
+    assert env_line.strip().endswith("role=ex-builder agent=ex-builder"), env_line    # both names (config.ROLE_VARS)
     assert "is a tool it does not know" in probe and "probe_tool" in probe, probe
     assert not (tmp_path / "probe_tool_ran").exists()
     # every judged call reached the project's own hook, CLAUDE_PROJECT_DIR the folder pi started in (its LOW 2), as the

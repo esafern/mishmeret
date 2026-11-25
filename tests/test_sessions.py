@@ -781,6 +781,12 @@ def test_the_stop_hook_hands_a_finished_roles_pane_to_agents_sh_next(monkeypatch
         assert kw["start_new_session"] is True, "detached: it outlives the session it exits"
     monkeypatch.setattr(sys, "stdin", io.StringIO("not json"))
     assert hook.main() is None and len(calls) == (started is not None)
+    if started is not None:                         # the role by Mishmeret's own name (config.session_role)
+        monkeypatch.delenv("CLAUDE_CODE_AGENT")
+        monkeypatch.setenv("MISHMERET_ROLE", role)
+        monkeypatch.setattr(sys, "stdin", io.StringIO(json.dumps(data)))
+        hook.main()
+        assert len(calls) == 2 and calls[1][0] == calls[0][0], case
 
 
 @pytest.mark.parametrize("case", ["again", "exit", "another's pane", "night run going", "the run asked it",

@@ -820,9 +820,9 @@ NO_ROLE = ("withdraw", "defer", "answer")
 
 
 def as_self(role):
-    """Refuse `role` when a role's session ($CLAUDE_CODE_AGENT, the variable land.py reads) names another; unset - the
+    """Refuse `role` when a role's session (config.session_role(), as land.py reads it) names another; unset - the
     night run, the reviewer's terminal, a test - anything goes."""
-    agent = os.environ.get("CLAUDE_CODE_AGENT")
+    agent = config.session_role()
     if agent and role != agent:
         raise ValueError(f"this session is {agent}: it writes to the Board as itself, not as {role!r}")
 

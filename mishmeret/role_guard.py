@@ -54,7 +54,8 @@ import config
 # whose main tree is the operator's, the remotes never pushed to, the checks whose status decides a commit
 _CFG = config.load()
 OPERATOR = _CFG["operator"]
-PLANNED = _CFG["land"]["planned"]
+LANDING = "land" in _CFG        # absent (config.PARTS): no landing tool - git commits and merges as it is
+PLANNED = _CFG["land"]["planned"] if LANDING else None
 GUARD = _CFG["guard"]
 # ONE SHELL WORD in the masked text, its quoted parts kept as quotes around spaces (notes/PLAN-KNOWN-GAPS.md, item 1):
 # with `\S+` a quoted word ended at its first space, so `git -C "." push`, `X="a b" git push` and the like matched
@@ -143,22 +144,24 @@ HEREDOC = re.compile(r"<<-?\s*(['\"]?)([A-Za-z_]\w*)\1")
 # tools/land.py (the landing script, Board #85 A step 2) runs git add, commit and merge as Python subprocesses, which
 # this hook never sees, and takes the role as its second word (`land.py commit ROLE ...`, `land.py land ROLE ...`).
 # The reviewer, 2026-10-26, Board #86 A (girsa-verifier's MEDIUM 1 on the script's plan): refused - a land.py commit or
-# land naming a role other than the session's own; a command that sets CLAUDE_CODE_AGENT, the variable land.py reads
-# for the session's role; and land.py commit in the main tree for any session but the operator's.
+# land naming a role other than the session's own; a command that sets MISHMERET_ROLE or CLAUDE_CODE_AGENT, the
+# variables land.py reads for the session's role (config.session_role); and land.py commit in the main tree for any
+# session but the operator's.
 LAND = re.compile(r"(?<![\w./-])(?:\S*/)?land\.py(?![\w.])\s+([a-z][\w-]*)([^;&|\n]*)")
 LAND_AS_ROLE = ("commit", "land")
-SETS_AGENT = re.compile(r"(?<![\w$])CLAUDE_CODE_AGENT=")
+SETS_AGENT = re.compile(r"(?<![\w$])(CLAUDE_CODE_AGENT|MISHMERET_ROLE)=")     # config.ROLE_VARS, both names
 # THE SCRIPT IS THE ONLY WAY IN (the reviewer, 2026-10-26: "add the extra guard"; the landing plan's section 6): in this
 # repository - its main clone or a linked worktree, not a copy and not a corpus root - `git commit` is refused for every
 # role, and `git merge` in the main tree (a landing) too, but `git merge --abort`: land.py commit and land.py land do
 # both, with the lane check, the gate and the hold. A session with no role keeps its commits in a worktree (it cannot
 # name a role to land.py).
 THROUGH_LAND = {"commit": "`land.py commit ROLE notes|code -F MESSAGE NAME...`",
-                "merge": f"`land.py land ROLE notes|code` ({PLANNED}'s code: `--plan PLAN`), from your worktree"}
+                "merge": f"`land.py land ROLE notes|code` ({PLANNED}'s code: `--plan PLAN`), from your worktree"
+                } if LANDING else {}
 # ...and the other git commands that make a commit on main, which CHANGES_MAIN already refuses every other role there:
 # refused to the operator too in this repository's main tree (girsa-verifier's LOW on 23be3451; the reviewer, Board #87
 # A), but each one's --abort.
-OPERATOR_THROUGH_LAND = {"revert", "cherry-pick", "am", "rebase", "commit-tree", "update-ref"}
+OPERATOR_THROUGH_LAND = {"revert", "cherry-pick", "am", "rebase", "commit-tree", "update-ref"} if LANDING else set()
 # GIT'S COMMANDS, EACH PLACED (notes/PLAN-GIT-CLASSIFICATION.md; the first project's Board #302 A): every name of git's
 # own list in one of four sets, so the next git's command fails a test until it is placed. Only CHANGES_MAIN decides a
 # refusal (where `reset --hard` is refused); the two last sets are labels. CHANGES_MAIN: what writes the checked-out
@@ -495,10 +498,10 @@ def _expand(path, text):
 HOOK_REPO = config.root()
 # When the list cannot be read, the root it held before it was the source - the guard never opens wider for a
 # broken file.
-FALLBACK_CORPUS_ROOTS = tuple(GUARD["fallback_roots"])
+FALLBACK_CORPUS_ROOTS = tuple(GUARD.get("fallback_roots", ()))
 # THE OTHER TREES WHOSE MAIN TREE IS THE OPERATOR'S (design-study/STEP-MISHMERET-MOVE-PLAN.md in Girsa, step 4): the
 # Mishmeret checkout - its worktrees anyone's, its pins (`<tree>/.pins/<sha>`) no one's (`pin_of`)
-TREES = tuple(GUARD["trees"])
+TREES = tuple(GUARD.get("trees", ()))
 # REPOSITORIES NO ROLE OF THIS PROJECT CHANGES, IN ANY TREE (Board #153 B: "the guard refuses every tree of Girsa,
 # worktrees included"): their main clone and every linked worktree - one git common dir - to every role, the operator
 # too. A copy (`cp -c -R`, its own .git) is another repository and is not refused; a read never is.
@@ -1124,7 +1127,7 @@ def refusal(role, command, cwd, main_tree=is_main_tree, read=_read, depth=0, pro
             if role != OPERATOR:
                 return (f"refused by the role guard: pushing is the operator's ({OPERATOR}), on the reviewer's "
                         "word - send it a LANDED or a REQUEST instead" + no_role)
-            retired = GUARD["retired_remotes"]
+            retired = GUARD.get("retired_remotes", [])
             set_here = _push_config(command[m.start():m.start(1)], command[m.start(1):m.end(1)])
             if set_here:
                 return ("refused by the role guard: the operator's push takes no config from its own line (found "
@@ -1158,9 +1161,10 @@ def refusal(role, command, cwd, main_tree=is_main_tree, read=_read, depth=0, pro
                 return (f"refused by the role guard: `git {verb}` would change the main tree or a root the "
                         "project lists, which are the operator's alone - work in your worktree or a copy and land with `git "
                         "merge --ff-only`, or send the operator a HANDOFF" + no_role)
-    if SETS_AGENT.search(masked):
-        return ("refused by the role guard: a command may not set CLAUDE_CODE_AGENT - Claude Code sets it to the "
-                "session's role, and land.py lands as that role" + no_role)
+    sets = SETS_AGENT.search(masked)
+    if sets:
+        return (f"refused by the role guard: a command may not set {sets.group(1)} - the session's start sets it to "
+                "the session's role, and land.py lands as that role" + no_role)
     for m in LAND.finditer(masked):
         verb = m.group(1)
         if verb not in LAND_AS_ROLE:
@@ -1247,7 +1251,8 @@ def _kill_verb(word):
     hits = [v for v in KILL_VERBS if v.startswith(word)] if word.startswith("kill-") and len(word) > 5 else []
     return hits[0] if len(hits) == 1 else ("kill-server" if hits else None)
 TMUX_SCRIPT = re.compile(BOUNDARY + "(" + TMUX_PREFIX + r")(?:(?:bash|sh|zsh)((?:\s+-\w+)*)\s+)?(\S+\.sh)(?![\w.])", re.M)
-ROLES_SESSION = _CFG["tmux_session"]
+# absent (config.PARTS): no roles' session, the live server still guarded
+ROLES_SESSION = _CFG["tmux_session"] if "tmux_session" in _CFG else None
 
 
 def _own_tmux_env(prefix, before):
@@ -1299,7 +1304,9 @@ def tmux_refusal(command, cwd, read=_read, own_env=False, depth=0):
         return (f"refused by the role guard: `tmux {verb}` here would reach the LIVE tmux server - the one every "
                 f"role's session runs in. "
                 "A test server is reached only as `env -u TMUX TMUX_TMPDIR=<its own folder> tmux ...` or `tmux -S "
-                f"<its own socket> ...`; the live server and the {ROLES_SESSION} session are the reviewer's to stop")
+                f"<its own socket> ...`; "
+                + (f"the live server and the {ROLES_SESSION} session are" if ROLES_SESSION else "the live server is")
+                + " the reviewer's to stop")
     for m in PKILL.finditer(masked):
         if re.search(r"(?<![\w-])tmux(?![\w-])", command[m.start(1):m.end(1)]):
             return ("refused by the role guard: pkill / killall of tmux would stop the LIVE tmux server with every "
@@ -1341,7 +1348,7 @@ FILE_TOOLS = {"Edit": "file_path", "Write": "file_path", "NotebookEdit": "notebo
 # before it, `check && echo ...;` (a failure in an && list does not stop even under set -e), or `check || true`. Read in
 # the command and one level into a script it runs. Its status counts when the command uses it: `if ! check; then`,
 # `check || { ...; exit 1; }`, `check && git commit`, or `set -e` before a check alone on its line.
-CHECKS = tuple(GUARD["checks"])
+CHECKS = tuple(GUARD.get("checks", ()))
 GATED_STEPS = {"commit", "merge", "push", "tag", "update-ref", "cherry-pick", "am"}
 STEP_SPLIT = re.compile(r"(\|\||&&|\|&?|;|(?<![<>&])&(?![>&])|\n)")
 LEAD_WORDS = {*KEYWORDS, "(", "time", "command", "exec"}

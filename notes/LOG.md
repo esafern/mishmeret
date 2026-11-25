@@ -52,6 +52,12 @@ M23. **[2026-11-25, the guard alone (notes/PLAN-GUARD-ONLY.md)]**
       gave 16: its config sat outside the copy, so `config.root()` named another folder and nothing was guarded - a
       probe showed a no-role commit let through. A config outside its tree leaves the project unguarded, unsaid
       (main's code too): an open item. Into the head.
+    * Committed 572a1d0. **[THE BUILD]** The prototype's change by hand; found: `--shell`'s `cfg.get("page_order")`
+      raises with no Board (Config's own rule) - sessions without a Board would have stopped; by membership now,
+      tested. The shipped landing skill re-read on the suite's warning (land.py changed after it): nothing in it
+      changes - it is for a project with a landing part. My first mutate run used the system Python, which has no
+      pytest: its baseline failed and it stopped, as its rule says; run again with the venv's. 29 rules red, the
+      suite 199, rule 45 at the build 0, 0, 0 on both records by role.
 
 M22. **[2026-11-25, the Board's tab icon (notes/PLAN-FAVICON.md; the first project's Board #249 B)]**
     * **[10:51]** The reviewer, in this pane: "add the favicon". girsa-ui-steward's REQUEST for it, from 2026-11-16,

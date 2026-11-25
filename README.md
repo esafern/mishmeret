@@ -32,7 +32,10 @@ iTerm2. The Board, the hooks, the status line and the reports are portable.
 ## How a project uses it
 
 A project keeps Mishmeret as a sibling checkout (`~/work/mishmeret`, or `MISHMERET_DIR`) and its own configuration in
-`.claude/mishmeret.json`. Each file of the process in the project is a shim: a few lines that run the same-named module
+`.mishmeret/config.json` - or in its old home, `.claude/mishmeret.json`, read when the new one is absent (Girsa's and
+Mishmeret's own, until both pins pass the move). The config's folder's parent is the project's root, so a config kept
+outside the project's tree guards another folder and leaves the project unguarded. Each file of the process in the
+project is a shim: a few lines that run the same-named module
 of `mishmeret/` with the same arguments, from the ONE commit the config names (`mishmeret_commit`), checked out as its
 own worktree:
 
@@ -45,9 +48,16 @@ edited: a change is a new commit and a new pin. The shim's helper is the project
 ## The config
 
 `mishmeret/config.py` is its one reader. Every field is required but those `OPTIONAL` there names (each absent is
-taken as off), and no other is accepted; `FIELDS` lists them with the module that reads each: the project's name, its roles (name, short name, tmux colour, the Board page's two
+taken as off), and no other is accepted. What a project may leave out whole is a part (`config.PARTS`), each all its
+fields or none: the Board (its folder, port, page order and budget), the sessions (the tmux session and settings, the
+transcripts, the agent files, the launchd prefix, the state folder, the night run's knobs), `sizes`, `start_reads`,
+`effort`, and the landing (`land`). A module that reads a field of a part the project left out stops with that part's
+sentence, naming itself. A role's drawing keys are required with the Board or the sessions.
+`FIELDS` lists them with the module that reads each: the project's name, its roles (name, short name, tmux colour, the Board page's two
 colours, whether it has a corner and a tmux pane), the page's order, the operator, the Board's folder and port, the
-tmux session and settings file, Claude Code's transcripts folder, the agent files, the project's Python, the launchd
+tmux session and settings file, each runner's transcripts folder (`transcripts`, `{"claude": "~/.claude/projects",
+"pi": "~/.pi/agent/sessions"}`; its old name `claude_projects`, Claude Code's folder alone, read as its `claude` until
+both configs move), the agent files, the project's Python, the launchd
 prefix, the state folder and the night run's knobs (with the project's two commands that end a session, below);
 and the reports' tables - the start-up documents' limits and where
 a whole block of each goes (`sizes`), the briefs and the logs never named at start (`start_reads`), the recommended
@@ -67,6 +77,27 @@ the transcripts folder itself, and `MISHMERET_NIGHT_DRY_RUN=1` makes the night r
 `board.py` by, for the commands the Board prints. The start scripts (`agents.sh`, `agents-morning.sh`) run only with
 a project named - through the project's own, whose shim sets `MISHMERET_CONFIG` and marks it as the shim's, or with
 `MISHMERET_CONFIG` set by hand; with neither, they stop and say so.
+
+The session's role, for `land.py`, `board.py`, the Stop hook, the effort report and the ref hook, is `MISHMERET_ROLE`,
+else Claude Code's `CLAUDE_CODE_AGENT`; the two set and differing are no role. The guard refuses a command that sets
+either. The Bash guard's own role is the hook input's alone (Claude Code's from `--agent`, pi's extension's from
+`--role`): an environment is inherited by a nested `claude -p`, which is no role.
+
+## The guard alone
+
+A project may take the guard and nothing else (notes/PLAN-GUARD-ONLY.md). Its config holds six fields - `repository`,
+`mishmeret_commit`, `project`, `roles` (each a name, and a role's `worktrees`), `operator`, `guard` (`foreign`,
+`refs`, `main` as it needs) - and no part. It needs the shim and its `.claude/hooks/role_guard.py`, the `PreToolUse`
+hook in `.claude/settings.json`, and an agent file for each role, so that a session starts as its role (or pi's
+`--role` with `pi_guard.ts`); for its protected refs, the ref hook's install. With no landing part, `git commit` and a
+landing `git merge` run as git makes them - there is no `land.py`; every other rule stands: the main clone the
+operator's, pushing the operator's and never a delete, the foreign repositories no role's, the stash, the checks'
+status, the live tmux server.
+
+Measured on a copy of a one-agent project's record (380 commands, every one run in its main clone): as its builder,
+beside an operator, 34 refused - 10 pushes, 18 writes in the main clone, 5 into another project it vendors a file into,
+and a stash - so the builder works in its own worktree and the operator lands and pushes; as its operator, 7. A session
+started with no role is refused what the builder is: 34.
 
 ## A ref is judged by the repository
 
@@ -89,7 +120,7 @@ The guard reads a command's words; a script, or a form it cannot read, moves a r
 `reference-transaction` hook sees every ref update of the repository, whatever makes it, and `ref_hook.py` judges it by
 the guard's own rule: main's branch may move forward (a landing) for any role, and back, be deleted or made a link only
 by the operator; a `guard.refs` ref and a replacement are their owner's alone. A role's branch stays the guard's. The
-role is the session's `CLAUDE_CODE_AGENT`; with none - a session with no role, or the reviewer's own terminal - a
+role is the session's (`MISHMERET_ROLE`, else `CLAUDE_CODE_AGENT`); with none - a session with no role, or the reviewer's own terminal - a
 protected move is refused and the refusal names the owner's pane. A copy of the main clone has its own refs, and is
 left alone. Main's branch is named in the config (`guard.main`) so that a detached or mid-rebase main clone does not
 leave it no one's; where it is set, `land.py` refuses a landing while the main clone holds another branch, so a wrong
@@ -101,7 +132,9 @@ naming the shim, the Python and the Mishmeret checkout by path and taking PATH a
 the command's own environment (another config, another Python, git's exec path, a field's override) does not reach it.
 It replaces its own older hook and refuses another's, and refuses when `core.hooksPath` is set. The order matters: the
 pin bump that brings the hook lands first, then the install; before the pin ever moves back to a commit without it,
-the hook is removed - else every commit in every tree is refused, the pin's own revert too. The hook fails closed: a
+the hook is removed - else every commit in every tree is refused, the pin's own revert too. A hook installed before the
+role's two names (notes/PLAN-GUARD-ONLY.md) passes `CLAUDE_CODE_AGENT` alone and still works; the install run again at
+the bump that brings them writes the text that passes both. The hook fails closed: a
 missing shim, a missing pin or its own fault refuses every transaction naming a ref under `refs/`. The reviewer's way
 out is their own terminal's `git -c core.hooksPath=/dev/null ...`.
 
@@ -112,7 +145,9 @@ What would switch it off is the guard's to refuse, in a guarded repository, to e
 Its costs, measured (notes/PLAN-REF-HOOK.md): a forward move of main that skips `land.py` is let through (the main tree's
 rule refuses its words), and leaves the main clone holding the reverse diff staged; a tag made on origin outside the
 shared repository fails a non-owner's plain `git fetch` (git would make it there) - `--no-tags` fetches the rest; an
-operator's subagent carries the operator's variable, so has the operator's rights here; a script that runs git with
+operator's subagent carries the operator's variable, so has the operator's rights here; a script that detaches the
+main clone leaves main's branch the one `guard.main` names, and `land.py` refuses every landing till the main clone
+holds it again; a script that runs git with
 its hooks off, or a shell write into the main clone's `.git/`, is read by neither. Git spends about 0.1 s a commit on a
 hook, most of it starting `/bin/sh` for each state of each transaction. Measured with git 2.56.1 on macOS; git before
 2.28 runs no such hook, and Linux, Windows and the reftable format are unmeasured.
@@ -152,8 +187,8 @@ no `--agent` and runs no Claude Code hook, so `agents.sh` starts it as `pi --no-
 <the pinned tree>/mishmeret/pi_guard.ts`, with the agent file's effort as `--thinking`, the agent file appended to the
 system prompt, and its `initialPrompt` as the first message. The extension puts every bash, edit and write call to the
 project's own `.claude/hooks/role_guard.py`, as Claude Code does, and blocks it unless the guard lets it run; `read`
-runs, and any other tool is blocked. It sets `CLAUDE_CODE_AGENT` to the role in each bash call, for `land.py` and
-`board.py`. `agents.sh` starts nothing for a pi role whose extension file is missing.
+runs, and any other tool is blocked. It sets `MISHMERET_ROLE` and `CLAUDE_CODE_AGENT` to the role in each bash call,
+for `land.py` and `board.py`. `agents.sh` starts nothing for a pi role whose extension file is missing.
 
 What a pi role lacks: the reports and night-run steps that read Claude Code's transcripts (the token report, the
 status line, the keep-alive, the night run's context check, `agents.sh --resume`, which starts a pi role fresh); the

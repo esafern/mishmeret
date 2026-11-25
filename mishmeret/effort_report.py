@@ -78,7 +78,7 @@ def report(agents_dir=AGENTS_DIR, settings_path=USER_SETTINGS, env=os.environ):
             mismatches.append(role)
         lines.append(f"{role:18} {str(f['model']):13} {str(f['effort']):14} {str(user):13} {str(rec):12} "
                      + ("; ".join(change) if change else "none") + f"  ({why})")
-    me, mine = env.get("CLAUDE_CODE_AGENT"), env.get("CLAUDE_EFFORT")
+    me, mine = config.session_role(env), env.get("CLAUDE_EFFORT")
     if mine:
         lines.append(f"this session: role {me or '(none - started without --agent)'}, running at {mine}")
     lines.append("in effect: for a role started by agents.sh, its agent file's effort (passed as --effort); for any other "

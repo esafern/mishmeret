@@ -164,11 +164,12 @@ class Where:
 
 def session_refusal(role, where, verb):
     """Why ROLE may not run this, or None (girsa-verifier's MEDIUM 1: the guard never sees the git this script runs, so
-    the role is the session's own, never an argument's alone). `$CLAUDE_CODE_AGENT` is the agent a role session was
-    started as; the role guard refuses a command that sets it (girsa-operator's, Board #86)."""
-    agent = os.environ.get("CLAUDE_CODE_AGENT")
+    the role is the session's own, never an argument's alone). `config.session_role()`: the role a session was started
+    as; the role guard refuses a command that sets it (girsa-operator's, Board #86)."""
+    agent = config.session_role()
     if not agent:
-        return "this is no role's session ($CLAUDE_CODE_AGENT is not set): land.py commits and lands for a role"
+        return ("this is no role's session (neither MISHMERET_ROLE nor CLAUDE_CODE_AGENT is set): land.py commits and "
+                "lands for a role")
     if agent != role:
         return f"this session is {agent}, not {role}: a role commits and lands as itself"
     if where.in_main and (verb != "commit" or role != OPERATOR):

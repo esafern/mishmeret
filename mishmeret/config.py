@@ -2,10 +2,11 @@
 
 The mechanism names no project. What is the project's - its roles and their colours, the operator's name, the Board's
 folder and port, the tmux session, where Claude Code keeps its transcripts, the night run's knobs - is in the
-project's `.claude/mishmeret.json`, read here and nowhere else:
+project's `.mishmeret/config.json` (its old home `.claude/mishmeret.json`), read here and nowhere else:
 
-    MISHMERET_CONFIG    the config file's path (the project's shim sets it); unset, `<root>/.claude/mishmeret.json`,
-                        the root from $CLAUDE_PROJECT_DIR, else `git rev-parse --show-toplevel` in the current folder
+    MISHMERET_CONFIG    the config file's path (the project's shim sets it); unset, `<root>/.mishmeret/config.json`,
+                        else `<root>/.claude/mishmeret.json` - the root from $CLAUDE_PROJECT_DIR, else `git rev-parse
+                        --show-toplevel` in the current folder
     MISHMERET_<FIELD>   overrides a text or number field (a number field's value read as an int), and
     MISHMERET_NIGHT_<KEY> one key of `night` - no other table's key has a variable
 
@@ -38,7 +39,8 @@ FIELDS = {
     "board_port": int,          # board, board_server: the Board's page
     "tmux_session": str,        # agents, agents-lib, agents-morning
     "tmux_conf": str,           # agents
-    "claude_projects": str,     # role_usage, agents-lib: Claude Code's transcripts folder
+    "transcripts": dict,        # role_usage, agents-lib: each runner's transcripts folder, by its RUNNERS name
+    "claude_projects": str,     # transcripts' old name, its `claude` folder: read until both pins and configs move
     "agent_files": str,         # agents: each role's agent file, "{role}" in its place, relative to the root
     "python": str,              # agents-lib: the project's Python, relative to the root
     "launchd_prefix": str,      # agents-morning: the launchd jobs' label prefix
@@ -60,16 +62,30 @@ FIELDS = {
 }
 GUARD = {"homes": str, "fallback_roots": list, "trees": list, "foreign": list, "retired_remotes": list, "checks": list,
          "precommit": str, "refs": dict, "main": str}
-LAND ={"planned": str, "verifier": str, "lane_check": str, "ledger": str, "server": dict, "gate_sets": dict,
+LAND = {"planned": str, "verifier": str, "lane_check": str, "ledger": str, "server": dict, "gate_sets": dict,
         "gate_env": dict, "hand_run": dict}
 SERVER = {"entry": str, "folders": list, "page": str}
 # WHAT ONLY SOME PROJECTS HAVE - a Python for the tmux roles, drafts, a list of corpus homes, a pre-commit hook, a live
 # ledger, a review server (girsa-architect, MISHMERET-OWN-CLAUDE-ARCHITECT.md in Girsa, 3: a required field only one
 # project can fill is that project's field in Mishmeret's code), and repositories no role changes (girsa-verifier's
 # review of that plan: a project's config then gains no field at its pin bump). Absent, its reader takes it as off.
+# THE PARTS A PROJECT MAY LEAVE OUT (notes/PLAN-GUARD-ONLY.md): the guard needs only the project, its roles' names and
+# its operator. Each part is what one reader needs together, all its fields or none (girsa-architect's answer, Q1);
+# a read of a field of an absent part stops with that part's sentence, naming the module that read it (Config), never
+# a KeyError - so this table is the one list of who needs what. `"land" in cfg` asks whether a part is there. A role's
+# drawing keys (DRAWN) go with the Board or the sessions.
+PARTS = {"board": ("board_dir", "board_port", "page_order", "budget"),
+         "sessions": ("tmux_session", "tmux_conf", "transcripts", "agent_files", "launchd_prefix", "state_dir",
+                      "night"),
+         "sizes": ("sizes",), "start_reads": ("start_reads",), "effort": ("effort",),
+         "landing": ("land",)}
+PART_OF = {f: part for part, fields in PARTS.items() for f in fields}
+DRAWN = ("short", "colour", "page_light", "page_dark", "corner", "tmux")
 OPTIONAL = {"python", "drafts", "guard.homes", "guard.precommit", "guard.foreign", "land.ledger", "land.server",
             "night.finish_command", "night.finish_exit_command", "expiring", "roles.runner", "guard.refs",
-            "roles.worktrees", "guard.main"}
+            "roles.worktrees", "guard.main", "claude_projects", "guard.fallback_roots", "guard.trees",
+            "guard.retired_remotes", "guard.checks", *(f for fields in PARTS.values() for f in fields),
+            *("roles." + k for k in DRAWN)}
 # WHAT EXPIRES (notes/PLAN-EXPIRING.md): each item's keys, and each source's kind with the kinds of its value -
 # expiring.READERS reads one each (a test holds the two to one list); a name given twice is refused (girsa-architect:
 # its events' UIDs would be one)
@@ -102,8 +118,34 @@ class ConfigError(Exception):
     pass
 
 
+class Config(dict):
+    """The loaded config: a read (`[]` or `.get`) of a field of a part the project left out raises that part's
+    sentence, naming the module that read it."""
+
+    def _absent(self, field):
+        frame = sys._getframe(2)
+        while frame and os.path.basename(frame.f_code.co_filename) == "config.py":   # this file's own helpers
+            frame = frame.f_back
+        # no caller outside this file: run as `config.py --shell`, its one script use
+        who = os.path.basename(frame.f_code.co_filename) if frame else "the session scripts (config.py --shell)"
+        part = PART_OF[field]
+        return ConfigError(f"{path()}: this project's config has no {part} part ({', '.join(PARTS[part])}) - {who} "
+                           "needs it")
+
+    def __getitem__(self, field):
+        if field in PART_OF and field not in self:
+            raise self._absent(field)
+        return dict.__getitem__(self, field)
+
+    def get(self, field, default=None):
+        if field in PART_OF and field not in self:
+            raise self._absent(field)
+        return dict.get(self, field, default)
+
+
 def root():
-    """The project's repository root: the config file's folder's parent (`<root>/.claude/mishmeret.json`)."""
+    """The project's repository root: the config file's folder's parent (`<root>/.mishmeret/config.json`, or
+    `<root>/.claude/mishmeret.json`)."""
     return os.path.dirname(os.path.dirname(os.path.abspath(path())))
 
 
@@ -117,7 +159,23 @@ def path():
         if out.returncode != 0:
             raise ConfigError("MISHMERET_CONFIG is not set and the current folder is in no git repository")
         top = out.stdout.strip()
-    return os.path.join(top, ".claude", "mishmeret.json")
+    new = os.path.join(top, ".mishmeret", "config.json")
+    return new if os.path.exists(new) else os.path.join(top, ".claude", "mishmeret.json")
+
+
+ROLE_VARS = ("MISHMERET_ROLE", "CLAUDE_CODE_AGENT")     # Mishmeret's own name, then Claude Code's
+
+
+def session_role(env=None):
+    """The session's role as its environment names it (land.py, board.py, finish_hook, effort_report, the ref hook -
+    never the Bash guard, whose role is the hook input's `agent_type`: an environment is inherited by a nested run):
+    MISHMERET_ROLE, else CLAUDE_CODE_AGENT; None when neither. The two set and differing name no role - a name no
+    role has, naming both."""
+    env = os.environ if env is None else env
+    named = {v: env[v] for v in ROLE_VARS if env.get(v)}
+    if len(set(named.values())) > 1:
+        return "a session whose " + " and ".join(f"{v} ({r})" for v, r in named.items()) + " differ"
+    return next(iter(named.values()), None)
 
 
 def _typed(name, want, value, where, from_env=False):
@@ -163,14 +221,28 @@ def load(p=None):
         if name not in raw and env is None:     # an OPTIONAL field the project has not (_exact let only those through)
             continue
         cfg[name] = _typed(name, want, raw[name] if env is None else env, p, from_env=env is not None)
-    _exact(cfg["night"], NIGHT, p + ": night", "night.")
-    night = {}
-    for k, t in NIGHT.items():
-        env = os.environ.get(f"MISHMERET_NIGHT_{k.upper()}")
-        if k not in cfg["night"] and env is None:     # an OPTIONAL command the project has not
-            continue
-        night[k] = _typed("night." + k, t, cfg["night"][k] if env is None else env, p, from_env=env is not None)
-    cfg["night"] = night
+    if "claude_projects" in cfg:                # the old name, read as the new until both configs move
+        if "transcripts" in cfg:
+            raise ConfigError(f"{p}: claude_projects is transcripts' old name - give transcripts alone")
+        cfg["transcripts"] = {"claude": cfg.pop("claude_projects")}
+    if "transcripts" in cfg and not ("claude" in cfg["transcripts"] and set(cfg["transcripts"]) <= set(RUNNERS)
+                                     and all(isinstance(v, str) and v for v in cfg["transcripts"].values())):
+        raise ConfigError(f"{p}: transcripts must give each runner of {', '.join(RUNNERS)} its folder, claude's at least")
+    for part, fields in PARTS.items():
+        have = [f for f in fields if f in cfg]
+        if have and len(have) != len(fields):
+            raise ConfigError(f"{p}: the {part} part is all its fields or none - it has {', '.join(have)}, lacks "
+                              + ", ".join(f for f in fields if f not in cfg))
+    if "night" in cfg:
+        _exact(cfg["night"], NIGHT, p + ": night", "night.")
+        night = {}
+        for k, t in NIGHT.items():
+            env = os.environ.get(f"MISHMERET_NIGHT_{k.upper()}")
+            if k not in cfg["night"] and env is None:     # an OPTIONAL command the project has not
+                continue
+            night[k] = _typed("night." + k, t, cfg["night"][k] if env is None else env, p, from_env=env is not None)
+        cfg["night"] = night
+    drawn = "board_dir" in cfg or "tmux_session" in cfg
     for i, r in enumerate(cfg["roles"]):
         if not isinstance(r, dict):
             raise ConfigError(f"{p}: roles[{i}] is not a table")
@@ -180,20 +252,24 @@ def load(p=None):
                 _typed(f"roles[{i}].{k}", t, r[k], p)
         if r.get("runner", "claude") not in RUNNERS:
             raise ConfigError(f"{p}: roles[{i}].runner must be one of {', '.join(RUNNERS)}, not {r['runner']!r}")
+        if not drawn:
+            continue
+        if any(k not in r for k in DRAWN):
+            raise ConfigError(f"{p}: roles[{i}] needs {', '.join(DRAWN)} - the Board and the sessions draw each role")
         # a colour is "" only where the role is not drawn: no tmux pane, no corner on the page
         for k, used in (("colour", r["tmux"]), ("page_light", r["corner"]), ("page_dark", r["corner"])):
             if bool(r[k]) != used:
                 raise ConfigError(f"{p}: roles[{i}].{k} must be " + ("a colour" if used else '"" (the role is not drawn)'))
-    shorts = {r["short"] for r in cfg["roles"]}
-    if sorted(cfg["page_order"]) != sorted(r["short"] for r in cfg["roles"] if r["corner"]) or len(shorts) != len(
-            cfg["roles"]):
+    if drawn and len({r["short"] for r in cfg["roles"]}) != len(cfg["roles"]):
+        raise ConfigError(f"{p}: each role's short name must be its own")
+    if "page_order" in cfg and sorted(cfg["page_order"]) != sorted(r["short"] for r in cfg["roles"] if r["corner"]):
         raise ConfigError(f"{p}: page_order must name each role with a corner once, by its short name")
     if cfg["operator"] not in {r["name"] for r in cfg["roles"]}:
         raise ConfigError(f"{p}: operator {cfg['operator']!r} is not one of the roles")
     for field, keys in (("sizes", SIZES), ("start_reads", START_READS), ("drafts", DRAFTS), ("guard", GUARD),
                         ("land", LAND), ("budget", BUDGET), ("land.server", SERVER)):
         parent, _, key = field.rpartition(".")
-        table = (cfg[parent] if parent else cfg).get(key)
+        table = (cfg.get(parent, {}) if parent else cfg).get(key)
         if table is None:                       # an OPTIONAL table absent
             continue
         _exact(table, keys, f"{p}: {field}", prefix=field + ".")
@@ -209,17 +285,20 @@ def load(p=None):
     for i, r in enumerate(cfg["roles"]):
         if not all(isinstance(w, str) and w for w in r.get("worktrees", [])):
             raise ConfigError(f"{p}: roles[{i}].worktrees must be a list of paths")
-    for k in ("planned", "verifier"):
+    for k in ("planned", "verifier") if "land" in cfg else ():
         if cfg["land"][k] not in {r["name"] for r in cfg["roles"]}:
             raise ConfigError(f"{p}: land.{k} {cfg['land'][k]!r} is not one of the roles")
-    if "landing" not in cfg["land"]["gate_sets"] or not set(cfg["land"]["gate_env"]) <= set(cfg["land"]["gate_sets"]):
+    if "land" in cfg and ("landing" not in cfg["land"]["gate_sets"]
+                          or not set(cfg["land"]["gate_env"]) <= set(cfg["land"]["gate_sets"])):
         raise ConfigError(f"{p}: land.gate_sets must hold `landing`, and land.gate_env name only its sets")
-    if not 0 < cfg["budget"]["warn_percent"] <= 100:
+    if "budget" in cfg and not 0 < cfg["budget"]["warn_percent"] <= 100:
         raise ConfigError(f"{p}: budget.warn_percent must be 1 to 100, not {cfg['budget']['warn_percent']}")
-    _rows(cfg["sizes"]["files"], (int, str), f"{p}: sizes.files")
-    _rows(cfg["effort"], (str, str), f"{p}: effort")
+    if "sizes" in cfg:
+        _rows(cfg["sizes"]["files"], (int, str), f"{p}: sizes.files")
+    if "effort" in cfg:
+        _rows(cfg["effort"], (str, str), f"{p}: effort")
     _expiring(cfg.get("expiring", []), p)
-    return cfg
+    return Config(cfg)
 
 
 def _expiring(items, p):
@@ -258,20 +337,20 @@ def expand(p):
 
 
 def transcripts(tree):
-    """Claude Code's folder for the sessions started in `tree`, under the config's claude_projects: the tree's absolute
-    path with every character but a letter or digit made "-" - the one rule (the audit's item 5: three, which
-    disagreed for a path holding "_" or a claude_projects of the project's own)."""
-    return os.path.join(expand(load()["claude_projects"]), re.sub(r"[^A-Za-z0-9]", "-", os.path.abspath(tree)))
+    """Claude Code's folder for the sessions started in `tree`, under the config's transcripts' `claude`: the tree's
+    absolute path with every character but a letter or digit made "-" - the one rule (the audit's item 5: three, which
+    disagreed for a path holding "_" or a transcripts folder of the project's own)."""
+    return os.path.join(expand(load()["transcripts"]["claude"]), re.sub(r"[^A-Za-z0-9]", "-", os.path.abspath(tree)))
 
 
 def role_names(**only):
     """The roles' names in the config's order; `tmux=True` or `corner=True` keeps those alone."""
-    return [r["name"] for r in load()["roles"] if all(r[k] == v for k, v in only.items())]
+    return [r["name"] for r in load()["roles"] if all(r.get(k) == v for k, v in only.items())]
 
 
 # The shell scripts' names for the fields they read: field, its variable, how its value is written.
 SHELL = (("project", "MM_PROJECT", str), ("tmux_session", "MM_SESSION", str), ("tmux_conf", "MM_TMUX_CONF", expand),
-         ("claude_projects", "MM_PROJECTS", expand), ("python", "MM_PYTHON", expand),
+         ("transcripts", "MM_PROJECTS", lambda t: expand(t["claude"])), ("python", "MM_PYTHON", expand),
          ("agent_files", "MM_AGENT_FILES", str), ("launchd_prefix", "MM_LAUNCHD_PREFIX", str), ("state_dir", "MM_STATE_DIR", expand),
          ("operator", "MM_OPERATOR_ROLE", str))
 
@@ -282,11 +361,13 @@ def shell():
     order they are made, as the page draws its corners), each one's colour (MM_COLOURS, `name=colour` words), and the
     night run's knobs."""
     cfg = load()
+    cfg["tmux_session"]                     # the session scripts' part, read first: absent, they stop here
     tmux = [r for r in cfg["roles"] if r["tmux"]]
     by_short = {r["short"]: r for r in tmux}
     pairs = [("MM_ROOT", root())] + [(var, how(cfg[field]) if field in cfg else "") for field, var, how in SHELL]
     pairs.append(("MM_ROLES", " ".join(r["name"] for r in tmux)))
-    pairs.append(("MM_LAYOUT", " ".join(by_short[s]["name"] for s in cfg["page_order"] if s in by_short)))
+    order = cfg["page_order"] if "page_order" in cfg else list(by_short)    # no Board: the config's own order
+    pairs.append(("MM_LAYOUT", " ".join(by_short[s]["name"] for s in order if s in by_short)))
     pairs.append(("MM_COLOURS", " ".join(f"{r['name']}={r['colour']}" for r in tmux)))
     pairs.append(("MM_PI_ROLES", " ".join(r["name"] for r in tmux if r.get("runner") == "pi")))
     pairs += [(f"MM_NIGHT_{k.upper()}", str(v)) for k, v in cfg["night"].items()]

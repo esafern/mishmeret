@@ -3,6 +3,7 @@ by some module. A placeholder project; no project's names."""
 import glob
 import json
 import os
+import re
 import subprocess
 import sys
 
@@ -72,19 +73,22 @@ def test_the_sample_loads_and_its_root_is_the_config_files_project(write, tmp_pa
     assert config.role_names() == ["ex-operator", "ex-builder", "ex-helper"]
     assert config.role_names(tmux=True) == ["ex-operator", "ex-builder"]
     assert config.expand("venv/bin/python") == os.path.join(str(tmp_path), "venv/bin/python")
-    # the transcripts' folder Claude Code keeps for a tree, under claude_projects: every character but a letter or digit
+    assert cfg["transcripts"] == {"claude": "~/.claude/projects"} and "claude_projects" not in cfg    # its old name
+    # the transcripts' folder Claude Code keeps for a tree, under transcripts' claude: every character but a letter or digit
     # made "-" (the audit's item 5: one reader replaced only "/" and ".", so "my_project" missed its memory index)
     assert config.transcripts("/Users/x/work/my_project.v2") == os.path.expanduser(
         "~/.claude/projects/-Users-x-work-my-project-v2")
 
 
 @pytest.mark.parametrize("change, said", [
-    (lambda c: c.pop("board_port"), "missing board_port"),
+    (lambda c: c.pop("board_port"), "the board part is all its fields or none - it has board_dir, page_order, budget, "
+                                    "lacks board_port"),
     (lambda c: c.update(extra=1), "unknown extra"),
     (lambda c: c["night"].pop("gap"), "night: missing gap"),
     (lambda c: c["night"].update(finish_command=5), "night.finish_command must be str"),
     (lambda c: c["night"].update(finished_quiet=120), "night: unknown finished_quiet"),
-    (lambda c: c["roles"][0].pop("tmux"), "roles[0]: missing tmux"),
+    (lambda c: c["roles"][0].pop("tmux"), "roles[0] needs short, colour, page_light, page_dark, corner, tmux - the Board "
+                                          "and the sessions draw each role"),
     (lambda c: c.update(board_port="x"), "board_port must be int"),
     (lambda c: c.update(board_port=True), "board_port must be int"),
     (lambda c: c.update(operator="nobody"), "operator 'nobody' is not one of the roles"),
@@ -97,13 +101,21 @@ def test_the_sample_loads_and_its_root_is_the_config_files_project(write, tmp_pa
     (lambda c: c["sizes"]["files"].update({"A.md": [100]}), "sizes.files: A.md must be [int, str]"),
     (lambda c: c["sizes"]["files"].update({"A.md": ["100", "home"]}), "sizes.files: A.md must be [int, str]"),
     (lambda c: c["effort"].update({"ex-builder": "high"}), "effort: ex-builder must be [str, str]"),
-    (lambda c: c["guard"].pop("trees"), "guard: missing trees"),
     (lambda c: c["guard"].update(checks="pytest"), "guard.checks must be list"),
     (lambda c: c["land"]["server"].pop("page"), "land.server: missing page"),
     (lambda c: c["land"].update(planned="nobody"), "land.planned 'nobody' is not one of the roles"),
     (lambda c: c["land"].update(gate_sets={"quick": []}), "land.gate_sets must hold `landing`"),
     (lambda c: c["land"].update(gate_env={"other": {}}), "land.gate_env name only its sets"),
-    (lambda c: c.pop("budget"), "missing budget"),
+    (lambda c: c.pop("budget"), "the board part is all its fields or none - it has board_dir, board_port, page_order, "
+                                "lacks budget"),
+    (lambda c: c.pop("night"), "the sessions part is all its fields or none"),
+    (lambda c: c.pop("claude_projects"), "the sessions part is all its fields or none"),
+    (lambda c: c.update(transcripts={"claude": "~/t"}), "claude_projects is transcripts' old name - give transcripts alone"),
+    (lambda c: c.pop("claude_projects") and c.update(transcripts={"claude": "~/t", "gemini": "~/g"}),
+     "transcripts must give each runner of claude, pi its folder, claude's at least"),
+    (lambda c: c.pop("claude_projects") and c.update(transcripts={"pi": "~/p"}), "transcripts must give each runner"),
+    (lambda c: c.pop("claude_projects") and c.update(transcripts={"claude": ""}), "transcripts must give each runner"),
+    (lambda c: c.pop("claude_projects") and c.update(transcripts="~/t"), "transcripts must be dict"),
     (lambda c: c["budget"].update(warn_percent="80"), "budget.warn_percent must be int"),
     (lambda c: c["budget"].update(warn_percent=0), "budget.warn_percent must be 1 to 100, not 0"),
 ])
@@ -121,10 +133,14 @@ def test_a_project_without_the_optional_fields_loads_and_each_reader_takes_them_
     tmux roles, no drafts, no list of homes, no pre-commit hook, no ledger and no review server loads; each reader, run
     on that config: no file is a draft, the corpus roots are the fallback alone, the server loads nothing and asks for
     no restart, no ledger is copied, there is no hook to install, and the shell form says MM_PYTHON=''. A required one
-    absent is still refused (above)."""
+    absent is still refused (above). The parts a project may leave out whole, and a role's drawing keys, are the next
+    test's; `claude_projects`, transcripts' old name, stands for its part here."""
     cfg = sample()
     for dotted in config.OPTIONAL:
         parent, _, key = dotted.rpartition(".")
+        if (not parent and (key in config.PART_OF or key == "claude_projects")) or (
+                parent == "roles" and key in config.DRAWN):
+            continue
         held = cfg[parent] if parent else cfg
         for table in held if isinstance(held, list) else [held]:       # roles.runner: a key of each role's entry
             table.pop(key, None) if isinstance(held, list) else table.pop(key)
@@ -140,7 +156,7 @@ def test_a_project_without_the_optional_fields_loads_and_each_reader_takes_them_
         "try:\n    t.install()\nexcept SystemExit as e:\n    print(e)\n")
     out = subprocess.run([sys.executable, "-c", probe], capture_output=True, text=True, env=os.environ, cwd=PKG)
     assert out.returncode == 0, out.stderr
-    assert out.stdout.splitlines() == ["(0, '')", "('~/book',) set() None () []",
+    assert out.stdout.splitlines() == ["(0, '')", "() set() None () []",           # no homes and no fallback roots
                                        "the project's config names no guard.precommit - there is no hook to install"]
     shell = subprocess.run([sys.executable, os.path.join(PKG, "config.py"), "--shell"], capture_output=True, text=True,
                            env=os.environ)
@@ -230,8 +246,9 @@ def test_the_refs_owners_and_the_roles_worktrees_are_checked(write):
 
 
 def test_every_field_is_read_by_some_module_or_the_projects_shim():
-    """WIRED TO NOTHING (LESSONS.md): a field no module reads is refused here, not left in every config."""
-    shim = {"repository", "mishmeret_commit"}
+    """WIRED TO NOTHING (LESSONS.md): a field no module reads is refused here, not left in every config. An old name
+    (`claude_projects`, transcripts') is config.py's alone: it reads it as the new until both configs move."""
+    shim = {"repository", "mishmeret_commit", "claude_projects"}
     files = [f for f in glob.glob(os.path.join(PKG, "*")) if os.path.isfile(f) and not f.endswith("config.py")]
     py = "".join(open(f, encoding="utf-8").read() for f in files if f.endswith(".py"))
     sh = "".join(open(f, encoding="utf-8").read() for f in files if f.endswith(".sh"))
@@ -240,3 +257,115 @@ def test_every_field_is_read_by_some_module_or_the_projects_shim():
     unread = [f for f in config.FIELDS if f not in shim and f'"{f}"' not in py and f"'{f}'" not in py
               and not (f in by_shell and by_shell[f] in sh)]
     assert unread == []
+
+
+def test_a_project_may_leave_out_each_part_whole_and_a_part_half_given_is_refused(write):
+    """notes/PLAN-GUARD-ONLY.md, item 1 (girsa-architect's Q1): the guard alone needs six fields; each part (config.PARTS)
+    is all its fields or none, so a field left out by mistake is refused, not read as off. A role's drawing keys go
+    with the Board or the sessions, and a short name is then each role's own."""
+    from conftest import minimal_config
+    write(minimal_config())
+    loaded = config.load()
+    assert set(loaded) == {"repository", "mishmeret_commit", "project", "roles", "operator", "guard"}
+    for part, fields in config.PARTS.items():
+        cfg = sample()
+        for f in fields:
+            cfg.pop("claude_projects" if f == "transcripts" else f)
+        write(cfg)
+        assert not set(fields) & set(config.load()), part           # loads, the part absent
+        cfg = sample()
+        for f in fields[1:] if part != "sessions" else ("tmux_conf",):
+            cfg.pop(f)
+        if len(fields) > 1:
+            write(cfg)
+            with pytest.raises(config.ConfigError, match=f"the {part} part is all its fields or none"):
+                config.load()
+    write(minimal_config(roles=[{"name": "ex-operator", "short": "op"}, {"name": "ex-builder", "short": "op"}]))
+    config.load()                                   # undrawn: a role's drawing keys, if given, are not checked
+    cfg = sample()
+    for f in config.PARTS["board"]:
+        cfg.pop(f)
+    cfg["roles"][1]["short"] = "operator"
+    write(cfg)
+    with pytest.raises(config.ConfigError, match="each role's short name must be its own"):
+        config.load()
+
+
+def test_a_read_of_an_absent_part_raises_its_sentence_naming_the_reader(write, tmp_path):
+    """girsa-architect's Q1: no reader meets a KeyError - `[]` and `.get` of an absent part's field raise its sentence,
+    naming the module that read it; `in` asks whether it is there. Every module imported under the guard-alone config
+    loads, or stops at its read so; the guard and its hooks load."""
+    from conftest import minimal_config
+    import subprocess as sp
+    sp.run(["git", "init", "-q", str(tmp_path)], check=True)
+    write(minimal_config(guard={"foreign": [str(tmp_path / "other")]}))
+    cfg = config.load()
+    assert "board_dir" not in cfg and "land" not in cfg
+    for read in (lambda: cfg["board_dir"], lambda: cfg.get("board_dir"), lambda: cfg.get("board_dir", "x")):
+        with pytest.raises(config.ConfigError) as e:
+            read()
+        assert str(e.value).endswith("this project's config has no board part (board_dir, board_port, page_order, "
+                                     "budget) - test_config.py needs it"), str(e.value)
+    assert cfg.get("python") is None and cfg["guard"] == {"foreign": [str(tmp_path / "other")]}   # not a part's
+    loads, stops = [], {}
+    paths = sorted(glob.glob(os.path.join(PKG, "*.py")))
+    ours = re.compile(r"^\s*(?:import|from) (" + "|".join(os.path.basename(p)[:-3] for p in paths) + r")\b", re.M)
+    for path in paths:
+        name = os.path.basename(path)[:-3]
+        if name != "config" and not ours.search(open(path, encoding="utf-8").read()):
+            continue                                # imports none of this package: reads no config (usage_tokens)
+        out = sp.run([sys.executable, "-c", f"import {name}"], capture_output=True, text=True, env=os.environ, cwd=PKG)
+        last = (out.stderr.strip().splitlines() or [""])[-1]
+        if out.returncode == 0:
+            loads.append(name)
+        else:
+            assert re.search(r"config\.ConfigError: .*: this project's config has no \w+ part \(.*\) - \w+\.py needs it$",
+                             last), (name, out.stderr[-600:])
+            stops[name] = last.rsplit(" - ", 1)[1]
+    assert {"role_guard", "ref_hook", "time_precommit", "expiring", "draft_check_hook", "config"} <= set(loads), stops
+    assert stops.get("board") == "board.py needs it" and stops.get("land") == "land.py needs it", stops
+
+
+def test_the_shell_form_stops_without_the_sessions_part_and_orders_the_panes_by_the_config_without_a_board(write):
+    """`config.py --shell`, the session scripts' read: no sessions part - it stops on its first read, naming the session
+    scripts; the sessions without the Board - the panes in the config's own order (no page_order to read)."""
+    from conftest import minimal_config
+    write(minimal_config())
+    run = lambda: subprocess.run([sys.executable, os.path.join(PKG, "config.py"), "--shell"], capture_output=True,
+                                 text=True, env=os.environ)
+    out = run()
+    assert out.returncode != 0 and out.stderr.strip().endswith(
+        "has no sessions part (tmux_session, tmux_conf, transcripts, agent_files, launchd_prefix, state_dir, night) - "
+        "the session scripts (config.py --shell) needs it"), out.stderr
+    cfg = sample()
+    for f in config.PARTS["board"]:
+        cfg.pop(f)
+    write(cfg)
+    out = run()
+    assert out.returncode == 0 and "MM_LAYOUT='ex-operator ex-builder'" in out.stdout.splitlines(), out.stderr
+
+
+def test_the_config_is_found_in_its_new_home_before_its_old(monkeypatch, tmp_path):
+    """The reviewer, 2026-11-25: ".mishmeret for config". With no MISHMERET_CONFIG, the project's
+    `.mishmeret/config.json`, else its `.claude/mishmeret.json` (until both pins pass the move); the root either's."""
+    monkeypatch.delenv("MISHMERET_CONFIG", raising=False)
+    monkeypatch.setenv("CLAUDE_PROJECT_DIR", str(tmp_path))
+    old, new = tmp_path / ".claude" / "mishmeret.json", tmp_path / ".mishmeret" / "config.json"
+    assert config.path() == str(old)
+    new.parent.mkdir()
+    new.write_text("{}", encoding="utf-8")
+    assert config.path() == str(new) and config.root() == str(tmp_path)
+    monkeypatch.setenv("MISHMERET_CONFIG", str(old))
+    assert config.path() == str(old)                    # the shim's own path first
+
+
+def test_the_sessions_role_is_mishmeret_role_else_claude_codes_and_two_that_differ_are_no_role():
+    """The reviewer, 2026-11-25: "set the var". config.session_role, for the readers of the environment (girsa-architect's
+    Q7: never the Bash guard's role); an empty one is unset (the ref hook passes both, set or not)."""
+    r = config.session_role
+    assert r({}) is None and r({"MISHMERET_ROLE": "", "CLAUDE_CODE_AGENT": ""}) is None
+    assert r({"CLAUDE_CODE_AGENT": "ex-builder"}) == r({"MISHMERET_ROLE": "ex-builder"}) == "ex-builder"
+    assert r({"MISHMERET_ROLE": "ex-builder", "CLAUDE_CODE_AGENT": "ex-builder"}) == "ex-builder"
+    assert r({"MISHMERET_ROLE": "", "CLAUDE_CODE_AGENT": "ex-builder"}) == "ex-builder"
+    assert r({"MISHMERET_ROLE": "ex-operator", "CLAUDE_CODE_AGENT": "ex-builder"}) == \
+        "a session whose MISHMERET_ROLE (ex-operator) and CLAUDE_CODE_AGENT (ex-builder) differ"

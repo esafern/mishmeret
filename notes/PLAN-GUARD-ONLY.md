@@ -86,6 +86,26 @@ parent, so the copy was no guarded repository and nothing in it was refused (a p
 through). A config named outside its project's tree leaves that project unguarded, unsaid - main's code too, not
 this piece's: into the state's open items.
 
+THE BUILD (2026-11-25, on main 0af5d7d): the measured prototype's change, by hand, with what the build found -
+- `config.py --shell` read `cfg.get("page_order")`, which Config raises on with the Board absent: a project with the
+  sessions and no Board would have stopped there. Neither measure had that config. Now by membership, and tested.
+- The hook's NIT 1 (`LAND ={`) and NOTE 2 (a detached main clone: landings refused till re-attached, in the README),
+  and the favicon test's quote as the Board's record has it, "needfavicons [need favicons]".
+- TESTS: the parts (each left out whole, each half given refused, the drawing keys, the short names); the read of an
+  absent part (`[]`, `.get`, `in`) and every module of the package that reads the config, imported under the guard
+  alone - the guard, the ref hook, the time check, expiring and the draft check load, the others stop naming
+  themselves (board.py, land.py ...); `--shell` with no sessions part and with no Board; the config's two homes; the
+  role function; the guard alone, live in a repository found by its new home with no MISHMERET_CONFIG (commit, merge,
+  rebase and cherry-pick the operator's as git makes them; the main clone, the push, the delete, the foreign
+  repository, the stash, a check that cannot stop the commit, the live tmux server; MISHMERET_ROLE in the hook's
+  environment no role); the command rule's two names; the ref hook's text and its role by MISHMERET_ROLE, two
+  differing no role; land.py, board.py, the effort report, the Stop hook and pi's bash each reading or setting it;
+  transcripts' cases.
+- 29 RULES each red with it taken out (mutate.py, the scratch copy that copies all of `.claude/`: the ref hook's tests
+  need the shim helper and land.py), the baseline passing. The suite: 199 passed.
+- RULE 45 at the build, main 0af5d7d's guard against the build's own snapshot, by role (`each`): the first project's
+  170,908 and Mishmeret's 1,815, each newly refused 0, newly let through 0, faults 0.
+
 Today a project cannot take the guard alone. `config.load` wants 21 of the config's 24 top-level fields - the Board's
 folder, port and page order, the tmux session and its settings, Claude Code's transcripts folder, the agent files, the
 launchd prefix, the night run's knobs, the reports' tables, the landing's - and each role's drawing keys (short name,
@@ -225,10 +245,12 @@ then refuses deeper (the session modules: their entry points, measured, say why)
 - mishmeret/role_guard.py (no landing part; the guard table's four keys; the tmux rule's session by membership;
   the rule refusing a command that sets MISHMERET_ROLE)
 - mishmeret/land.py, board.py, finish_hook.py, effort_report.py, ref_hook.py, pi_guard.ts (MISHMERET_ROLE);
-  role_usage.py, role_sessions.py, keepalive_due.py (`transcripts`)
+  `transcripts`' readers (role_usage.py, role_sessions.py, keepalive_due.py, agents-lib.sh) unchanged - they read it
+  through `config.transcripts()` and `--shell`'s MM_PROJECTS
 - tests/test_config.py (the four refusals' words, the optional-fields test by parts, WIRED TO NOTHING taking the old
   name as config.py's own), tests/test_guard.py,
-  tests/conftest.py (a minimal placeholder project beside the full one)
+  tests/conftest.py (a minimal placeholder project beside the full one), tests/test_ref_hook.py, tests/test_board.py,
+  tests/test_reports.py, tests/test_sessions.py, tests/test_pi_role.py (MISHMERET_ROLE read or set)
 - README.md (the guard alone)
 - notes/PLAN-GUARD-ONLY.md, notes/LOG.md, notes/STATE-mishmeret-builder.md
 

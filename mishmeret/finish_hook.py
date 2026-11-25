@@ -29,7 +29,7 @@ def main():
         return
     message = data.get("last_assistant_message") if isinstance(data, dict) else None
     said = role_usage.closing(message) if isinstance(message, str) else None
-    role, pane = os.environ.get("CLAUDE_CODE_AGENT"), os.environ.get("TMUX_PANE")
+    role, pane = config.session_role(), os.environ.get("TMUX_PANE")
     try:
         if not said or not pane or role not in config.role_names(tmux=True):
             return

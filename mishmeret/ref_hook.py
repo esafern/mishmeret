@@ -10,7 +10,8 @@ never sees - this sees every ref update of the repository, from its main clone o
 
 Who may move which ref is the guard's one rule (role_guard._owner and may_move): a `guard.refs` ref and a replacement
 their owner's alone; main's branch (`guard.main`, and the one the main clone has checked out) the operator's, but a
-fast-forward - a landing - any role's. The role is the session's CLAUDE_CODE_AGENT; with none, a session with no role.
+fast-forward - a landing - any role's. The role is the session's (config.session_role: MISHMERET_ROLE, else
+CLAUDE_CODE_AGENT); with none, a session with no role.
 Exit 1 refuses the transaction and says why; the hook's own fault refuses it too."""
 import os
 import shlex
@@ -37,7 +38,7 @@ s={shim}
 lines=$(cat)
 case "$lines" in *" refs/"*) ;; *) exit 0 ;; esac
 printf '%s\\n' "$lines" | env -i PATH="$PATH" HOME="$HOME" GIT_DIR="${{GIT_DIR-}}" \\
-    CLAUDE_CODE_AGENT="${{CLAUDE_CODE_AGENT-}}"{checkout} {python} -I "$s" prepared
+    MISHMERET_ROLE="${{MISHMERET_ROLE-}}" CLAUDE_CODE_AGENT="${{CLAUDE_CODE_AGENT-}}"{checkout} {python} -I "$s" prepared
 """
 
 
@@ -142,7 +143,7 @@ def main(argv):
         del os.environ[k]
     lines = [tuple(line.split(" ", 2)) for line in sys.stdin.read().splitlines() if line.count(" ") >= 2]
     try:
-        why = refusal(os.environ.get("CLAUDE_CODE_AGENT") or rg.NO_ROLE, lines, where)
+        why = refusal(config.session_role() or rg.NO_ROLE, lines, where)
     except Exception as e:
         why = f"refused by the ref hook: the hook itself failed ({type(e).__name__}: {e}) - nothing was checked"
     if why:

@@ -116,6 +116,8 @@ def test_the_effort_report_reads_the_configs_roles_and_flags_a_file_that_differs
     assert "low" in row.split()[3], row          # the user setting, read for the file's model
     assert any(line.startswith("ex-verifier") and "not in the operator's table" in line for line in lines), lines
     assert any("role (none - started without --agent), running at low" in line for line in lines), lines
+    lines, _ = er.report(str(agents), str(settings), env={"CLAUDE_EFFORT": "low", "MISHMERET_ROLE": "ex-builder"})
+    assert any("this session: role ex-builder, running at low" in line for line in lines), lines   # session_role
     assert er.AGENTS_DIR.endswith(os.path.join(".claude", "agents")) and er.AGENT_FILE == "{role}.md"
 
 
