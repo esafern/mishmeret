@@ -22,8 +22,10 @@ Rewritten in place when a piece lands and at the end of a session; the log is `n
   the reviewer's questions 4-6 (is `~/work/rav-shvat-blog` foreign to the citation normalizer; the stash rule for one
   agent; the names - asked in this pane 2026-11-25), then girsa-verifier's review. Its prototype was in this session's
   scratchpad (guardonly/proto): the plan names each change. Rebase the branch on main before the build.
-- The first project's bump to 3016e2b or later: its steps sent to girsa-builder (girsa-verifier's NOTE 1 order: the
-  pin, then `guard.main` with its own branch's name, the older-worktree landing, then `ref_hook.py --install`).
+- The first project's bump to 3016e2b or later: its steps sent to girsa-builder, who forwarded them to girsa-operator
+  (Board #3378) - in the first project the pin bump is girsa-operator's, not girsa-builder's as the brief says. In
+  girsa-verifier's NOTE 1 order: the pin, then `guard.main` with its own branch's name, the older-worktree landing,
+  then `ref_hook.py --install`.
 - To resume: `git -C ~/work/mishmeret log --oneline -3`; `git -C ~/work/mishmeret-builder status -sb` (branch
   `builder-state-2026-11-25`: delete it once merged); the Board, and a watcher on any Board item a piece waits on.
 
