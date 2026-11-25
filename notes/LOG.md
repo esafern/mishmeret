@@ -40,6 +40,15 @@ M21. **[2026-11-25, git's reference-transaction hook (notes/PLAN-REF-HOOK.md; gi
       (`refs/replace/` let through), each with a test; NOTEs 1-2 for the README. **[11:29]** Taken: `guard.main`, an
       OPTIONAL field both callers read (the fix was left to me and girsa-architect - to tell it, live, at the commit);
       `refs/replace/*` the operator's in the one rule. The live measure again: 74, 0 faults.
+    * Committed 89479c6; sent, live, the NOTICE of the choice to girsa-architect. Its ANSWER, live (the first project's
+      ae09078f5): agreed, with two changes - the first project's main branch is not named `main`, so its `guard.main`
+      is its own name; and land.py refuses a landing while the main clone holds another branch than `guard.main`.
+      Both taken.
+    * **[11:56]** BUILT on `builder-ref-hook`: the hook, the one rule, the escapes, `guard.main`, replacements, the
+      install, land.py's check; README's section. My fault: the `-I` test planted its file before the install, which
+      then ran it and installed nothing - caught by its mutation (GREEN), fixed. Three parts git already says deleted.
+      Rule 45 on the build equal to the prototype's. The mutations' second run: 35 of 35 RED; the suite 185 passed.
+      To send at the notes commit, live: the build's HANDOFF to girsa-verifier.
 
 M20. **[2026-11-24, a ref judged by the repository, not the folder (notes/PLAN-PROTECTED-REFS.md; the first project's
     #304 A)]**

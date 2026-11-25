@@ -59,6 +59,39 @@ main rewound under a detached main clone and mid-rebase, and a builder's `git re
 the operator's own replace and its removal let through. A wording to fix at the build: the replacement's refusal says
 "a ref `guard.refs` gives to", and it is built in.
 
+GIRSA-ARCHITECT'S FOLLOW-UP on `guard.main` (the same document, "Follow-up, 2026-11-25", at ae09078f5), on my notice of
+the choice: agreed - a field both callers read, not the install's text (git keeps no record of the branch a detached
+main clone left; the Bash guard cannot read the hook). Two changes, each taken at the build:
+1. The first project's main branch is not named `main` (it has no such branch): its `guard.main` is its main branch's
+   own name, read from its main clone, or MEDIUM 1 stays open in the one project it was found for. Mishmeret's is
+   `main`.
+2. One definition of main's branch: land.py takes it from the main clone's HEAD, so where `guard.main` is set a
+   landing is refused while the main clone holds another branch - a wrong or stale name met at the next landing, not
+   a hole left in silence. A test: `guard.main` naming another branch, `land.py land` refused with its sentence.
+
+THE BUILD (the change below, with the review's MEDIUM 1 and LOW 1 and the architect's follow-up). Found at the build:
+- A replacement's refusal in its own words: `_owner` gives it the kind `replace`, the operator's alone, not a
+  `guard.refs` ref.
+- Three parts no case could see, each because git already says it, deleted (THE MUTATION THAT DID NOT FAIL): the
+  Python filter for `refs/` (the hook's shell passes only a transaction naming one, and a line of HEAD or a pseudo-ref
+  has no owner), and in "forward" the tests for a symbolic value and for zeros (`merge-base --is-ancestor` answers no
+  to each).
+- MY FAULT, caught by its mutation: the `-I` test planted its `usercustomize` before the install, which the install's
+  own Python then ran - it exited 0 having installed nothing, and the test passed with `-I` taken out. Now it installs
+  first, reads the hook's text for the scratch HOME, then plants and runs the control.
+- The skill's mutate.py copies `mishmeret/`, `tests/` and `.claude/skills/`; the hook's tests need `.claude/`'s shim
+  helper and land.py, so its rows ran on a scratch copy of mutate.py copying all of `.claude/` (mutate_full.py) - a
+  NOTE for the skill, the operator's lane.
+- Tests: tests/test_ref_hook.py (6: the live measure's cases as its roles, the fetch's cost, the install, `-I`, the
+  hook's text at `prepared` alone and with its shim missing, a repository git cannot name); REF_CASES 39 more (26
+  refused, 13 let through: the escapes and their siblings, `guard.main` with the main clone detached, a glob over it,
+  replacements); land.py refused under another `guard.main`; the config's two checks. The suite: 185 passed.
+- Each rule red with it taken out: 35 rows over role_guard.py, ref_hook.py, config.py and land.py (mutations.json),
+  each RED over a passing baseline (mutate_full.py, its second run on the final code).
+- Rule 45 on the build (decide.py, a snapshot of it, against main e8cfcb0's): by role, as girsa-builder and as
+  girsa-operator, the first project's 170,908 each newly refused 1, let through 0, faults 0 - the comparisons equal
+  to the prototype's (girsa-operator's `export HOME=` then `~`); Mishmeret's 0, 0, 0.
+
 ON THE RECORD (the guard-measure skill's extract.py, 2026-11-25: the first project's 1,105 transcripts with its pi
 sessions, 170,908 command-cwd-role triples; Mishmeret's 11, 1,815), each form searched as text in the command:
 - `core.hooksPath`: 21 commands - reads (`git config --get core.hooksPath`) but girsa-verifier's 2 (`-c
@@ -214,8 +247,10 @@ such hook), the reftable backend (no packed-refs), Linux and Windows (`env -i`, 
 ## Files
 
 - mishmeret/ref_hook.py (new: the hook, its install)
-- mishmeret/role_guard.py (`may_move`; the escapes; `_push_config` given its keys)
-- mishmeret/config.py (`guard.refs` globs under `refs/`)
+- mishmeret/role_guard.py (`may_move`; the escapes; `_push_config` given its keys; `guard.main` and replacements in
+  `_owner`)
+- mishmeret/config.py (`guard.refs` globs under `refs/`; `guard.main`)
+- mishmeret/land.py (a landing refused while the main clone holds another branch than `guard.main`)
 - tests/test_ref_hook.py (new), tests/test_guard.py, tests/test_config.py
 - README.md (the hook, its install, what it refuses and its costs; the config's `guard.refs` line)
 - notes/PLAN-REF-HOOK.md, notes/LOG.md, notes/STATE-mishmeret-builder.md
@@ -238,8 +273,9 @@ such hook), the reftable backend (no packed-refs), Linux and Windows (`env -i`, 
 ## For the first project
 
 At its pin bump to this piece's commit: its `.claude/hooks/ref_hook.py` (a shim, as its others), its config's
-`guard.main` ("main", with the bump: an older pin refuses the key - the older-worktree landing first, as for
-`guard.refs`), then, once the bump is on main, girsa-operator runs `python3 .claude/hooks/ref_hook.py --install` in
+`guard.main` - its main branch's own name, as `git -C <main clone> branch --show-current` gives it, not `main`
+(girsa-architect's follow-up) - with the bump (an older pin refuses the key: the older-worktree landing first, as for
+`guard.refs`); then, once the bump is on main, girsa-operator runs `python3 .claude/hooks/ref_hook.py --install` in
 the main clone - the first project's own step, as the time check's `--install` was. Before any later move of the pin
 to a commit without the hook, the hook is removed first (the review's NOTE 1). For Mishmeret's own repository,
 mishmeret-operator does the same after Mishmeret's own pin moves.
