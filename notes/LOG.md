@@ -15,6 +15,12 @@ M23. **[2026-11-25, the guard alone (notes/PLAN-GUARD-ONLY.md)]**
       into `rav-shvat-blog`, a stash, a remote branch's deletion), with no role 34. Mishmeret's record by role
       unchanged. The board's corner cannot say "waiting for" a role of the first project (`--waiting-for` takes this
       config's roles): another of the ties.
+    * Committed 6b42157, e6cdeeb (the first project's record unchanged too). Sent, live: its design QUESTIONS 1-3 to
+      girsa-architect, 4-6 the reviewer's. girsa-architect's ANSWER, live (the first project's 7501436fb): parts, but
+      a part is what one reader needs (the reports three), and no `need()` - the read itself raises its part's
+      sentence; Q2 and Q3 agreed; its view on the names. **[11:26]** Built into the prototype: each module stops at its
+      read naming itself; the suite on it 174 of 179, the 5 the rules they test, changed. Into the plan's head. Its
+      review waits for the reviewer's 4-6.
 
 M22. **[2026-11-25, the Board's tab icon (notes/PLAN-FAVICON.md; the first project's Board #249 B)]**
     * **[10:51]** The reviewer, in this pane: "add the favicon". girsa-ui-steward's REQUEST for it, from 2026-11-16,

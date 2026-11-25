@@ -44,29 +44,59 @@ checkout, and `~/work/rav-shvat-blog`) - and the 380 commands' folder read as th
 The scripts and decision files: this session's scratchpad, guardonly/ (cmds-normalizer.jsonl, cmds-norm-copy.jsonl,
 norm-*.jsonl, r45-*.jsonl; the copy `norm/` and its config).
 
+GIRSA-ARCHITECT'S ANSWER (the first project's design-study/MISHMERET-GUARD-ONLY-ARCHITECT.md at 7501436fb, written
+before any review of this plan; it read the prototype):
+- Q1, parts - with two changes. A part is what ONE reader needs together: the reports share no field (`size_report`
+  reads `sizes` alone, `start_reading_report` `start_reads`, `effort_report` `effort` with `agent_files`), so three
+  parts of one field each. And one home for "who needs which part": not `need()` at each reader with a test's list
+  beside them (the rule in two copies), but `load()` returning a config whose read of a field of an absent part raises
+  that part's sentence, naming the reading module; `"x" in cfg` asks whether a part is there. Measured there: every
+  config read in the prototype goes through `load()` (22 call sites), none copies it into a plain dict.
+- Q2, started as its role: no role judged as the single role would make an unset variable mean the operator in one
+  kind of project; the 34 of 380 the README's measured cost of forgetting it.
+- Q3, agreed: without the landing part THROUGH_LAND has nothing to bring.
+- Its view on 5 and 6 (the reviewer's): the split is right. The config's path has one home already, the project's
+  shim; `config.path()`'s own default is a second copy, to go once the runs that reach it with no MISHMERET_CONFIG
+  are counted (not yet). "Who is this session" - land.py, board.py and finish_hook.py read CLAUDE_CODE_AGENT, pi_guard
+  sets it, the Bash guard reads the payload's `agent_type` - becomes one function in the runner adapter (Claude Code's
+  variable for Claude Code, MISHMERET_ROLE for pi). The README says only what the code reads that day: this piece
+  lands the config's new home, or its README keeps `.claude/mishmeret.json` until the move. The move's size in the
+  first project: `.claude/mishmeret.json` 208 times in 107 files, `.claude/hooks/` 153 in 62, `.claude/board/` 98 in
+  41, the shim 51 in 35, CLAUDE_CODE_AGENT 90 in 39.
+BUILT INTO THE PROTOTYPE AND MEASURED AGAIN: the six parts and the reading object (`config.Config`), the seven `need`
+calls gone (their modules as main's again). Under the minimal config each module loads or stops at its first read
+with its part's sentence naming itself ("...has no board part (board_dir, board_port, page_order, budget) - board.py
+needs it"; land.py, size_report.py, start_reading_report.py, effort_report.py each its own; `--shell` the session
+scripts). The suite on the prototype with its full placeholder config: 179, of which 174 pass and 5 are the rule
+they test, changed - four of a field missing refused by its old words (`board_port`, `budget`, a role's `tmux`, and
+`guard.trees`, now optional) and the optional-fields test, whose loop pops `land` before `land.ledger`.
+
 ## The change
 
 1. THE PARTS, each all its fields or none (`config.PARTS`): the Board (`board_dir`, `board_port`, `page_order`,
    `budget`), the sessions (`tmux_session`, `tmux_conf`, `claude_projects`, `agent_files`, `launchd_prefix`,
-   `state_dir`, `night`), the reports (`sizes`, `start_reads`, `effort`), the landing (`land`). A part half given is
-   refused at load. A role's drawing keys are required only with the Board or the sessions. `guard.fallback_roots`,
-   `trees`, `retired_remotes` and `checks` each optional, absent read as none. What is left required: `repository`,
+   `state_dir`, `night`), `sizes`, `start_reads`, `effort`, and the landing (`land`). A part half given is refused at
+   load. A role's drawing keys are required only with the Board or the sessions. `guard.fallback_roots`, `trees`,
+   `retired_remotes` and `checks` each optional, absent read as none. What is left required: `repository`,
    `mishmeret_commit`, `project`, `roles` (each a name), `operator`, `guard`.
-2. `config.need(part, who)`: the config with that part, else a ConfigError naming the part's fields and who needs
-   them - called where each module reads one (board.py, land.py, the three reports, the keep-alive, the transcripts'
-   folder, `--shell`), so no reader meets a KeyError.
+2. `config.Config`, what `load()` returns: a read (`[]` or `.get`) of a field of an absent part raises a ConfigError
+   naming the part's fields and the module that read it - PARTS the one list of who needs what, no reader meeting a
+   KeyError; `"x" in cfg` asks whether a part is there (the guard's tmux session so). A module that must not begin
+   work reads its part first (`--shell`: `tmux_session`).
 3. THE GUARD with no landing part: `git commit` and a landing `git merge` are not sent through land.py (THROUGH_LAND
    and the operator's OPERATOR_THROUGH_LAND empty); every other rule as it is. With no sessions part the tmux rule
    still refuses the live server's `kill-server` (it holds every project's sessions), and names no roles' session.
 4. THE README: a project that takes the guard alone - its config's six fields, the shim and `.claude/hooks/
    role_guard.py`, the `PreToolUse` hook in `.claude/settings.json`, one agent file so the session starts as its
-   role (or pi's `--role` with `pi_guard.ts`) - and what the guard then refuses.
+   role (or pi's `--role` with `pi_guard.ts`) - and what the guard then refuses, and the cost of starting it with no
+   role (34 of the normalizer's 380). In the names the code reads that day: `.claude/mishmeret.json` until the move
+   (girsa-architect's view on Q6), or the new home if the reviewer's answer to Q5 and Q6 brings it into this piece.
 
 Not in this piece: setting the normalizer up (its own repository, the reviewer's or its session's step, the files
 in item 4); the names (design questions 5 and 6, a piece of their own); a part's reader that loads and then refuses
 deeper (the session modules: their entry points, measured, say why).
 
-## Design questions (to girsa-architect; 2 and 4 to 6 may be the reviewer's)
+## Design questions (to girsa-architect, answered at 7501436fb, the plan's head; 4 to 6 the reviewer's, asked)
 
 1. PARTS, all or none, not each field optional: a Board with a port and no folder is no Board, and a field left out
    by mistake would read as "off". My recommendation: parts.
@@ -94,10 +124,10 @@ deeper (the session modules: their entry points, measured, say why).
 
 ## Files
 
-- mishmeret/config.py (PARTS, need, the checks with a part absent, `--shell`)
-- mishmeret/role_guard.py (no landing part; the guard table's four keys; the tmux rule's session)
-- mishmeret/board.py, land.py, size_report.py, start_reading_report.py, effort_report.py, keepalive_due.py (need)
-- tests/test_config.py, tests/test_guard.py, tests/conftest.py (a minimal placeholder project beside the full one)
+- mishmeret/config.py (PARTS, Config, the checks with a part absent, `--shell`)
+- mishmeret/role_guard.py (no landing part; the guard table's four keys; the tmux rule's session by membership)
+- tests/test_config.py (the four refusals' words, the optional-fields test by parts), tests/test_guard.py,
+  tests/conftest.py (a minimal placeholder project beside the full one)
 - README.md (the guard alone)
 - notes/PLAN-GUARD-ONLY.md, notes/LOG.md, notes/STATE-mishmeret-builder.md
 
@@ -105,9 +135,9 @@ deeper (the session modules: their entry points, measured, say why).
 
 - The minimal config loads; each part half given refused; a role's drawing keys required with the Board or the
   sessions, not without.
-- Every module under the minimal config: loads, or stops with its part's sentence - one list in the test of every
-  module and the part it needs, and a test that fails on a module reading a part it does not name (WRITE THE
-  ENUMERATION DOWN).
+- Every module under the minimal config: loads, or stops at its read with its part's sentence naming itself - each
+  module imported, PARTS the one list (girsa-architect's Q1: no second list to keep in step); a read by `.get` raises
+  as `[]` does; `"x" in cfg` does not.
 - The guard under the minimal config: `git commit` and `git merge` in the main clone let through to the operator;
   the push, foreign, stash, check-status and tmux rules as with a full config.
 - The full configs unchanged: rule 45 by role on both records (above).
