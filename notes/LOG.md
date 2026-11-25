@@ -3,6 +3,17 @@
 Findings, decisions and open work, each the moment it is known; a time from `date`. One item per run of work, newest
 first (`M01.`, `M02.` ...); what git records (what each commit did) is not repeated here.
 
+M24. **[2026-11-25, the terminal adapter (notes/PLAN-TERMINAL-ADAPTER.md)]**
+    * The reviewer: "small terminal adapter", then, asked which second terminal (WezTerm, iTerm2 or none): "wezterm".
+      Installed by Homebrew on that word (20240203-110809-5046fc22; none was here but tmux and iTerm2).
+    * THE PROBE, a private `wezterm-mux-server`: its first start failed - the socket's path, in the scratchpad, longer
+      than macOS's SUN_LEN; the socket alone moved to a short folder of the per-user temp directory. Each of tmux's
+      verbs has a `wezterm cli` form but a pane's own options, the border's label, the tiled layout, source-file.
+    * THE MEASURE, term.sh through agents.sh's sequence, 25 checks: tmux on a private server 25; WezTerm 23, then 25 -
+      get-text does not join a wrapped line (two 19-column panes), so a line as wide as its pane is joined to the
+      next. Two checks of mine at first took their wanted value from the call they checked: rewritten to fixed
+      values before the runs. Both servers stopped, their folders removed. The plan, its questions 1-5.
+
 M23. **[2026-11-25, the guard alone (notes/PLAN-GUARD-ONLY.md)]**
     * The reviewer, in this pane: "what needs to be done to sep girsa from mish? what is inv. in using mish on a new
       proj?" - answered here: the code's ties (the Board's page a Girsa template filled at start, Girsa's paths in
