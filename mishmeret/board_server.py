@@ -26,6 +26,7 @@ import role_usage  # noqa: E402
 PAGE = r"""<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Girsa Board</title>
+<link rel="icon" type="image/png" href="/favicon.png">
 <style>
 /* THE LOOK: "A - Quiet" (the reviewer's Board #28, 2026-10-13, after "this tmux panels look fine, nice clear font and muted
    colors. the girsa panel looks amateurish and non-prof."; girsa-ui-steward's sheet). One face at few sizes, neutral greys
@@ -470,6 +471,7 @@ refresh(true).then(goToQA); setInterval(() => refresh(false), 5000);
 MOCKUPS = r"""<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Girsa Board - mock-ups</title>
+<link rel="icon" type="image/png" href="/favicon.png">
 <style>
 /* The mock-ups' window in the Board's look (Board #28, "A - Quiet") */
 :root{--bg:#f5f5f4;--card:#fff;--ink:#24272b;--muted:#6b7075;--line:#e0e0dd;--accent:#3a6596}
@@ -559,6 +561,8 @@ def _rendered(cfg):
 
 
 PAGE, MOCKUPS = _rendered(config.load())
+with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "favicon.png"), "rb") as _fh:
+    ICON = _fh.read()
 
 
 class Live:
@@ -775,7 +779,9 @@ class Handler(BaseHTTPRequestHandler):
             return self._send(403, "host not allowed", "text/plain; charset=utf-8")
         if self.path in ("/", "/index.html") or self.path.startswith("/#"):
             return self._send(200, PAGE, "text/html; charset=utf-8")
-        if self.path.startswith("/img/"):           # only an image an item names, and only an image
+        if self.path == "/favicon.png":             # the tab's icon: mem on slate (the first project's Board #249 B)
+            return self._send(200, ICON, "image/png")
+        if self.path.startswith("/img/"):          # only an image an item names, and only an image
             try:
                 _, _, item_id, n = self.path.split("/")
                 path = board.items()[int(item_id)]["images"][int(n)]

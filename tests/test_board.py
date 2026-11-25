@@ -240,6 +240,31 @@ def test_the_reviewer_can_change_an_answer_on_the_board(tmp_path, monkeypatch):
     assert "data-change=" in page and "body.change = true" in page and "Changed from" in page
 
 
+def test_the_boards_pages_name_its_icon_and_the_server_serves_it(tmp_path, monkeypatch):
+    """The tab's icon (the reviewer: "girsa and mishmeret need favicons"; the first project's Board #249 B, made by
+    girsa-ui-steward: mem, white on slate): both pages link /favicon.png, served as the file's own bytes."""
+    import importlib.util
+    import threading
+    import urllib.request
+    monkeypatch.setenv("MISHMERET_BOARD_DIR", str(tmp_path / "board"))
+    monkeypatch.syspath_prepend(PKG)
+    spec = importlib.util.spec_from_file_location("board_server", os.path.join(PKG, "board_server.py"))
+    bs = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(bs)
+    link = '<link rel="icon" type="image/png" href="/favicon.png">'
+    assert link in bs.PAGE and link in bs.MOCKUPS
+    srv = bs.ThreadingHTTPServer(("127.0.0.1", 0), bs.Handler)
+    threading.Thread(target=srv.serve_forever, daemon=True).start()
+    try:
+        got = urllib.request.urlopen(f"http://127.0.0.1:{srv.server_address[1]}/favicon.png", timeout=10)
+        body = got.read()
+    finally:
+        srv.shutdown()
+    with open(os.path.join(PKG, "favicon.png"), "rb") as fh:
+        assert got.status == 200 and got.headers["Content-Type"] == "image/png" and body == fh.read()
+    assert body.startswith(b"\x89PNG")
+
+
 def test_the_board_answer_is_not_sent_again_while_it_is_the_same(tmp_path, monkeypatch):
     """M07's smaller items (notes/PLAN-KNOWN-GAPS.md, item 13): /api/board sent the whole record every 5 s - 1.5 MB in
     the first project - for the page to parse and compare whole. The page sends the hash of the answer it holds; the
