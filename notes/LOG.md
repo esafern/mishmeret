@@ -3,6 +3,12 @@
 Findings, decisions and open work, each the moment it is known; a time from `date`. One item per run of work, newest
 first (`M01.`, `M02.` ...); what git records (what each commit did) is not repeated here.
 
+M22. **[2026-11-25, the Board's tab icon (notes/PLAN-FAVICON.md; the first project's Board #249 B)]**
+    * **[10:51]** The reviewer, in this pane: "add the favicon". girsa-ui-steward's REQUEST for it, from 2026-11-16,
+      had never reached me (kept in its worktree's scratch for "when mishmeret-builder next runs"): its icon taken as
+      made. Built on branch `builder-favicon`, M21's uncommitted log lines set aside as a patch on `builder-ref-hook`
+      (never a stash). Three parts, each red with it taken out.
+
 M20. **[2026-11-24, a ref judged by the repository, not the folder (notes/PLAN-PROTECTED-REFS.md; the first project's
     #304 A)]**
     * After M19: girsa-operator's ANSWER, live - MERGED 9b979d3 by fast-forward, its scan clean; 1 ahead of origin.
