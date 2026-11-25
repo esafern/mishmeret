@@ -49,6 +49,16 @@ M21. **[2026-11-25, git's reference-transaction hook (notes/PLAN-REF-HOOK.md; gi
       then ran it and installed nothing - caught by its mutation (GREEN), fixed. Three parts git already says deleted.
       Rule 45 on the build equal to the prototype's. The mutations' second run: 35 of 35 RED; the suite 185 passed.
       To send at the notes commit, live: the build's HANDOFF to girsa-verifier.
+    * Sent, live, at 57e29e5. girsa-verifier's ANSWER, live (its #3377): VERIFIED, NOTEs 1-2 and NIT 1 - the
+      merge-tree's suite 186; its plan's cases refused with `guard.main` set; the 35 mutations RED one at a time; rule
+      45 byte-equal, and with the first project's `guard.main` set no decision changed. NOTE 1: the first project's
+      bump in order (the pin, then `guard.main`, the older-worktree landing, then the install). NOTE 2: a script can
+      still detach the main clone - landings then refused, nothing moved. NIT 1: config.py's `LAND ={`. Answered,
+      live: the NIT and NOTE 2 at the next touch of config.py and the README (the guard-only build), the branch left
+      as verified. girsa-operator's REQUEST, live: rebase onto main 43a9d97 (main linear). **[12:54]** Rebased: only
+      the first commit's log conflicted (M22 kept above M21); the code commit's patch-id equal to 0e60bc0's, the tree
+      against 57e29e5 main's favicon alone, the suite 186. Sent, live: LANDED-READY at 3016e2b. girsa-operator's
+      ANSWER, live: MERGED, main 3016e2b, not pushed. Sent, live, to girsa-builder: the NOTICE of the bump's steps.
 
 M20. **[2026-11-24, a ref judged by the repository, not the folder (notes/PLAN-PROTECTED-REFS.md; the first project's
     #304 A)]**
