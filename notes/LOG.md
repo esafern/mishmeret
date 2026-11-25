@@ -21,6 +21,17 @@ M23. **[2026-11-25, the guard alone (notes/PLAN-GUARD-ONLY.md)]**
       sentence; Q2 and Q3 agreed; its view on the names. **[11:26]** Built into the prototype: each module stops at its
       read naming itself; the suite on it 174 of 179, the 5 the rules they test, changed. Into the plan's head. Its
       review waits for the reviewer's 4-6.
+    * **[14:38]** The reviewer's answers, in this pane (the plan's head, verbatim): `rav-shvat-blog` foreign to the
+      normalizer, a customer to use it by an API; the stash rule kept; `.mishmeret/` for the config and the role
+      variable set; a small terminal adapter; protected tags for the operator (`beta-rc*`, `stage`, `prod` - "what
+      else?": `v*` offered, the normalizer having 0 tags and a CHANGELOG); `claude_projects` replaced. So the names
+      join this piece (item 5; design questions 7-8 to girsa-architect), the terminal adapter after it. Asked back:
+      the agent named `norm-builder` against Q2's operator. Then the reviewer, mid-turn: "for .claude/ paths - explain
+      the adapter. would that support arb. models? what to do to make gemini first-class alongside claude" - answered
+      here; read for it, offline: Gemini CLI 0.70.0 here has BeforeTool/AfterAgent hooks (stdin `tool_name`,
+      `tool_input`, `cwd`, `transcript_path`; exit 2 blocks with stderr; project hooks in `.gemini/settings.json`,
+      warned once per command), sessions in `~/.gemini/tmp/<project_hash>/chats/`, skills as SKILL.md in
+      `.gemini/skills/` or `.agents/skills/`; pi's package names google and google-vertex among its providers.
 
 M22. **[2026-11-25, the Board's tab icon (notes/PLAN-FAVICON.md; the first project's Board #249 B)]**
     * **[10:51]** The reviewer, in this pane: "add the favicon". girsa-ui-steward's REQUEST for it, from 2026-11-16,
