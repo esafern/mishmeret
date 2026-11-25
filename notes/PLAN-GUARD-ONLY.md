@@ -27,6 +27,19 @@ stage prod - what else? repl claude_projects". Read as:
   pushes and the tags are the operator's - the reviewer's `!` or a second session. As the operator, the tags are its
   own. The normalizer's setup, not this piece's code.
 
+GIRSA-ARCHITECT'S FOLLOW-UP on 7 and 8 (the same file at ef7c62294):
+- Q7, not in this piece: the guard keeps one source, the hook input's `agent_type`, which each runner's adapter fills
+  (Claude Code from `--agent`, pi_guard.ts from `--role`). An environment variable is inherited and `agent_type` is
+  not: nine headless `claude -p` runs on the record started from a role's shell (girsa-ui-steward 2, girsa-verifier 2,
+  mishmeret-builder 5), each no role today as a subagent is; with the fallback each would take its parent's role. Kept:
+  for the readers that already read the environment (land.py, board.py, finish_hook.py, effort_report.py,
+  ref_hook.py), one function, MISHMERET_ROLE else CLAUDE_CODE_AGENT, both set and differing no role, the refusal naming
+  both; the command rule refusing either set. A start with no agent file is the terminal adapter's to plan, measured
+  on a top-level start and a nested one.
+- Q8, the table, keyed by `config.RUNNERS`' own names: `{"claude": "~/.claude/projects", "pi":
+  "~/.pi/agent/sessions"}` (the guard-measure skill's extract.py reads pi's folder, given by hand today). No Gemini key
+  until Mishmeret starts it.
+
 Today a project cannot take the guard alone. `config.load` wants 21 of the config's 24 top-level fields - the Board's
 folder, port and page order, the tmux session and its settings, Claude Code's transcripts folder, the agent files, the
 launchd prefix, the night run's knobs, the reports' tables, the landing's - and each role's drawing keys (short name,
@@ -115,13 +128,12 @@ they test, changed - four of a field missing refused by its old words (`board_po
    the old's removal named in the plan of the move:
    - the config at `.mishmeret/config.json`: `config.path()`'s default, `.claude/mishmeret.json` when it is absent;
      the shim's own CONFIG is the project's (the normalizer's copy names the new path).
-   - `MISHMERET_ROLE`, the role variable Mishmeret reads and sets: land.py, board.py, finish_hook.py,
-     effort_report.py and ref_hook.py read it (CLAUDE_CODE_AGENT beside it); pi_guard.ts sets it; the guard's rule
-     refusing a command that sets the role variable takes both names. The guard's own role stays the hook's input
-     (`agent_type`, a subagent no role): with none, MISHMERET_ROLE from the hook's environment, so a session started
-     as `MISHMERET_ROLE=<role> claude` is its role with no agent file (design question 7).
-   - `transcripts` in place of `claude_projects`, a table by runner (`{"claude-code": "~/.claude/projects"}`), so
-     pi's and another runner's join it with no second rename (design question 8).
+   - `MISHMERET_ROLE`, the role variable Mishmeret reads and sets: one function for land.py, board.py,
+     finish_hook.py, effort_report.py and ref_hook.py - MISHMERET_ROLE else CLAUDE_CODE_AGENT, both set and differing
+     no role, named; pi_guard.ts sets it; the guard's rule refusing a command that sets the role variable takes both
+     names. The guard's own role stays the hook input's `agent_type` alone (design question 7, girsa-architect's).
+   - `transcripts` in place of `claude_projects`, a table keyed by the runners' names, `{"claude":
+     "~/.claude/projects", "pi": "~/.pi/agent/sessions"}` (design question 8).
 
 Not in this piece: setting the normalizer up (its own repository, the reviewer's or its session's step, the files
 in item 4, its `guard.foreign` and `guard.refs` above); moving the first project and Mishmeret itself to the names;
@@ -130,7 +142,7 @@ then refuses deeper (the session modules: their entry points, measured, say why)
 review: the prototype with item 5, rule 45 by role on both records with their configs as they are (old names), and the
 normalizer's copy with the new ones.
 
-## Design questions (1-3 girsa-architect's, answered at 7501436fb; 4-6 the reviewer's, answered at the head; 7-8 to girsa-architect)
+## Design questions (1-3 girsa-architect's, answered at 7501436fb, 7-8 at ef7c62294; 4-6 the reviewer's; each at the head)
 
 1. PARTS, all or none, not each field optional: a Board with a port and no folder is no Board, and a field left out
    by mistake would read as "off". My recommendation: parts.
@@ -167,7 +179,7 @@ normalizer's copy with the new ones.
 
 - mishmeret/config.py (PARTS, Config, the checks with a part absent, `--shell`; the new path; `transcripts`)
 - mishmeret/role_guard.py (no landing part; the guard table's four keys; the tmux rule's session by membership;
-  MISHMERET_ROLE in `role_of` and the rule refusing a command that sets it)
+  the rule refusing a command that sets MISHMERET_ROLE)
 - mishmeret/land.py, board.py, finish_hook.py, effort_report.py, ref_hook.py, pi_guard.ts (MISHMERET_ROLE);
   role_usage.py, role_sessions.py, keepalive_due.py (`transcripts`)
 - tests/test_config.py (the four refusals' words, the optional-fields test by parts), tests/test_guard.py,
@@ -185,5 +197,6 @@ normalizer's copy with the new ones.
 - The guard under the minimal config: `git commit` and `git merge` in the main clone let through to the operator;
   the push, foreign, stash, check-status and tmux rules as with a full config.
 - The full configs unchanged: rule 45 by role on both records (above).
-- The names: the config read at the new path, the old when it is absent; MISHMERET_ROLE as the role with no
-  `agent_type`, a difference refused, a command setting it refused; `transcripts` read, `claude_projects` beside it.
+- The names: the config read at the new path, the old when it is absent; the readers' role MISHMERET_ROLE else
+  CLAUDE_CODE_AGENT, a difference no role; a command setting either refused; the guard's role unchanged by
+  MISHMERET_ROLE in its environment; `transcripts` read, `claude_projects` beside it.

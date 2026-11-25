@@ -32,6 +32,12 @@ M23. **[2026-11-25, the guard alone (notes/PLAN-GUARD-ONLY.md)]**
       `tool_input`, `cwd`, `transcript_path`; exit 2 blocks with stderr; project hooks in `.gemini/settings.json`,
       warned once per command), sessions in `~/.gemini/tmp/<project_hash>/chats/`, skills as SKILL.md in
       `.gemini/skills/` or `.agents/skills/`; pi's package names google and google-vertex among its providers.
+    * Committed 0a7b786; QUESTIONS 7-8 sent to girsa-architect, live. Its ANSWER (the first project's ef7c62294):
+      Q7 not in this piece - the guard's role stays `agent_type` alone, since an environment variable is inherited
+      (nine nested `claude -p` runs on the record, each no role today, would take the parent's); MISHMERET_ROLE for the
+      readers of the environment, one function. Q8 the table, keyed `claude` and `pi` (`config.RUNNERS`). Into the
+      plan's head and item 5. So the reviewer's "set the var" is the readers' and pi_guard's; a session started with
+      the variable alone is no role to the guard - the terminal adapter's piece to plan, if wanted.
 
 M22. **[2026-11-25, the Board's tab icon (notes/PLAN-FAVICON.md; the first project's Board #249 B)]**
     * **[10:51]** The reviewer, in this pane: "add the favicon". girsa-ui-steward's REQUEST for it, from 2026-11-16,
