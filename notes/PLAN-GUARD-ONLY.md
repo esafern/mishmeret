@@ -60,7 +60,19 @@ MISHMERET_ROLE; the command rule's two names; pi_guard.ts setting both):
 - RULE 45 by role, main 0af5d7d's guard against the new prototype's, each project's config as it is (old names): the
   first project's 170,908 and Mishmeret's 1,815 - each newly refused 0, newly let through 0, faults 0.
 The scripts and files: this session's scratchpad, guardonly/ (proto2/, names_check.py, n45-*.jsonl and n45-cmp-*.txt,
-nn-*.jsonl, norm/.mishmeret/config.json).
+nn-*.jsonl, norm/.mishmeret/config.json). The n45 runs are ROLE `each` (the role each command was run as: 2 of the
+first project's 170,908 decisions name a session with no role); their file names do not say so.
+
+GIRSA-VERIFIER'S REVIEW (session 0b7d16, the first project's Board #3435; its REVIEW.md in that project's
+design-study/step5-verification/mishmeret-guard-only-plan-2026-11-25/): READY, no finding, NOTEs 1-2; Q1-Q3, Q7, Q8
+agreed. The case occurs. Rule 45 re-run on its own copy, main 0af5d7d's guard against proto2, as a builder, as the
+operator and as each, on both records: 0 newly refused, 0 newly let through, 0 faults in all six runs - the measure
+of record (NOTE 2). names_check.py on its copy: 15 ok. The guard fails closed under a guard-only config (check()'s
+try; the shim's stand_in for an import-time ConfigError); no reader goes around Config; the first project's own code
+reads none of the renamed names.
+- NOTE 1: the first project's ref hook, installed today, passes CLAUDE_CODE_AGENT alone - nothing breaks with
+  session_role; the install re-run at the bump that brings this piece writes the text passing both. For the bump's
+  steps (girsa-operator's) and the README.
 
 Today a project cannot take the guard alone. `config.load` wants 21 of the config's 24 top-level fields - the Board's
 folder, port and page order, the tmux session and its settings, Claude Code's transcripts folder, the agent files, the

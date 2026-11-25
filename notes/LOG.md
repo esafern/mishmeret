@@ -43,6 +43,10 @@ M23. **[2026-11-25, the guard alone (notes/PLAN-GUARD-ONLY.md)]**
       the guard's 7, 0 faults; the normalizer's copy in the new names 7 and 34 again; rule 45 by role 0, 0, 0 on both
       records. A probe of mine first ran the guard with `-I`, which hides config.py beside it: every probe a
       traceback, read as such and run again as the shim runs it. Into the plan's head; the plan to girsa-verifier.
+    * Committed 1bf2c19; the REVIEW REQUEST sent, live. girsa-verifier's ANSWER (0b7d16, Board #3435): READY, no
+      finding; NOTE 1 the first project's installed ref hook passes CLAUDE_CODE_AGENT alone (the install re-run at
+      the bump); NOTE 2 its six rule 45 runs (a builder, the operator, each; both records; 0, 0, 0) stand in the head
+      - my n45 files' names omit their role, `each` (checked: 2 of 170,908 decisions name no role). Into the head.
 
 M22. **[2026-11-25, the Board's tab icon (notes/PLAN-FAVICON.md; the first project's Board #249 B)]**
     * **[10:51]** The reviewer, in this pane: "add the favicon". girsa-ui-steward's REQUEST for it, from 2026-11-16,
