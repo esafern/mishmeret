@@ -27,7 +27,7 @@ Rewritten in place when a piece lands and at the end of a session; the log is `n
 - The first project's bump to 2327b0d: girsa-operator's (it said so, 2026-11-25), with `ref_hook.py --install` run
   again after it (girsa-verifier's NOTE 1: a hook installed earlier passes CLAUDE_CODE_AGENT alone).
 - The normalizer's setup is its own, not this lane (the plan's head): `norm-builder` and an operator, rav-shvat-blog
-  foreign, its tags the operator's - asked: are `stage` and `prod` exact names or prefixes.
+  foreign, its tags the operator's - `stage` and `prod` exact (the reviewer), `beta-rc*`; others suggested (M24).
 - To resume: `git -C ~/work/mishmeret log --oneline -3`; `git -C ~/work/mishmeret-builder status -sb`; the Board, and a
   watcher on any Board item a piece waits on.
 

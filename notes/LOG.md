@@ -13,6 +13,14 @@ M24. **[2026-11-25, the terminal adapter (notes/PLAN-TERMINAL-ADAPTER.md)]**
       get-text does not join a wrapped line (two 19-column panes), so a line as wide as its pane is joined to the
       next. Two checks of mine at first took their wanted value from the call they checked: rewritten to fixed
       values before the runs. Both servers stopped, their folders removed. The plan, its questions 1-5.
+    * Committed 78d6816; QUESTIONS 1-5 sent to girsa-architect, live. Its ANSWER (the first project's 83c414ef4): Q1,
+      Q4 agreed; Q2 the file written afresh by term_new (pane ids repeat across servers, measured there: [1, 2] twice -
+      my measure's own `rm -f` hid it); Q3 IN THIS PIECE, not after: the tmux rule's 2026-10-11 case returns by the
+      pane's WEZTERM_UNIX_SOCKET, and the refactor breaks the guard's reading of agents.sh's kill - the guard reads
+      what a script sources; Q5 agreed, a test that no script outside term.sh names the terminal; Windows (the case)
+      unmeasured, Git Bash named, the reviewer's own run before done. Into the plan's head: items 5 and 6.
+    * The reviewer, on the normalizer's tags: "exact. suggest other tags" - `stage` and `prod` exact names (as the
+      measure's config had them); suggestions answered in this pane.
 
 M23. **[2026-11-25, the guard alone (notes/PLAN-GUARD-ONLY.md)]**
     * The reviewer, in this pane: "what needs to be done to sep girsa from mish? what is inv. in using mish on a new
