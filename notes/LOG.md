@@ -9,6 +9,26 @@ M22. **[2026-11-25, the Board's tab icon (notes/PLAN-FAVICON.md; the first proje
       made. Built on branch `builder-favicon`, M21's uncommitted log lines set aside as a patch on `builder-ref-hook`
       (never a stash). Three parts, each red with it taken out.
 
+M21. **[2026-11-25, git's reference-transaction hook (notes/PLAN-REF-HOOK.md; girsa-architect's follow-up at the first
+    project's 350e01e37)]**
+    * At the start: main e8cfcb0, 0 ahead of origin (pushed); nothing open on the Board for this role. Branches
+      `builder-state-2026-11-23` and `-24` deleted (merged); `builder-ref-hook` from main.
+    * **[10:33]** The plan's case and measure, on a prototype: the hole probed (38 cases on main's guard), the record
+      counted (no role has switched git's hooks off in a guarded repository), git's own calls of the hook logged, and a
+      live run in a scratch project with the hook installed - 59 of 59 as expected after two findings in the
+      prototype: a builder's `git gc` refused (packing deletes each loose ref's file: told apart by the packed refs),
+      and the command's environment choosing the hook's config, code and Python (`MISHMERET_OPERATOR=`, `PATH=`, ...:
+      the hook now takes only what it needs). The guard refused my first live run, a script setting
+      CLAUDE_CODE_AGENT for each placeholder role, and a push into the scratch origin: run as a test instead, the
+      suite's way. Observed: a release tag made on origin elsewhere fails a builder's plain fetch whole.
+    * My faults: three refused cases moved a tag to the value it already held (the hook rightly let them through);
+      the setup's own process carried a placeholder config into the install.
+    * **[10:54]** Rule 45's first run: 2 newly refused, each a HOME= the rule read too widely (one prefixing another
+      command, before a read): narrowed to where a variable reaches git, a read let through. Its second run: 1 in each
+      of the first project's three, the operator's `export HOME=` then `~` (a named cost); Mishmeret's 0. The piece
+      paused at 10:42 for M22 (the reviewer's "add the favicon"); this item's log lines kept as a patch meanwhile. To
+      send at the plan's commit, live: its four design QUESTIONS to girsa-architect.
+
 M20. **[2026-11-24, a ref judged by the repository, not the folder (notes/PLAN-PROTECTED-REFS.md; the first project's
     #304 A)]**
     * After M19: girsa-operator's ANSWER, live - MERGED 9b979d3 by fast-forward, its scan clean; 1 ahead of origin.
