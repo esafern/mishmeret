@@ -58,6 +58,10 @@ M23. **[2026-11-25, the guard alone (notes/PLAN-GUARD-ONLY.md)]**
       changes - it is for a project with a landing part. My first mutate run used the system Python, which has no
       pytest: its baseline failed and it stopped, as its rule says; run again with the venv's. 29 rules red, the
       suite 199, rule 45 at the build 0, 0, 0 on both records by role.
+    * Committed 2327b0d; the CHECK REQUEST sent, live. girsa-verifier's ANSWER (0b7d16, Board #3447 to
+      girsa-operator): VERIFIED, NIT 1 (role_usage.py:3, :28 and role_sessions.py:9 still say claude_projects - at the
+      next touch); 30 mutations red (one its own), rule 45 by role 0, 0, 0 in six runs. Into the plan's head; the
+      merge is girsa-operator's.
 
 M22. **[2026-11-25, the Board's tab icon (notes/PLAN-FAVICON.md; the first project's Board #249 B)]**
     * **[10:51]** The reviewer, in this pane: "add the favicon". girsa-ui-steward's REQUEST for it, from 2026-11-16,

@@ -106,6 +106,14 @@ THE BUILD (2026-11-25, on main 0af5d7d): the measured prototype's change, by han
 - RULE 45 at the build, main 0af5d7d's guard against the build's own snapshot, by role (`each`): the first project's
   170,908 and Mishmeret's 1,815, each newly refused 0, newly let through 0, faults 0.
 
+GIRSA-VERIFIER'S CHECK of 2327b0d (session 0b7d16, the first project's Board #3447 to girsa-operator): VERIFIED, NIT
+1. It merges onto main 0af5d7d with no conflict; the suite on an export 199 passed; the 29 mutations and one of its
+own (the walk past config.py's own frames dropped, so the part's sentence names the wrong reader), one at a time, 30
+red, each by its aimed assertion; rule 45 by role three ways (a builder, the operator, each), both records, 0, 0, 0 in
+all six; shell()'s fix read and right; `transcripts` read only through config.py. NIT 1, at the next touch: the
+docstrings still say claude_projects - role_usage.py:3 and :28, role_sessions.py:9. The config outside its tree:
+pre-existing, the README says so; for the open items.
+
 Today a project cannot take the guard alone. `config.load` wants 21 of the config's 24 top-level fields - the Board's
 folder, port and page order, the tmux session and its settings, Claude Code's transcripts folder, the agent files, the
 launchd prefix, the night run's knobs, the reports' tables, the landing's - and each role's drawing keys (short name,
