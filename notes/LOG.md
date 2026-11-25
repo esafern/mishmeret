@@ -28,6 +28,13 @@ M21. **[2026-11-25, git's reference-transaction hook (notes/PLAN-REF-HOOK.md; gi
       of the first project's three, the operator's `export HOME=` then `~` (a named cost); Mishmeret's 0. The piece
       paused at 10:42 for M22 (the reviewer's "add the favicon"); this item's log lines kept as a patch meanwhile. To
       send at the plan's commit, live: its four design QUESTIONS to girsa-architect.
+    * Sent, live, at ad5647c. girsa-architect's ANSWER, live (the first project's 0c778416f): Q1 refuse, the words
+      naming the owner's pane; Q2 as set; Q3 agreed, and the exec path an escape the list missed - git puts the
+      command's own first on a hook's PATH, and a stand-in git let main move back - closed in the hook (PATH and HOME
+      as installed, an unnamed repository refused); Q4 fail closed, the install replacing its own hook. A subagent
+      carries its parent's role variable: measured, a cost. **[11:14]** Into the prototype and the plan's head; the
+      live measure again: 64 of 64 and the install's three. To send at the plan's commit, live: its HANDOFF to
+      girsa-verifier for review.
 
 M20. **[2026-11-24, a ref judged by the repository, not the folder (notes/PLAN-PROTECTED-REFS.md; the first project's
     #304 A)]**

@@ -15,6 +15,27 @@ function of who may move which ref, called by the Bash guard and by the hook; an
 Its scope: main's branch and `guard.refs`. Its measure: a live run, with the hook installed, of every ref update the
 roles make, none refused - not rule 45's replay of Bash text.
 
+GIRSA-ARCHITECT'S ANSWER (the first project's design-study/MISHMERET-REF-HOOK-ARCHITECT.md at 0c778416f, written
+before any review of this plan; it ran the prototype in a scratch project of its own, by live_setup.py):
+- Q1, refuse - the reviewer's rule of 2026-10-04 carried to git, not a Board question. Measured: the reviewer's
+  terminal history holds no git line that rewinds main or moves a `guard.refs` ref, and no scheduled job runs git; a
+  plain fetch is refused only for a `guard.refs` tag on origin missing locally (origin's 22 all exist locally). With no
+  role the refusal names the owner's pane and `! git ...`, not a REQUEST. MEASURED, for this plan's "unmeasured": a
+  subagent's shell carries its parent's role variable (three of girsa-verifier's subagents printed it), so in the hook
+  an operator's subagent has the operator's rights - a measured cost for the README.
+- Q2, as set; a role's branch when the record shows a case, not next by default.
+- Q3, agreed, the operator too - and an escape the list missed, closed in the hook: git puts the command's own exec
+  path first on a hook's PATH, so `GIT_EXEC_PATH=<a folder>` or `--exec-path=<a folder>` gave the hook a `git` that
+  said yes (main moved back, `known-good` moved; a stand-in `cat` too). The hook takes PATH and HOME as installed,
+  from its text's first line, and refuses a repository it cannot name. The six rows into the tests.
+- Q4, fail closed, agreed - and the install replaces its own hook (known by its marker line), refusing only another's:
+  a second install with another Python had been refused. The README names the reviewer's way out when every commit
+  is refused: `git -c core.hooksPath=/dev/null ...` in their own terminal.
+BUILT INTO THE PROTOTYPE AND MEASURED AGAIN (live5.txt): the live measure's 59 cases and the five new rows refused
+(the exec path by variable and option, a tag through it, a stand-in `cat`, and a git dir outside the repository whose
+commondir names it - refused before too), 64 of 64 as expected; the install refused over another's hook, replaced
+its own with another Python, and put back; with no role the refusal names the owner's pane.
+
 ON THE RECORD (the guard-measure skill's extract.py, 2026-11-25: the first project's 1,105 transcripts with its pi
 sessions, 170,908 command-cwd-role triples; Mishmeret's 11, 1,815), each form searched as text in the command:
 - `core.hooksPath`: 21 commands - reads (`git config --get core.hooksPath`) but girsa-verifier's 2 (`-c
@@ -102,7 +123,7 @@ prototype's first run had 2: that one, and girsa-verifier's `HOME=<x> /bin/bash 
 that prefixed another command, before a read - the rule narrowed to where a variable reaches git, and a read let
 through (the change, item 4).
 The scripts, the decision files and the reports: this session's scratchpad, hook/ (live_setup.py, test_live.py,
-live4.txt, escapes2.json, probe2-old.out, probe2-new.out, r45-*-old.jsonl and r45-*-new2.jsonl, cmp2-*.txt).
+live4.txt and, after the architect's answer, live5.txt; escapes2.json, probe2-old.out, probe2-new.out, r45-*-old.jsonl and r45-*-new2.jsonl, cmp2-*.txt).
 
 ## The change
 
@@ -116,14 +137,17 @@ live4.txt, escapes2.json, probe2-old.out, probe2-new.out, r45-*-old.jsonl and r4
    git, not the line's; nothing moved when the value is the same, or when a deletion leaves it in the packed refs (the
    lock being written, else the file); `forward` when the new value is a commit that descends from the current one.
    The repository is git's `GIT_DIR`, else the folder, and git's own variables are cleared before the guard asks git
-   about other repositories. The role is CLAUDE_CODE_AGENT; with none, a session with no role (design question 1).
-   Exit 1 refuses the transaction, with the reason; the hook's own fault refuses it too.
+   about other repositories; a repository git cannot name is refused (Q3). The role is CLAUDE_CODE_AGENT; with none,
+   a session with no role, refused and told the owner's pane (Q1). Exit 1 refuses the transaction, with the reason;
+   the hook's own fault refuses it too.
 3. THE HOOK'S TEXT, written by `ref_hook.py --install`, run by the project's shim in the main clone (`MISHMERET_AS` names
-   it): `prepared` alone, and a transaction naming no ref under `refs/` let through in the shell, before any Python
-   (`HEAD` and git's pseudo-refs are no one's); then, AS INSTALLED, NOT AS THE COMMAND SET IT - `env -i` with `PATH`,
-   `HOME`, `GIT_DIR`, the role variable and the checkout's `MISHMERET_DIR` if the install had one, the installing
-   Python by its path with `-I`, the shim by its path. A missing shim refuses. The install refuses a linked worktree,
-   a set `core.hooksPath` (git would not run the hook), and an existing hook that is not this one.
+   it): AS INSTALLED, NOT AS THE COMMAND SET IT - its first line sets PATH and HOME as the install had them (Q3: the
+   command's exec path came first on a hook's PATH); `prepared` alone, and a transaction naming no ref under `refs/`
+   let through in the shell, before any Python (`HEAD` and git's pseudo-refs are no one's); then `env -i` with
+   `PATH`, `HOME`, `GIT_DIR`, the role variable and the checkout's `MISHMERET_DIR` if the install had one, the
+   installing Python by its path with `-I`, the shim by its path, each quoted for the shell. A missing shim refuses.
+   The install refuses a linked worktree, a set `core.hooksPath` (git would not run the hook), and a hook that is not
+   its own; its own, by the marker line, it replaces (Q4).
 4. THE ESCAPES IN THE BASH GUARD, in a guarded repository, for every role, the operator too (design question 3): on
    git's line `-c` or `--config-env` with `core.hooksPath`, `include.` or `includeIf.` (the push rule's own reading,
    `_push_config`, given the keys); and a `GIT_CONFIG...=`, `HOME=` or `XDG_CONFIG_HOME=` (another config file, which
@@ -136,11 +160,12 @@ Not in this piece, each a named cost: a forward move of main that skips land.py 
 guard's); a role's branch (design question 2); a script that runs git with its hooks off (unread, as any script); a
 shell write into the main clone's `.git/` (the older gap: no shell write is read by path); a `~` after an `export
 HOME=` in the same command, read with the guard's HOME (rule 45's 1); a release tag made on origin elsewhere, which
-fails a non-owner's plain fetch (measured above); an operator's subagent,
-which may carry the operator's variable (unmeasured); git before 2.28 (no such hook), the reftable backend (no
-packed-refs), Linux and Windows (`env -i`, `/bin/sh`) - unmeasured.
+fails a non-owner's plain fetch (measured above); an operator's subagent, which carries the operator's variable and
+so has the operator's rights in the hook while the Bash guard judges it as no role (measured by girsa-architect); the
+reviewer's own terminal, refused a protected move like a session with no role (Q1). Unmeasured: git before 2.28 (no
+such hook), the reftable backend (no packed-refs), Linux and Windows (`env -i`, `/bin/sh`).
 
-## Design questions (to girsa-architect)
+## Design questions (to girsa-architect; answered at 0c778416f, the plan's head)
 
 1. NO ROLE VARIABLE: the hook judges a session with no role - refused a protected move, as land.py refuses one and the
    Bash guard judges one - so unsetting the variable is no escape (the architect's third), and the Bash guard needs no
@@ -172,8 +197,10 @@ packed-refs), Linux and Windows (`env -i`, `/bin/sh`) - unmeasured.
 
 - The hook on a scratch project made as above (git, the real shim, a pin linked to the tree under test): the live
   measure's cases, each as its role - the roles' own work let through, a landing among it; each protected move
-  refused, its ref unmoved; each variable of the command's environment refused; a copy let through.
-- The install: its text; refused from a worktree, with `core.hooksPath` set, over another hook.
+  refused, its ref unmoved; each variable of the command's environment refused, the exec path's six rows among them
+  (girsa-architect's Q3); a copy let through; with no role, the owner's pane named.
+- The install: its text; refused from a worktree, with `core.hooksPath` set, over another's hook; its own replaced
+  with another Python (Q4).
 - The Bash guard: each of the probe's 15 forms refused, the operator's too; the siblings let through (a scratch folder,
   another key, a read, `clone`).
 - The config: a `guard.refs` glob not under `refs/` refused at load.
