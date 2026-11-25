@@ -21,6 +21,8 @@ M24. **[2026-11-25, the terminal adapter (notes/PLAN-TERMINAL-ADAPTER.md)]**
       unmeasured, Git Bash named, the reviewer's own run before done. Into the plan's head: items 5 and 6.
     * The reviewer, on the normalizer's tags: "exact. suggest other tags" - `stage` and `prod` exact names (as the
       measure's config had them); suggestions answered in this pane.
+    * Committed a6a4bb4. The reviewer: "finish". The state rewritten for the next session (the guard part of the
+      adapter next, items 5-6, measured before the review); the branch's notes asked of girsa-operator to merge.
 
 M23. **[2026-11-25, the guard alone (notes/PLAN-GUARD-ONLY.md)]**
     * The reviewer, in this pane: "what needs to be done to sep girsa from mish? what is inv. in using mish on a new
