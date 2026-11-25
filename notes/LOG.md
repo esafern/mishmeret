@@ -38,6 +38,11 @@ M23. **[2026-11-25, the guard alone (notes/PLAN-GUARD-ONLY.md)]**
       readers of the environment, one function. Q8 the table, keyed `claude` and `pi` (`config.RUNNERS`). Into the
       plan's head and item 5. So the reviewer's "set the var" is the readers' and pi_guard's; a session started with
       the variable alone is no role to the guard - the terminal adapter's piece to plan, if wanted.
+    * Committed 67ad0d1. The names on a new prototype (main 0af5d7d's code, the first prototype's change carried over:
+      one hunk by hand, the OPTIONAL set beside `guard.main`): suite 180 of 186, the 6 the rules they test; direct 15,
+      the guard's 7, 0 faults; the normalizer's copy in the new names 7 and 34 again; rule 45 by role 0, 0, 0 on both
+      records. A probe of mine first ran the guard with `-I`, which hides config.py beside it: every probe a
+      traceback, read as such and run again as the shim runs it. Into the plan's head; the plan to girsa-verifier.
 
 M22. **[2026-11-25, the Board's tab icon (notes/PLAN-FAVICON.md; the first project's Board #249 B)]**
     * **[10:51]** The reviewer, in this pane: "add the favicon". girsa-ui-steward's REQUEST for it, from 2026-11-16,

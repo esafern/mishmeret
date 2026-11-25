@@ -40,6 +40,28 @@ GIRSA-ARCHITECT'S FOLLOW-UP on 7 and 8 (the same file at ef7c62294):
   "~/.pi/agent/sessions"}` (the guard-measure skill's extract.py reads pi's folder, given by hand today). No Gemini key
   until Mishmeret starts it.
 
+THE NAMES' MEASURE (2026-11-25), a new prototype: main 0af5d7d's `mishmeret/`, `tests/` and `.claude/`, the first
+prototype's change carried over (its one rejected hunk, the OPTIONAL set beside main's `guard.main`, made by hand),
+item 5 built in (config.py's path, `session_role`, `transcripts`; the five readers; the ref hook's text passing
+MISHMERET_ROLE; the command rule's two names; pi_guard.ts setting both):
+- THE SUITE on it, the full placeholder config: 186, 180 passed; the 6 the rules they test, changed - the first
+  prototype's 5, and WIRED TO NOTHING, since `claude_projects` is now read by config.py alone (the old name, kept).
+  Mishmeret's own config at 0af5d7d (old names) loads.
+- DIRECT, 15 cases, 0 faults (names_check.py): the path the new home when it is there, the old when not, the root
+  from either; the role neither / either / both the same / an empty one unset / both differing no role naming both;
+  `claude_projects` read as `{"claude": ...}`, both names refused, a runner not in RUNNERS refused, no `claude` refused.
+- THE GUARD, 7 probes, 0 faults: `MISHMERET_ROLE=... land.py`, `export MISHMERET_ROLE=`, `CLAUDE_CODE_AGENT=` refused
+  by name; `env -u MISHMERET_ROLE` and `echo $MISHMERET_ROLE` let through; a commit in the main clone with no
+  `agent_type` refused with either variable in the hook's environment (Q7: the guard's role not taken from it).
+- THE NORMALIZER'S COPY in the new names (`.mishmeret/config.json` alone, the old home moved away, its `guard.refs`
+  `beta-rc*`, `stage`, `prod` and `v*` tags the operator's): found by the default path; its 380 judged by the new
+  prototype against the first's - as its operator 7 refused, with no role 34, each newly refused 0, newly let
+  through 0, faults 0.
+- RULE 45 by role, main 0af5d7d's guard against the new prototype's, each project's config as it is (old names): the
+  first project's 170,908 and Mishmeret's 1,815 - each newly refused 0, newly let through 0, faults 0.
+The scripts and files: this session's scratchpad, guardonly/ (proto2/, names_check.py, n45-*.jsonl and n45-cmp-*.txt,
+nn-*.jsonl, norm/.mishmeret/config.json).
+
 Today a project cannot take the guard alone. `config.load` wants 21 of the config's 24 top-level fields - the Board's
 folder, port and page order, the tmux session and its settings, Claude Code's transcripts folder, the agent files, the
 launchd prefix, the night run's knobs, the reports' tables, the landing's - and each role's drawing keys (short name,
@@ -138,9 +160,7 @@ they test, changed - four of a field missing refused by its old words (`board_po
 Not in this piece: setting the normalizer up (its own repository, the reviewer's or its session's step, the files
 in item 4, its `guard.foreign` and `guard.refs` above); moving the first project and Mishmeret itself to the names;
 the terminal adapter; a runner adapter for another CLI (Gemini CLI's: its own piece); a part's reader that loads and
-then refuses deeper (the session modules: their entry points, measured, say why). THE NAMES' MEASURE comes before the
-review: the prototype with item 5, rule 45 by role on both records with their configs as they are (old names), and the
-normalizer's copy with the new ones.
+then refuses deeper (the session modules: their entry points, measured, say why). The names' measure: the head.
 
 ## Design questions (1-3 girsa-architect's, answered at 7501436fb, 7-8 at ef7c62294; 4-6 the reviewer's; each at the head)
 
@@ -182,7 +202,8 @@ normalizer's copy with the new ones.
   the rule refusing a command that sets MISHMERET_ROLE)
 - mishmeret/land.py, board.py, finish_hook.py, effort_report.py, ref_hook.py, pi_guard.ts (MISHMERET_ROLE);
   role_usage.py, role_sessions.py, keepalive_due.py (`transcripts`)
-- tests/test_config.py (the four refusals' words, the optional-fields test by parts), tests/test_guard.py,
+- tests/test_config.py (the four refusals' words, the optional-fields test by parts, WIRED TO NOTHING taking the old
+  name as config.py's own), tests/test_guard.py,
   tests/conftest.py (a minimal placeholder project beside the full one)
 - README.md (the guard alone)
 - notes/PLAN-GUARD-ONLY.md, notes/LOG.md, notes/STATE-mishmeret-builder.md
