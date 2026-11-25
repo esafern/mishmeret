@@ -35,6 +35,11 @@ M21. **[2026-11-25, git's reference-transaction hook (notes/PLAN-REF-HOOK.md; gi
       carries its parent's role variable: measured, a cost. **[11:14]** Into the prototype and the plan's head; the
       live measure again: 64 of 64 and the install's three. To send at the plan's commit, live: its HANDOFF to
       girsa-verifier for review.
+    * Sent, live, at d1ed7a0. girsa-verifier's ANSWER, live (its #3372): READY once it takes MEDIUM 1 (main's branch
+      read from the main clone's HEAD alone: detached or mid-rebase, a builder's script rewound main) and LOW 1
+      (`refs/replace/` let through), each with a test; NOTEs 1-2 for the README. **[11:29]** Taken: `guard.main`, an
+      OPTIONAL field both callers read (the fix was left to me and girsa-architect - to tell it, live, at the commit);
+      `refs/replace/*` the operator's in the one rule. The live measure again: 74, 0 faults.
 
 M20. **[2026-11-24, a ref judged by the repository, not the folder (notes/PLAN-PROTECTED-REFS.md; the first project's
     #304 A)]**

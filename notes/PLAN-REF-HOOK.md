@@ -36,6 +36,29 @@ BUILT INTO THE PROTOTYPE AND MEASURED AGAIN (live5.txt): the live measure's 59 c
 commondir names it - refused before too), 64 of 64 as expected; the install refused over another's hook, replaced
 its own with another Python, and put back; with no role the refusal names the owner's pane.
 
+GIRSA-VERIFIER'S REVIEW (the first project's design-study/step5-verification/mishmeret-ref-hook-plan-2026-11-25/
+REVIEW.md; its #3372): READY once it takes MEDIUM 1 and LOW 1, each with a test; NOTEs 1-2 for the README. It re-ran
+the live measure on a scratch project of its own: 70 ok, 0 FAULT, equal to live5.txt but a path. Agreed Q1-Q4.
+- MEDIUM 1: main's branch was the branch the main clone had checked out at the moment of the move. With the main clone
+  detached or mid-rebase (git lists it detached), a builder's script - `git -C <main> checkout --detach`,
+  `update-ref refs/heads/main <older>`, `checkout main` - rewound main, the hook on throughout (the detach names no
+  ref under `refs/`); the Bash guard shares `_owner`. 0 on the record. Its choice of fix left to me and girsa-architect:
+  TAKEN as an OPTIONAL config field both callers read, `guard.main`, the branch's name - main's branch is that name
+  and the one the main clone has checked out (a field, not the install's text, so the Bash guard reads it too; OPTIONAL
+  because Mishmeret pins itself and an older pin refuses a new key - absent, HEAD's alone, as today).
+- LOW 1: `git replace` is refused by the Bash guard to all but the operator, and the hook let `refs/replace/` through:
+  a builder's script replaced main's tip with the root commit, and the main clone read main as the root. TAKEN in the
+  one rule: `refs/replace/*` the operator's alone, built in beside `guard.refs` (a project's config may still name it).
+- NOTE 1, for the README: a pin moved back past this piece refuses every commit in every tree, its own revert too (the
+  pin has no ref_hook.py); the order - install after the bump is on main, remove the hook before moving the pin to a
+  commit without it - and the reviewer's way out.
+- NOTE 2: after a forward `update-ref` of main that skips land.py, the main clone holds the reverse diff staged - the
+  named cost as it looks.
+BUILT INTO THE PROTOTYPE AND MEASURED AGAIN (live6.txt, `guard.main` set in the scratch config): 74 lines, 0 faults -
+main rewound under a detached main clone and mid-rebase, and a builder's `git replace` of main's tip, each refused;
+the operator's own replace and its removal let through. A wording to fix at the build: the replacement's refusal says
+"a ref `guard.refs` gives to", and it is built in.
+
 ON THE RECORD (the guard-measure skill's extract.py, 2026-11-25: the first project's 1,105 transcripts with its pi
 sessions, 170,908 command-cwd-role triples; Mishmeret's 11, 1,815), each form searched as text in the command:
 - `core.hooksPath`: 21 commands - reads (`git config --get core.hooksPath`) but girsa-verifier's 2 (`-c
@@ -154,7 +177,11 @@ live4.txt and, after the architect's answer, live5.txt; escapes2.json, probe2-ol
    can set them) where it reaches git - on git's own prefix, in an `export` before it, or as an assignment that is a
    statement of its own (`HOME` is exported already) - not one that prefixes another command. Not for a verb of the
    classification's READS, nor `clone` and `init`: none runs a ref transaction of the repository.
-5. THE CONFIG: each `guard.refs` glob is a ref's full name, `refs/...` (the hook's shell reads only those).
+5. THE CONFIG: each `guard.refs` glob is a ref's full name, `refs/...` (the hook's shell reads only those); `guard.main`,
+   OPTIONAL, main's branch by name (the review's MEDIUM 1).
+6. IN THE ONE RULE (`_owner`, both callers): main's branch is `guard.main`'s and the main clone's checked-out one;
+   `refs/replace/*` the operator's alone unless `guard.refs` says otherwise (the review's LOW 1), its refusal in its own
+   words. The README: NOTEs 1 and 2, the measured costs, and the order of install and pin.
 
 Not in this piece, each a named cost: a forward move of main that skips land.py (the main tree's rule stays the Bash
 guard's); a role's branch (design question 2); a script that runs git with its hooks off (unread, as any script); a
@@ -203,11 +230,16 @@ such hook), the reftable backend (no packed-refs), Linux and Windows (`env -i`, 
   with another Python (Q4).
 - The Bash guard: each of the probe's 15 forms refused, the operator's too; the siblings let through (a scratch folder,
   another key, a read, `clone`).
-- The config: a `guard.refs` glob not under `refs/` refused at load.
+- The config: a `guard.refs` glob not under `refs/` refused at load; `guard.main` taken, absent allowed.
+- The review's rows (live6.txt): main rewound under a detached main clone and mid-rebase, refused with `guard.main`
+  set (and let through without it - the test red with the field's reading taken out); a builder's `git replace`
+  refused, the operator's let through; the Bash guard's `update-ref` of `refs/replace/...` and of main by name.
 
 ## For the first project
 
-At its pin bump to this piece's commit: its `.claude/hooks/ref_hook.py` (a shim, as its others), then girsa-operator
-runs `python3 .claude/hooks/ref_hook.py --install` in the main clone - the first project's own step, as the time
-check's `--install` was. Its config is unchanged (`guard.refs` is already `refs/...`). For Mishmeret's own repository,
+At its pin bump to this piece's commit: its `.claude/hooks/ref_hook.py` (a shim, as its others), its config's
+`guard.main` ("main", with the bump: an older pin refuses the key - the older-worktree landing first, as for
+`guard.refs`), then, once the bump is on main, girsa-operator runs `python3 .claude/hooks/ref_hook.py --install` in
+the main clone - the first project's own step, as the time check's `--install` was. Before any later move of the pin
+to a commit without the hook, the hook is removed first (the review's NOTE 1). For Mishmeret's own repository,
 mishmeret-operator does the same after Mishmeret's own pin moves.
