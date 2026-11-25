@@ -74,6 +74,18 @@ reads none of the renamed names.
   session_role; the install re-run at the bump that brings this piece writes the text passing both. For the bump's
   steps (girsa-operator's) and the README.
 
+THE REVIEWER, asked back whether the normalizer's agent is its builder or its operator: "builder." So its config
+has two roles - `norm-builder` with its own worktree, and an operator (named here `norm-operator`, a placeholder),
+which is the reviewer's `!` or a second session - and the tags are the operator's. MEASURED, the normalizer's copy
+with that config (`norm/.mishmeret/builder.json`), its 380 as `norm-builder`: 34 refused, faults 0 - 10 pushes, 18
+writes in the main clone (commit 7, add 6, switch 2, pull, checkout, update-ref), the 5 into `rav-shvat-blog`, the
+stash; the same 380 as the operator: 7, as before. The builder's work moves to its worktree; main's moves and pushes
+are the operator's. For the README (item 4): the agent file starts the session as `norm-builder`.
+MY FIRST RUN OF IT GAVE 16, WRONG: its config was outside the copy, and `config.root()` is the config's folder's
+parent, so the copy was no guarded repository and nothing in it was refused (a probe: a commit with no role let
+through). A config named outside its project's tree leaves that project unguarded, unsaid - main's code too, not
+this piece's: into the state's open items.
+
 Today a project cannot take the guard alone. `config.load` wants 21 of the config's 24 top-level fields - the Board's
 folder, port and page order, the tmux session and its settings, Claude Code's transcripts folder, the agent files, the
 launchd prefix, the night run's knobs, the reports' tables, the landing's - and each role's drawing keys (short name,

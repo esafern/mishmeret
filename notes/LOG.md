@@ -47,6 +47,11 @@ M23. **[2026-11-25, the guard alone (notes/PLAN-GUARD-ONLY.md)]**
       finding; NOTE 1 the first project's installed ref hook passes CLAUDE_CODE_AGENT alone (the install re-run at
       the bump); NOTE 2 its six rule 45 runs (a builder, the operator, each; both records; 0, 0, 0) stand in the head
       - my n45 files' names omit their role, `each` (checked: 2 of 170,908 decisions name no role). Into the head.
+    * The reviewer, on the normalizer's agent: "builder." Measured as `norm-builder` with an operator beside it: 34
+      of 380 refused (10 pushes, 18 main-clone writes, 5 rav-shvat-blog, the stash), 7 as the operator. My first run
+      gave 16: its config sat outside the copy, so `config.root()` named another folder and nothing was guarded - a
+      probe showed a no-role commit let through. A config outside its tree leaves the project unguarded, unsaid
+      (main's code too): an open item. Into the head.
 
 M22. **[2026-11-25, the Board's tab icon (notes/PLAN-FAVICON.md; the first project's Board #249 B)]**
     * **[10:51]** The reviewer, in this pane: "add the favicon". girsa-ui-steward's REQUEST for it, from 2026-11-16,
