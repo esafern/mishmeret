@@ -39,7 +39,8 @@ checkout, and `~/work/rav-shvat-blog`) - and the 380 commands' folder read as th
   (`commit` 7, `add` 6, `switch` 2, `pull`, `checkout`, `update-ref`), the 5 into `rav-shvat-blog` and the stash.
   So the agent starts as its role (design question 2).
 - RULE 45, the first project's 170,908 and Mishmeret's 1,815, by role, main's guard against the prototype with each
-  full config: (running).
+  full config: each newly refused 0, newly let through 0, faults 0. Main's side is the hook piece's run at e8cfcb0,
+  whose `role_guard.py` and `config.py` are main 43a9d97's byte for byte (`git diff`, 0 lines).
 The scripts and decision files: this session's scratchpad, guardonly/ (cmds-normalizer.jsonl, cmds-norm-copy.jsonl,
 norm-*.jsonl, r45-*.jsonl; the copy `norm/` and its config).
 
