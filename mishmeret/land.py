@@ -330,6 +330,13 @@ def land(role, kind, cwd=".", accept=(), plan=None, because=None):
     refusal = session_refusal(role, where, "land")
     if refusal:
         raise Refused(refusal)
+    # ONE DEFINITION OF MAIN'S BRANCH (girsa-architect, the first project's ae09078f5, on notes/PLAN-REF-HOOK.md): where
+    # the config names it (`guard.main`, which the guards read), a main clone holding another is refused here - a
+    # wrong or stale name met at the next landing, not left a hole in silence
+    named = _CFG["guard"].get("main")
+    if named and where.main_branch != named:
+        raise Refused(f"the main clone has {where.main_branch} checked out, and the config's guard.main names {named} - "
+                      f"one of them is wrong: tell {OPERATOR}, whose tree and config they are")
     if (kind == "code" and role == BUILDER) or plan:
         plan = named_plan(where, cwd, plan)
     if _rebasing(where):                # before the branch is read: mid-rebase, HEAD names no branch (the rehearsal)

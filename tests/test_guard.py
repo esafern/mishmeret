@@ -490,7 +490,8 @@ def test_no_alias_and_no_config_write_reach_a_guarded_repository(monkeypatch):
         assert why and "takes no config from its own line" in why, line
     for lead in ("GIT_CONFIG_GLOBAL=/tmp/g", "GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=remote.origin.mirror GIT_CONFIG_VALUE_0=true",
                  "env GIT_CONFIG_PARAMETERS=x"):
-        assert "takes no config" in no(f"{lead} git push origin main", main, "ex-operator"), lead
+        why = no(f"{lead} git push origin main", main, "ex-operator")     # the hooks' rule, wider, may come first
+        assert why and ("takes no config" in why or "move git's hooks" in why), lead
     for fine in ("git -c user.name=x push origin main", "git -c core.sshCommand=ssh push origin b"):
         assert no(fine, main, "ex-operator") is None, fine
 
@@ -770,7 +771,55 @@ REF_CASES = [
     (False, 'ex-builder', '/work/book-builder', "trap 'rm -f /tmp/x' EXIT", 'attached'),
     (False, 'ex-builder', '/work/book-builder', 'eval "$(ssh-agent -s)"', 'attached'),
     (False, 'ex-builder', '/work/book-builder', 'git diff --name-only | xargs git checkout --', 'attached'),
-    (True, 'ex-builder', '/work/book-builder', 'echo main | xargs git checkout', 'attached')
+    (True, 'ex-builder', '/work/book-builder', 'echo main | xargs git checkout', 'attached'),
+    # GIT'S HOOKS SWITCHED OFF OR MOVED (notes/PLAN-REF-HOOK.md, the probe's forms): refused in a guarded repository to
+    # every role, the operator too; a read, clone, a scratch folder, another key, another command's prefix let through
+    (True, 'ex-builder', '/work/book-builder', 'git -c core.hooksPath=/dev/null merge x', 'attached'),
+    (True, 'ex-builder', '/work/book-builder', 'git -c core.HooksPath=/tmp/h rebase main', 'attached'),
+    (True, 'ex-builder', '/work/book-builder', 'git -ccore.hooksPath=/dev/null rebase main', 'attached'),
+    (True, 'ex-builder', '/work/book-builder', "git -c 'core.hooksPath=/dev/null' rebase main", 'attached'),
+    (True, 'ex-builder', '/work/book-builder', 'git --config-env core.hooksPath=H rebase main', 'attached'),
+    (True, 'ex-builder', '/work/book-builder', 'git --config-env=core.hooksPath=H rebase main', 'attached'),
+    (True, 'ex-builder', '/work/book-builder', 'git -c include.path=/tmp/inc rebase main', 'attached'),
+    (True, 'ex-builder', '/work/book-builder', 'git -c includeIf.onbranch:main.path=/tmp/inc rebase main', 'attached'),
+    (True, 'ex-builder', '/work/book-builder',
+     'GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=core.hooksPath GIT_CONFIG_VALUE_0=/dev/null git rebase main', 'attached'),
+    (True, 'ex-builder', '/work/book-builder', "GIT_CONFIG_PARAMETERS=\"'core.hookspath'='/dev/null'\" git rebase main",
+     'attached'),
+    (True, 'ex-builder', '/work/book-builder', 'GIT_CONFIG_GLOBAL=/tmp/g git rebase main', 'attached'),
+    (True, 'ex-builder', '/work/book-builder', 'GIT_CONFIG_SYSTEM=/tmp/g git rebase main', 'attached'),
+    (True, 'ex-builder', '/work/book-builder', 'env GIT_CONFIG_COUNT=1 git rebase main', 'attached'),
+    (True, 'ex-builder', '/work/book-builder', 'export GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=core.hooksPath; git rebase main',
+     'attached'),
+    (True, 'ex-builder', '/work/book-builder', 'export FOO=1 GIT_CONFIG_GLOBAL=/tmp/g; git rebase main', 'attached'),
+    (True, 'ex-builder', '/work/book-builder', 'HOME=/tmp/h git rebase main', 'attached'),
+    (True, 'ex-builder', '/work/book-builder', 'XDG_CONFIG_HOME=/tmp/x git rebase main', 'attached'),
+    (True, 'ex-builder', '/work/book-builder', 'HOME=/tmp/h; git rebase main', 'attached'),
+    (True, 'ex-builder', '/work/book-builder', 'X=1 HOME=/tmp/h; git rebase main', 'attached'),
+    (True, 'ex-operator', '/work/book',
+     'GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=core.hooksPath GIT_CONFIG_VALUE_0=/dev/null git tag -f demo-good HEAD',
+     'attached'),
+    (False, 'ex-operator', '/work/book',
+     'GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=core.hooksPath GIT_CONFIG_VALUE_0=/dev/null git status', 'attached'),
+    (False, 'ex-builder', '/tmp/scratch', 'git -c core.hooksPath=/dev/null commit -m x', 'attached'),
+    (False, 'ex-builder', '/tmp/scratch', 'GIT_CONFIG_GLOBAL=/tmp/g git commit -m x', 'attached'),
+    (False, 'ex-builder', '/work/book-builder', 'git -c user.email=p@x -c user.name=p rebase main', 'attached'),
+    (False, 'ex-builder', '/work/book-builder', 'git config --get core.hooksPath', 'attached'),
+    (False, 'ex-builder', '/work/book-builder', "HOME=/tmp/h bash -c 'echo $HOME'; git rebase main", 'attached'),
+    (False, 'ex-builder', '/work/book-builder', 'GIT_CONFIG_GLOBAL=/tmp/g python3 run.py; git rebase main', 'attached'),
+    (False, 'ex-builder', '/work/book-builder', 'export HOME=/tmp/h; git log -1', 'attached'),
+    (False, 'ex-builder', '/work/book-builder', 'git -c core.hooksPath=/dev/null log -1', 'attached'),
+    (False, 'ex-builder', '/work/book-builder', 'HOME=/tmp/h git clone https://example.org/x.git /tmp/x', 'attached'),
+    # main's branch by its name, `guard.main`, with the main clone detached (girsa-verifier's MEDIUM 1 on the plan);
+    # an object replacement the operator's (its LOW 1)
+    (True, 'ex-builder', '/work/book-builder', 'git update-ref refs/heads/main HEAD~1', 'main-detached'),
+    (True, 'ex-builder', '/work/book-builder', 'git branch -f main HEAD~1', 'main-detached'),
+    (False, 'ex-operator', '/work/book-builder', 'git update-ref refs/heads/main HEAD~1', 'main-detached'),
+    (True, 'ex-builder', '/work/book-builder', 'git update-ref "refs/heads/$X" HEAD~1', 'main-detached-alone'),
+    (False, 'ex-builder', '/work/book-builder', 'git update-ref refs/heads/builder-x HEAD~1', 'main-detached-alone'),
+    (True, 'ex-builder', '/work/book-builder', 'git update-ref refs/replace/0123abcd 4567ef01', 'attached'),
+    (True, 'ex-builder', '/work/book-builder', 'git update-ref -d "refs/replace/$X"', 'attached'),
+    (False, 'ex-operator', '/work/book-builder', 'git update-ref refs/replace/0123abcd 4567ef01', 'attached'),
 ]
 
 
@@ -789,9 +838,13 @@ def test_a_ref_is_judged_by_the_repository_not_the_folder():
     spec.loader.exec_module(rg)
     rg.REFS = {"refs/tags/known-good": "ex-operator", "refs/tags/alpha-rc*": "ex-operator",
                "refs/tags/demo-good": "ex-demo-operator"}
+    rg.MAIN_REF = "refs/heads/main"           # guard.main
     rg.WORKTREES = {"/work/book-builder": "ex-builder", "/work/book-verifier": "ex-verifier"}
     states = {"attached": [("/work/book", "refs/heads/main"), ("/work/book-builder", "refs/heads/builder-x"),
                            ("/work/book-verifier", "refs/heads/verifier")],
+              "main-detached": [("/work/book", None), ("/work/book-builder", "refs/heads/builder-x"),
+                                ("/work/book-verifier", "refs/heads/verifier")],
+              "main-detached-alone": [("/work/book", None), ("/work/book-builder", "refs/heads/builder-x")],
               "detached": [("/work/book", "refs/heads/main"), ("/work/book-builder", None),
                            ("/work/book-verifier", "refs/heads/verifier")],
               "unreadable": None, "headless": "headless"}
@@ -1508,6 +1561,22 @@ def test_land_py_stopped_releases_the_hold_and_leaves_nothing_staged(tmp_path):
     staged = subprocess.run(["git", "-C", str(tmp_path / "commit" / "t" / "worktree"), "diff", "--cached", "--name-only"],
                             capture_output=True, text=True, check=True).stdout
     assert rc == 128 + signal.SIGTERM and staged == "", (rc, staged)
+
+
+def test_land_refuses_a_main_clone_holding_another_branch_than_the_configs_main(tmp_path, monkeypatch):
+    """One definition of main's branch (girsa-architect, the first project's ae09078f5, on notes/PLAN-REF-HOOK.md):
+    where `guard.main` names it, a landing is refused while the main clone holds another - a wrong or stale name met
+    at the next landing; named right, the branch lands. Placeholder repository."""
+    land, main, tree, git, calls = _placeholder_clone_and_worktree(tmp_path, monkeypatch)
+    (tree / "plan.md").write_text("# A placeholder plan, changed\n", encoding="utf-8")
+    git(tree, "commit", "-q", "-am", "placeholder: the plan changed")
+    monkeypatch.setitem(land._CFG["guard"], "main", "trunk")
+    with pytest.raises(land.Refused, match="the main clone has main checked out, and the config's guard.main names "
+                                           "trunk"):
+        land.land("ex-builder", "notes", cwd=str(tree))
+    monkeypatch.setitem(land._CFG["guard"], "main", "main")
+    land.land("ex-builder", "notes", cwd=str(tree))
+    assert git(main, "rev-parse", "main") == git(tree, "rev-parse", "HEAD")
 
 
 def test_land_lands_on_main_and_releases_the_hold_on_every_exit(tmp_path, monkeypatch, capsys):

@@ -59,8 +59,8 @@ FIELDS = {
     "expiring": list,           # expiring (board_server's feed): what expires - [{name, who, how, source}]
 }
 GUARD = {"homes": str, "fallback_roots": list, "trees": list, "foreign": list, "retired_remotes": list, "checks": list,
-         "precommit": str, "refs": dict}
-LAND = {"planned": str, "verifier": str, "lane_check": str, "ledger": str, "server": dict, "gate_sets": dict,
+         "precommit": str, "refs": dict, "main": str}
+LAND ={"planned": str, "verifier": str, "lane_check": str, "ledger": str, "server": dict, "gate_sets": dict,
         "gate_env": dict, "hand_run": dict}
 SERVER = {"entry": str, "folders": list, "page": str}
 # WHAT ONLY SOME PROJECTS HAVE - a Python for the tmux roles, drafts, a list of corpus homes, a pre-commit hook, a live
@@ -69,7 +69,7 @@ SERVER = {"entry": str, "folders": list, "page": str}
 # review of that plan: a project's config then gains no field at its pin bump). Absent, its reader takes it as off.
 OPTIONAL = {"python", "drafts", "guard.homes", "guard.precommit", "guard.foreign", "land.ledger", "land.server",
             "night.finish_command", "night.finish_exit_command", "expiring", "roles.runner", "guard.refs",
-            "roles.worktrees"}
+            "roles.worktrees", "guard.main"}
 # WHAT EXPIRES (notes/PLAN-EXPIRING.md): each item's keys, and each source's kind with the kinds of its value -
 # expiring.READERS reads one each (a test holds the two to one list); a name given twice is refused (girsa-architect:
 # its events' UIDs would be one)
@@ -204,6 +204,8 @@ def load(p=None):
     for pattern, owner in cfg["guard"].get("refs", {}).items():
         if owner not in {r["name"] for r in cfg["roles"]}:
             raise ConfigError(f"{p}: guard.refs gives {pattern!r} to {owner!r}, which is not one of the roles")
+        if not pattern.startswith("refs/"):         # the ref hook reads only what git writes under refs/
+            raise ConfigError(f"{p}: guard.refs names {pattern!r}: a ref's full name, `refs/...`")
     for i, r in enumerate(cfg["roles"]):
         if not all(isinstance(w, str) and w for w in r.get("worktrees", [])):
             raise ConfigError(f"{p}: roles[{i}].worktrees must be a list of paths")

@@ -298,6 +298,19 @@ REMOTE_WRITES = ("add", "set-url", "rename", "remove", "rm", "set-branches")
 # ...and on the operator's push, no config from its own line (item 6c): these keys choose where a push goes or what it
 # sends (`-c remote.origin.mirror=true`, `-c push.default=matching`, a bare push's `branch.<name>.pushRemote`)
 PUSH_CONFIG_KEYS = ("remote.", "url.", "alias.", "branch.", "push.")
+# ...and in a guarded repository, for every role, no key that switches off or moves git's hooks, nor another config
+# before git (GIT_CONFIG..., HOME=, XDG_CONFIG_HOME=: a global config elsewhere) - the reference-transaction hook
+# guards the refs whatever writes them (notes/PLAN-REF-HOOK.md; girsa-architect's measure: `-c core.hooksPath=/dev/null`
+# and GIT_CONFIG_COUNT passed it)
+HOOK_KEYS = ("core.hookspath", "include.", "includeif.")
+OTHER_CONFIG = re.compile(r"(?<![\w$])(GIT_CONFIG\w*|HOME|XDG_CONFIG_HOME)=")
+# ...where it reaches git: on git's own prefix (OTHER_CONFIG there), an `export`, or an assignment that is a statement
+# of its own (HOME is exported already) - not one that prefixes another command (rule 45: `HOME=<x> bash -c '...'; git
+# show` by girsa-verifier had been refused)
+_SETS = r"(?:\s+[A-Za-z_]\w*=(?:" + WORD + r")?)*"
+OTHER_CONFIG_SET = (re.compile(r"(?<![\w$-])export(?:\s+-\w+)*(?:\s+" + WORD + r")*?\s+" + OTHER_CONFIG.pattern),
+                    re.compile(r"(?:^|[;&|(\n])\s*(?:[A-Za-z_]\w*=(?:" + WORD + r")?\s+)*" + OTHER_CONFIG.pattern
+                               + r"(?:" + WORD + r")?" + _SETS + r"\s*(?=[;&|)\n]|$)"))
 
 
 def _config_writes(verb, words):
@@ -325,15 +338,15 @@ def _config_writes(verb, words):
     return (bool(plain[:1]) and plain[0] in ("set", "unset", "rename-section", "remove-section", "edit")) or len(plain) > 1
 
 
-def _push_config(lead, opts):
-    """The config the operator's push line sets that PUSH_CONFIG_KEYS name: `-c KEY=...` or `--config-env KEY=...` among
-    git's options (as the shell gives them), or a GIT_CONFIG... assignment before git."""
+def _push_config(lead, opts, keys=PUSH_CONFIG_KEYS):
+    """The config git's line sets that `keys` name (the operator's push: PUSH_CONFIG_KEYS): `-c KEY=...` or
+    `--config-env KEY=...` among git's options (as the shell gives them), or a GIT_CONFIG... assignment in `lead`."""
     found = re.findall(r"(?<![\w$])GIT_CONFIG\w*=", lead)
     words = _split(opts)
     for i, w in enumerate(words):
         key = (words[i + 1] if i + 1 < len(words) else "") if w in ("-c", "--config-env") else \
             w[2:] if w.startswith("-c") else w[13:] if w.startswith("--config-env=") else ""
-        if key.lower().startswith(PUSH_CONFIG_KEYS):
+        if key.lower().startswith(keys):
             found.append(f"{w} {key}" if w in ("-c", "--config-env") else w)
     return found
 
@@ -695,6 +708,11 @@ def _config_refusal(command, masked, m, cwd, verb, guarded):
 # the operator's too, for its cleanups and rewrites on the reviewer's word (#310 A). A branch checked out nowhere is
 # no one's (girsa-architect's Q1: its named cost).
 REFS = dict(GUARD.get("refs", {}))      # {ref glob: owner role}; absent (config.OPTIONAL): none
+# ...and main's branch by its name too, `guard.main` (girsa-verifier's MEDIUM 1 on notes/PLAN-REF-HOOK.md: read from the
+# main clone's HEAD alone, a detached or mid-rebase main clone left it no one's and a builder's script rewound it); and
+# git's object replacements the operator's alone, as `git replace` is (its LOW 1: one made main read as another commit)
+MAIN_REF = "refs/heads/" + GUARD["main"] if "main" in GUARD else None     # absent (config.OPTIONAL): HEAD's alone
+REPLACE = "refs/replace/*"
 WORKTREES = {os.path.realpath(os.path.expanduser(w)): r["name"] for r in _CFG["roles"] for w in r.get("worktrees", ())}
 REF_VERBS = ("update-ref", "tag", "branch", "checkout", "switch", "worktree", "symbolic-ref", "fetch", "pull", "push")
 # each verb's options whose value is the next word (or, short, the rest of its word): long, short letters
@@ -763,16 +781,28 @@ def worktree_owner(path):
 
 def _owner(ref, listing):
     """(role, kind) - the role that may move `ref` and why: "main" (main's branch, the operator's), "refs" (a
-    `guard.refs` ref, its owner's alone), "worktree" (the branch checked out in a role's worktree) - or None."""
-    if listing[0][1] == ref:
+    `guard.refs` ref, its owner's alone), "replace" (an object replacement, the operator's alone), "worktree" (the
+    branch checked out in a role's worktree) - or None."""
+    if ref in (listing[0][1], MAIN_REF):
         return OPERATOR, "main"
     for pattern, owner in REFS.items():
         if fnmatch.fnmatchcase(ref, pattern):
             return owner, "refs"
+    if fnmatch.fnmatchcase(ref, REPLACE):
+        return OPERATOR, "replace"
     for path, r in listing[1:]:
         if r == ref and worktree_owner(path):
             return worktree_owner(path), "worktree"
     return None
+
+
+def may_move(role, owner, kind, forward=False):
+    """True when `role` may move a ref `_owner` gives to (`owner`, `kind`) - THE ONE RULE OF WHO MOVES WHICH REF, the Bash
+    guard's on the words it reads and git's reference-transaction hook's on what git is about to write (ref_hook.py;
+    girsa-architect's follow-up at the first project's 350e01e37: one function, two callers). A `guard.refs` ref and a
+    replacement are their owner's alone; a role's branch its own and the operator's (#310 A); main's branch the
+    operator's, but a fast-forward - what a landing does - is any role's, and only the hook can tell one (`forward`)."""
+    return role == owner or (role == OPERATOR and kind == "worktree") or (kind == "main" and forward)
 
 
 def _overlap(a, b):
@@ -790,7 +820,7 @@ def _owners(name, kind, listing):
             o = _owner(ref, listing)
             found += [(ref, *o)] if o else []
             continue
-        for r in list(REFS) + [r for _, r in listing if r]:
+        for r in list(REFS) + [REPLACE] + [r for _, r in listing if r] + ([MAIN_REF] if MAIN_REF else []):
             o = _overlap(r, ref) and _owner(r.replace("*", "x") if "*" in r else r, listing)
             found += [(r, *o)] if o else []
     return found
@@ -960,6 +990,14 @@ def _ref_refusal(role, verb, command, masked, m, cwd, guarded):
                     "its main clone and every worktree share - no role's, the reviewer's own command")
     if not trees:
         return None
+    moved = verb not in READS | {"clone", "init", "init-db"} and (
+        _push_config("", command[m.start(1):m.end(1)], HOOK_KEYS)
+        + [a.group(1) + "=" for a in OTHER_CONFIG.finditer(masked, m.start(), m.start(1))]
+        + [a.group(1) + "=" for p in OTHER_CONFIG_SET for a in p.finditer(masked[:m.start()])])
+    if moved:
+        return (f"refused by the role guard: `git {verb}` here with {', '.join(moved)} may switch off or move git's "
+                "hooks - the reference-transaction hook guards main's branch and the `guard.refs` refs, whatever "
+                "writes them; run git with the repository's own config, or the reviewer runs it: `! git ...`")
     if role != OPERATOR:
         wide = (verb == "replace" and bool(words) and not _has(flags, "-l", "--list", "--format")
                 or verb == "reflog" and names[:1] in (["delete"], ["expire"], ["drop"])
@@ -1004,7 +1042,7 @@ def _ref_refusal(role, verb, command, masked, m, cwd, guarded):
                                 "git could not say which it is - name the ref")
                     continue
             for ref, owner, why in _owners(name, "heads" if kind == "deleted" else kind, listing):
-                if role == owner or (role == OPERATOR and why == "worktree"):
+                if may_move(role, owner, why):
                     continue
                 # git itself refuses to delete a branch checked out in any worktree (measured, git 2.56.1) - main's and
                 # each role's - so a deletion by names the guard cannot read is judged by `guard.refs` alone (the
@@ -1012,6 +1050,7 @@ def _ref_refusal(role, verb, command, masked, m, cwd, guarded):
                 if kind == "deleted" and "*" in name and why != "refs":
                     continue
                 whose = {"main": "main's branch", "refs": f"a ref `guard.refs` gives to {owner}",
+                         "replace": "an object replacement, as `git replace` makes",
                          "worktree": f"the branch checked out in {owner}'s worktree"}[why]
                 return (f"refused by the role guard: `git {verb}` here {'may move' if '*' in name else 'moves'} {ref}, "
                         f"{whose} - {owner}'s alone, from any worktree of this repository"

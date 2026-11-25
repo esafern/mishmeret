@@ -36,7 +36,7 @@ def sample():
         "effort": {"ex-operator": ["high", "bookkeeping"]},
         "drafts": {"pattern": r"^draft_.*\.txt$", "check": "tools/check.py", "passed": "passed", "failed": "{path}", "timeout": 20},
         "guard": {"homes": "homes.json", "fallback_roots": ["~/book"], "trees": ["~/checkout"], "foreign": [],
-                  "retired_remotes": [],
+                  "main": "main", "retired_remotes": [],
                   "checks": ["pytest"], "precommit": ".claude/hooks/time_check.py",
                   "refs": {"refs/tags/known-good": "ex-operator"}},
         "land": {"planned": "ex-builder", "verifier": "ex-operator", "lane_check": "tools/lanes.py",
@@ -205,11 +205,19 @@ def test_the_refs_owners_and_the_roles_worktrees_are_checked(write):
     loaded = config.load()
     assert loaded["guard"]["refs"] == {"refs/tags/known-good": "ex-operator"}
     assert [r.get("worktrees") for r in loaded["roles"]] == [None, ["~/book-builder"], None]
-    probe = "import role_guard as rg, os; print(rg.REFS, rg.WORKTREES == {os.path.realpath(os.path.expanduser('~/book-builder')): 'ex-builder'})"
+    probe = "import role_guard as rg, os; print(rg.REFS, rg.WORKTREES == {os.path.realpath(os.path.expanduser('~/book-builder')): 'ex-builder'}, rg.MAIN_REF)"
     out = subprocess.run([sys.executable, "-c", probe], capture_output=True, text=True, env=os.environ, cwd=PKG)
-    assert out.stdout.split("\n")[0] == "{'refs/tags/known-good': 'ex-operator'} True", (out.stdout, out.stderr)
+    assert out.stdout.split("\n")[0] == "{'refs/tags/known-good': 'ex-operator'} True refs/heads/main", (out.stdout,
+                                                                                                         out.stderr)
+    cfg["guard"]["main"] = "trunk"            # main's branch by name (notes/PLAN-REF-HOOK.md), OPTIONAL
+    write(cfg)
+    out = subprocess.run([sys.executable, "-c", probe], capture_output=True, text=True, env=os.environ, cwd=PKG)
+    assert out.stdout.split("\n")[0].endswith(" refs/heads/trunk"), (out.stdout, out.stderr)
     for change, said in ((lambda c: c["guard"]["refs"].update({"refs/tags/x": "nobody"}),
                           "guard.refs gives 'refs/tags/x' to 'nobody', which is not one of the roles"),
+                         (lambda c: c["guard"]["refs"].update({"tags/x": "ex-operator"}),     # the ref hook reads refs/
+                          "guard.refs names 'tags/x': a ref's full name, `refs/...`"),
+                         (lambda c: c["guard"].update(main=["main"]), "guard.main must be str"),
                          (lambda c: c["guard"].update(refs=["refs/tags/x"]), "guard.refs must be dict"),
                          (lambda c: c["roles"][1].update(worktrees="~/book-builder"), "roles[1].worktrees must be list"),
                          (lambda c: c["roles"][1].update(worktrees=[""]), "roles[1].worktrees must be a list of paths")):

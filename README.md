@@ -55,8 +55,9 @@ effort per role (`effort`), and which files are drafts, their check and its two 
 and the landing's - the list of the project's homes (its corpus roots) with a fallback, the other trees whose main
 tree is the operator's (the Mishmeret checkout: nothing is written into its `.pins/`, by any role), the repositories
 no role changes in any tree, their main clone or any worktree (another project's), the remotes never
-pushed to, the checks whose own status must decide a commit, the pre-commit hook's path, and the refs only their owner
-moves (`guard.refs`, `{"<ref glob>": "<role>"}`); each role's worktrees (`roles[].worktrees`); the role whose code
+pushed to, the checks whose own status must decide a commit, the pre-commit hook's path, the refs only their owner
+moves (`guard.refs`, `{"refs/<ref glob>": "<role>"}`), and main's branch by name (`guard.main`); each role's worktrees
+(`roles[].worktrees`); the role whose code
 landing names its plan, the verifier a round goes back to, the project's lane check (a script run with ROLE,
 `--doc-only`, `--range`, `--because`, `--plan`, read by its exit status), the live rulings file, what a review server
 loads, and the gate's lists (`land`).
@@ -71,17 +72,50 @@ a project named - through the project's own, whose shim sets `MISHMERET_CONFIG` 
 
 A branch or a tag belongs to the shared repository, which the main clone and every worktree read, so the guard judges a
 git command that moves one by the ref it moves, wherever in that repository it runs (not in a copy, which has its own
-refs). Main's branch - the one checked out in the main clone - is the operator's. A ref `guard.refs` names is its
-owner's alone, the operator too refused it. The branch checked out in a role's worktree (`roles[].worktrees`) is that
+refs). Main's branch - the one `guard.main` names, and the one checked out in the main clone - is the operator's. A ref
+`guard.refs` names is its owner's alone, the operator too refused it; an object replacement (`refs/replace/`) is the
+operator's. The branch checked out in a role's worktree (`roles[].worktrees`) is that
 role's and the operator's, and so is the worktree: another role may not move or delete that branch, remove or move that
 worktree, or run a git write in it. The forms the guard cannot read for the ref they move (`update-ref --stdin`, `rebase
 --update-refs`, `filter-branch`, `fast-import`, `replay`, xargs) and the shared repository's own writes (`replace`,
 `reflog delete/expire`, `gc --prune`, `prune`) are the operator's alone - and so they reach a `guard.refs` ref of
 another owner too. `git maintenance register` and `git init --separate-git-dir` in a guarded tree are refused to every
 role. A branch checked out nowhere (a role's branch while its worktree holds another) is no one's. A subagent is no
-role, so a role's own subagent is refused a git write in its parent's worktree too. The guard reads the
-command's words; git's own `reference-transaction` hook, which sees every ref update whatever makes it, is the next
-piece.
+role, so a role's own subagent is refused a git write in its parent's worktree too.
+
+## The ref hook
+
+The guard reads a command's words; a script, or a form it cannot read, moves a ref it never sees. Git's own
+`reference-transaction` hook sees every ref update of the repository, whatever makes it, and `ref_hook.py` judges it by
+the guard's own rule: main's branch may move forward (a landing) for any role, and back, be deleted or made a link only
+by the operator; a `guard.refs` ref and a replacement are their owner's alone. A role's branch stays the guard's. The
+role is the session's `CLAUDE_CODE_AGENT`; with none - a session with no role, or the reviewer's own terminal - a
+protected move is refused and the refusal names the owner's pane. A copy of the main clone has its own refs, and is
+left alone. Main's branch is named in the config (`guard.main`) so that a detached or mid-rebase main clone does not
+leave it no one's; where it is set, `land.py` refuses a landing while the main clone holds another branch, so a wrong
+name is met at the next landing.
+
+Installed by the operator, once per clone, in the main clone, through the project's shim:
+`python3 .claude/hooks/ref_hook.py --install`. It writes `.git/hooks/reference-transaction`, which the worktrees share,
+naming the shim, the Python and the Mishmeret checkout by path and taking PATH and HOME as they were at the install -
+the command's own environment (another config, another Python, git's exec path, a field's override) does not reach it.
+It replaces its own older hook and refuses another's, and refuses when `core.hooksPath` is set. The order matters: the
+pin bump that brings the hook lands first, then the install; before the pin ever moves back to a commit without it,
+the hook is removed - else every commit in every tree is refused, the pin's own revert too. The hook fails closed: a
+missing shim, a missing pin or its own fault refuses every transaction naming a ref under `refs/`. The reviewer's way
+out is their own terminal's `git -c core.hooksPath=/dev/null ...`.
+
+What would switch it off is the guard's to refuse, in a guarded repository, to every role, the operator too:
+`core.hooksPath`, `include.` and `includeIf.` set by `-c` or `--config-env` on git's line, and a `GIT_CONFIG...=`,
+`HOME=` or `XDG_CONFIG_HOME=` (another config file) where it reaches git - but for a read, `clone` and `init`.
+
+Its costs, measured (notes/PLAN-REF-HOOK.md): a forward move of main that skips `land.py` is let through (the main tree's
+rule refuses its words), and leaves the main clone holding the reverse diff staged; a tag made on origin outside the
+shared repository fails a non-owner's plain `git fetch` (git would make it there) - `--no-tags` fetches the rest; an
+operator's subagent carries the operator's variable, so has the operator's rights here; a script that runs git with
+its hooks off, or a shell write into the main clone's `.git/`, is read by neither. Git spends about 0.1 s a commit on a
+hook, most of it starting `/bin/sh` for each state of each transaction. Measured with git 2.56.1 on macOS; git before
+2.28 runs no such hook, and Linux, Windows and the reftable format are unmeasured.
 
 ## What the project's sessions must say
 
