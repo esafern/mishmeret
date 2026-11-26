@@ -3,6 +3,29 @@
 Findings, decisions and open work, each the moment it is known; a time from `date`. One item per run of work, newest
 first (`M01.`, `M02.` ...); what git records (what each commit did) is not repeated here.
 
+M26. **[2026-11-27, a project's setup (notes/PLAN-PROJECT-SETUP.md, branch builder-project-setup)]**
+    * The reviewer, on "the verifier will be tomorrow" first, then: "what can we do to get a role in place to use
+      mishmeret for the normalizer project. is that work planned" - answered: not planned (PLAN-GUARD-ONLY put the
+      setup outside its piece); a recipe by hand, or a Mishmeret piece. The reviewer: "a mishmeret piece. plan it, and
+      i will turn ver on now"; then "when ver comes back, implement. is there a mishmeret operator? should I run it
+      now" - answered: no session can start as mishmeret-operator (no agent file); girsa-operator merges Mishmeret's
+      main; nothing to run now.
+    * girsa-verifier live again, started by the reviewer: the terminal adapter's plan sent to it, delivered.
+    * THE PROTOTYPE, measured on an APFS copy of the normalizer (origin a local bare repository; a private pin at main
+      57b87b2): 7 files written, a second run none; the steps it printed followed; the copy's hook as Claude Code runs
+      it, 25 cases as expected; the ref hook live (protected tags refused); `claude -p --agent norm-builder --model
+      haiku` in the copy's worktree - its push refused by the hook; the record's 510 under the written config, as
+      norm-builder 83 refused, as the operator 10, faults 0. FOUND: six refusals say "send <owner> a REQUEST", the
+      Board's words, in a project with no Board - the live session repeated them as its advice. Into the plan.
+    * THE CONFIG'S `repository` IS MISHMERET'S (where to clone it from, config.FIELDS), not the project's remote: read
+      before the prototype wrote it.
+    * A RULE OF THE BRIEF BROKEN: "a file is changed through the Edit tool" - I ran `sed -i '' -e 's/^- mishmeret\/...
+      (the five refusals. words)$/X/' notes/PLAN-PROJECT-SETUP.md` meaning to look for the line, and it rewrote the
+      plan's Files line to `X`; restored by Edit, before the commit.
+    * The two pieces' notes: the plan alone on its branch (7f75522); this log and the state on the terminal adapter's,
+      so the two branches' notes do not collide at their merges. The plan sent to girsa-verifier, delivered; its four
+      design questions to girsa-architect, not live.
+
 M25. **[2026-11-27, the terminal adapter's guard part (notes/PLAN-TERMINAL-ADAPTER.md, items 5-6)]**
     * The reviewer, in this pane, mid-work: "which role works on sefaria-citation-normalizer" - answered: `norm-builder`
       (the reviewer's name for it, PLAN-GUARD-ONLY's head) beside an operator; none set up there yet (no config in its

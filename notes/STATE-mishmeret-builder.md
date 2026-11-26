@@ -19,22 +19,24 @@ Rewritten in place when a piece lands and at the end of a session; the log is `n
   5-6; M25): a script read with what it sources, a library's function when what runs names it; WezTerm's kill-pane
   refused but on a socket of its own; pkill/killall/taskkill of wezterm outright; 28 mutations red; rule 45 newly
   refused 1 and 5, named costs. The plan's head at 6074848.
-- NEXT: THE PLAN TO GIRSA-VERIFIER, its one review - written, NOT DELIVERED (no session live: the night run, 01:17).
-  Send when live: the plan, 654db02, the two departures (pkill outright; a library's function when called), and the
-  measure's files - session aa55e80c's scratchpad, ta/ (the plan's head names each; gone if cleared, the head is the
-  recipe). girsa-architect told the pkill departure when live. Then term.sh: its dispatch literal.
+- Its plan WITH GIRSA-VERIFIER for its one review (sent and delivered 2026-11-27; the measure's files in session
+  aa55e80c's scratchpad, ta/). On its answer: its findings into the plan, then term.sh's build (the reviewer: "when
+  ver comes back, implement") - its dispatch literal. girsa-architect told the pkill departure when live.
+- A PROJECT'S SETUP (PLAN-PROJECT-SETUP, branch `builder-project-setup` from main 57b87b2, the plan alone at 7f75522;
+  M26; the reviewer: "a mishmeret piece. plan it"): setup_project.py measured on a copy of the normalizer (scratchpad
+  st/). Plan with girsa-verifier (delivered); its 4 design questions for girsa-architect, not live. This branch's
+  log and state stay here, on the adapter's.
 - Main's push is the reviewer's word, in girsa-operator's pane.
 - The first project's bump to 2327b0d: girsa-operator's (it said so, 2026-11-25), with `ref_hook.py --install` run
   again after it (girsa-verifier's NOTE 1: a hook installed earlier passes CLAUDE_CODE_AGENT alone).
-- The normalizer's setup is its own, not this lane (the plan's head): `norm-builder` and an operator, rav-shvat-blog
-  foreign, its tags the operator's - `stage` and `prod` exact (the reviewer), `beta-rc*`; others suggested (M24).
 - To resume: `git -C ~/work/mishmeret log --oneline -3`; `git -C ~/work/mishmeret-builder status -sb`; the Board, and a
   watcher on any Board item a piece waits on.
 
 ## Next, in order
 
 1. The terminal adapter: the plan's review, then term.sh and the scripts (above); Windows the reviewer's own run
-   before done. If wanted, a session started by MISHMERET_ROLE with no agent file (measured top-level and nested first).
+   before done. Then the setup's build; the normalizer's own run of it is the reviewer's, once it lands. If wanted, a
+   session started by MISHMERET_ROLE with no agent file (measured top-level and nested first).
 2. The move to the names in the first project and Mishmeret itself (every shim, the settings' hook paths, the configs'
    `transcripts`), then the old names' removal once both pins pass - its own piece. The first project's share:
    `.claude/mishmeret.json` 208 times in 107 files, CLAUDE_CODE_AGENT 90 in 39 (girsa-architect, 7501436fb).
