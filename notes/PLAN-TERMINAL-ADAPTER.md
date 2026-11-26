@@ -50,6 +50,54 @@ written before any review of this plan): the case holds.
   before the piece is called done for its case.
 So the change gains items 5 and 6 below, and the guard's part is measured (the guard-measure skill) before the review.
 
+THE GUARD'S PART, BUILT ON THE BRANCH AND MEASURED (2026-11-27, the guard-measure skill; committed at 654db02, the
+branch's first code; the cases, extracts, decisions and prototype scripts in this session's scratchpad, ta/):
+- THE HOLE, main 57b87b2's guard (probe.py, 29 cases on placeholder paths): every form of `wezterm cli kill-pane` let
+  through - no --pane-id, behind wezterm's and cli's own options, by a path, `wezterm.exe`, in a loop, in `bash -c`,
+  the operator's - and pkill, killall and taskkill naming wezterm. And with the kill moved into term.sh (a prototype:
+  agents-lib.sh sourcing term.sh, agents.sh calling `term_kill`), main's guard lets `bash agents.sh --resume` through
+  from a live pane.
+- ON THE RECORD (extract.py, 2026-11-27: the first project's 1,142 transcripts with its pi sessions, 174,150
+  command-cwd-role triples; Mishmeret's 13, 2,277): `wezterm cli ... kill-pane` 0 and 0; pkill, killall or taskkill
+  naming wezterm 0 and 5 (this lane's own measure, each a `pkill -f` of the private server's config path); a command
+  naming wezterm at all 6 and 16 (girsa-architect's Q2 probe and its notes, a look at the terminals; this lane's probe
+  and measure); `bash agents-morning.sh` 63 (girsa-operator's 53) and 7.
+- ITEM 5 AS BUILT (`_script`, `_sourced`, `_called`; for every rule that reads a script - the git rules, the tmux
+  rule, the check-status and piped-check rules): a script's `.sh` sources and theirs, each once; a relative path from
+  where the shell is; a folder the guard cannot read (`"$HERE"`, the `$(cd "$(dirname ...)" && pwd)` form) taken for
+  the script's own - a `shortcut:` in the code. AND A LIBRARY'S FUNCTION IS READ ONLY WHEN WHAT RUNS NAMES IT (the
+  script, a library's top-level code, a function so named): rule 45 on the first build refused 20 of the first
+  project's runs of agents-morning.sh (`--install-night`, `--install-reminder`, `--skip`, `--skip-tonight`, `--resume`,
+  the night's dry run, a stubbed test; girsa-operator's but 2 of girsa-verifier's), which sources term.sh for its
+  capture and never calls its kill - the shell runs a sourced function only when called. Not read: a function called
+  by a name the guard cannot read.
+- ITEM 6 AS BUILT, with two changes to girsa-architect's form: pkill and killall naming wezterm are refused OUTRIGHT,
+  not let through on a socket of the command's own - they match processes by name, which no socket narrows; a test
+  server is stopped by its pid, as girsa-architect's own measure did. And taskkill with them (Windows's, the case's
+  platform; unmeasured there). `wezterm cli kill-pane` is let through where the command sets WEZTERM_UNIX_SOCKET (a
+  prefix, `env`, an earlier `export` outside quotes) to a value not empty and not the variable itself - into a script
+  and its `bash -c` too.
+- THE TESTS (test_guard.py, one new test, placeholder scripts): two levels of sourcing, a relative path, a loop, a
+  source in a heredoc, `. venv/bin/activate` and /dev/stdin not read; a library's function cut or read (not called,
+  called by another, by the library's top level, `function NAME {`, a name inside another, a body that never closes,
+  a definition inside another); the git rules through a sourced file; every WezTerm form refused and let through, the
+  operator too. 28 RULES each red with it taken out (mutate.py, the baseline passing). The suite: 200 passed.
+- THE BUILD'S RUN OF RULE 45, main 57b87b2 (its guard and scripts) against the branch's guard with the prototype
+  scripts, by role (a builder, the operator, `each`): the first project's 174,150 - newly refused 1, newly let through
+  0, faults 0, in each of the three; Mishmeret's 2,277 - 5, 0, 0 in each. The 1: girsa-operator's run of agents.sh in
+  a private tmux server's environment (`env -u TMUX TMUX_TMPDIR=<folder> ... bash <the project>/agents.sh`), which now
+  reaches WezTerm's kill too: the first cost below. The 5: this lane's own `pkill -f "wezterm-mux-server ...
+  --config-file <scratch>/mux.lua"` - the pkill rule's cost. And main's guard against the prototype scripts (the hole,
+  on the record): 5 of the first project's newly let through - `bash agents.sh` from a live pane with its tmux stubbed
+  on PATH, refused today by the kill in agents.sh; the branch refuses them again.
+- THE COSTS, for the README: a script holding both terminals' kills (agents.sh), run against a private server, names a
+  private one for each - `env -u TMUX TMUX_TMPDIR=<folder> WEZTERM_UNIX_SOCKET=<socket> bash agents.sh`; a pkill of a
+  private WezTerm server is refused whatever its pattern (stop it by its pid); a library function called by a name the
+  guard cannot read is not read.
+- FOR TERM.SH'S BUILD: its dispatch stays literal (`if [ "$MM_TERMINAL" = wezterm ]`, never `"_${T}_kill"`), so the
+  guard reads both kills - test_guard.py's read of the real agents.sh pins it, its private-server line gaining the
+  WezTerm socket.
+
 ## The measure (a prototype: `term.sh`, one function a verb, each with a tmux and a WezTerm form)
 
 `measure.sh` runs agents.sh's sequence through it, 25 checks: no session at start; four panes, each its own id, listed
@@ -74,10 +122,11 @@ The scripts: this session's scratchpad, wez/ (term.sh, measure.sh, measure-tmux.
    session is killed (question 2).
 4. The README: the adapter, WezTerm's form and its costs (with Q1's: tmux's names kept, `tmux_conf` unread under
    WezTerm); on Windows the scripts run under Git Bash, unmeasured - the reviewer's own run on the Windows machine.
-5. THE GUARD READS A SCRIPT WITH WHAT IT SOURCES by a literal path (`. "$HERE/term.sh"`, `source ...`), one level as
-   today, so the tmux rule finds the kill where it now lives.
-6. THE GUARD'S WEZTERM FORM, the tmux rule's scope: `wezterm cli kill-pane`, and pkill or killall naming wezterm,
-   refused but where the command sets `WEZTERM_UNIX_SOCKET` to a socket of its own; the operator too, as tmux's.
+5. THE GUARD READS A SCRIPT WITH WHAT IT SOURCES (`. "$HERE/term.sh"`, `source ...`), and theirs, a library's
+   function when what runs names it, so the tmux rule finds the kill where it now lives (the head: as built).
+6. THE GUARD'S WEZTERM FORM, the tmux rule's scope: `wezterm cli kill-pane` refused but where the command sets
+   `WEZTERM_UNIX_SOCKET` to a socket of its own; pkill, killall or taskkill naming wezterm refused outright; the
+   operator too, as tmux's (the head: as built).
 
 THE COSTS, WezTerm's (named in the README): no label on each pane's border (the tab's title alone); no tiled layout
 (the splits as made); a line exactly as wide as its pane is joined to the next in a capture; the tags in a file, which
@@ -124,6 +173,7 @@ Not in this piece: `send-text` into another role's pane (not in the tmux rule ei
   a private server).
 - The tags file: one left behind with ids the next session reuses - only the new tags read.
 - No `tmux` or `wezterm` command in the three scripts outside term.sh.
-- The guard: the kill read in a sourced file (agents.sh's `"in the script ..."` again); `wezterm cli kill-pane`,
-  pkill and killall of wezterm refused, the operator too; each let through with a socket of its own; each rule red
-  with it taken out; rule 45 by role on both records.
+- The guard (built, the head): the kill read in a sourced file, a library's uncalled function not; `wezterm cli
+  kill-pane` refused, the operator too, and let through with a socket of its own; pkill, killall and taskkill of
+  wezterm refused; each rule red with it taken out; rule 45 by role on both records. At term.sh's build, the real
+  agents.sh's line (`"in the script agents.sh"`) read through term.sh, and its private-server form with both sockets.

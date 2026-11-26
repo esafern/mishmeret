@@ -3,6 +3,22 @@
 Findings, decisions and open work, each the moment it is known; a time from `date`. One item per run of work, newest
 first (`M01.`, `M02.` ...); what git records (what each commit did) is not repeated here.
 
+M25. **[2026-11-27, the terminal adapter's guard part (notes/PLAN-TERMINAL-ADAPTER.md, items 5-6)]**
+    * The reviewer, in this pane, mid-work: "which role works on sefaria-citation-normalizer" - answered: `norm-builder`
+      (the reviewer's name for it, PLAN-GUARD-ONLY's head) beside an operator; none set up there yet (no config in its
+      tree), its setup not this lane's.
+    * THE HOLE on main 57b87b2's guard, probed: every `wezterm cli kill-pane` form and pkill / killall / taskkill of
+      wezterm let through; with the kill moved into term.sh, `bash agents.sh --resume` let through too. On the record:
+      no kill-pane in either project; the pkills of wezterm this lane's own 5.
+    * BUILT: the guard reads what a script sources, and the WezTerm form. RULE 45 ON THE FIRST BUILD: 21 of the first
+      project's newly refused - 20 runs of agents-morning.sh (girsa-operator 18, girsa-verifier 2), which sources
+      term.sh's kill and never calls it. Not a cost to name: the shell runs a sourced function only when called, so
+      the guard now reads a library's function only when what runs names it. Again: 1 and 5, both named costs.
+    * pkill of wezterm refused outright, not on a socket as girsa-architect's Q3 form had it - pkill matches by name;
+      for girsa-verifier's review, and girsa-architect when live (not listed this session).
+    * One mutation GREEN at first (a source inside a heredoc: the case's library was never called, so the cut hid it
+      either way) - the case rewritten to a library whose top level kills; 28 RED. Committed 654db02.
+
 M24. **[2026-11-25, the terminal adapter (notes/PLAN-TERMINAL-ADAPTER.md)]**
     * The reviewer: "small terminal adapter", then, asked which second terminal (WezTerm, iTerm2 or none): "wezterm".
       Installed by Homebrew on that word (20240203-110809-5046fc22; none was here but tmux and iTerm2).
