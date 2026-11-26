@@ -15,17 +15,16 @@ Rewritten in place when a piece lands and at the end of a session; the log is `n
 ## Now
 
 - THE TERMINAL ADAPTER (PLAN-TERMINAL-ADAPTER, branch `builder-terminal-adapter` from main 57b87b2): planned and
-  measured (term.sh's prototype 25/25 on private tmux and WezTerm servers). ITS GUARD PART BUILT at 654db02 (items
-  5-6; M25): a script read with what it sources, a library's function when what runs names it; WezTerm's kill-pane
-  refused but on a socket of its own; pkill/killall/taskkill of wezterm outright; 28 mutations red; rule 45 newly
-  refused 1 and 5, named costs. The plan's head at 6074848.
+  measured. ITS GUARD PART BUILT at 654db02 (M25): a script read with what it sources, a library's function when
+  called; WezTerm's kill-pane but on its own socket, and pkill of wezterm, refused; rule 45: 1 and 5, named costs.
 - Its plan WITH GIRSA-VERIFIER for its one review (sent and delivered 2026-11-27; the measure's files in session
   aa55e80c's scratchpad, ta/). On its answer: its findings into the plan, then term.sh's build (the reviewer: "when
-  ver comes back, implement") - its dispatch literal. girsa-architect told the pkill departure when live.
-- A PROJECT'S SETUP (PLAN-PROJECT-SETUP, branch `builder-project-setup` from main 57b87b2, the plan alone at 7f75522;
-  M26; the reviewer: "a mishmeret piece. plan it"): setup_project.py measured on a copy of the normalizer (scratchpad
-  st/). Plan with girsa-verifier (delivered); its 4 design questions for girsa-architect, not live. This branch's
-  log and state stay here, on the adapter's.
+  ver comes back, implement") - its dispatch literal. girsa-architect agreed the pkill departure (332c2fdb1).
+- A PROJECT'S SETUP (PLAN-PROJECT-SETUP, branch `builder-project-setup` from main 57b87b2, the plan alone at 5937c48;
+  M26): setup_project.py measured on a copy of the normalizer (scratchpad st/). girsa-architect answered (332c2fdb1):
+  agreed, a pi role's runner and start line into the piece. Plan with girsa-verifier. THE NORMALIZER SET UP that
+  night by the prototype (girsa-operator: its 165f8dc, not pushed); norm-builder runs under pi by its line with the
+  pin's pi_guard.ts. This branch's log and state stay here, on the adapter's.
 - Main's push is the reviewer's word, in girsa-operator's pane.
 - The first project's bump to 2327b0d: girsa-operator's (it said so, 2026-11-25), with `ref_hook.py --install` run
   again after it (girsa-verifier's NOTE 1: a hook installed earlier passes CLAUDE_CODE_AGENT alone).

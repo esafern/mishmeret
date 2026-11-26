@@ -25,6 +25,21 @@ M26. **[2026-11-27, a project's setup (notes/PLAN-PROJECT-SETUP.md, branch build
     * The two pieces' notes: the plan alone on its branch (7f75522); this log and the state on the terminal adapter's,
       so the two branches' notes do not collide at their merges. The plan sent to girsa-verifier, delivered; its four
       design questions to girsa-architect, not live.
+    * girsa-operator, live: the reviewer told it "you will make that happen tonight"; asked what of the onboarding is
+      its. Answered: its parts in order (the merge, the pin, the run, the normalizer's commit, worktree and ref hook as
+      its operator). Asked the reviewer three questions here (AskUserQuestion): "Prototype tonight", "No, leave v*
+      open", "Wait for girsa-architect". The prototype's paths made `~` and its agent file's words fixed, measured again
+      on a fresh copy (25 cases as expected); the exact steps sent to girsa-operator. ITS REPORT: the pin at 57b87b2,
+      the 7 files committed by name as the normalizer's 165f8dc, the worktree on `norm-builder`, the ref hook installed
+      (its Python Homebrew's 3.15 by path) - read against the measure, the same. Not pushed: the repository is public;
+      `~/work/rav-shvat-blog` in 165f8dc, its name already in two pushed messages - the reviewer's word.
+    * The reviewer: "arch is up" - the 4 questions and the pkill departure sent to girsa-architect. ITS ANSWER (the
+      first project's 332c2fdb1): Q1-Q4 agreed with additions; the departure agreed; and THE GAP - the normalizer's
+      runner is pi (412 of its shell calls since September, none Claude Code's), so a bare `pi` there runs unguarded.
+      MEASURED: pi 1.6.1 started as agents.sh starts a role, with the pin's pi_guard.ts, in a fresh copy's worktree, on
+      the suite's scripted provider - the push, a main-clone commit and write, the tag stage refused; status and a
+      worktree write let through. The line sent to girsa-operator and given to the reviewer. The plan's head and change
+      at 5937c48; girsa-verifier told the plan moved.
 
 M25. **[2026-11-27, the terminal adapter's guard part (notes/PLAN-TERMINAL-ADAPTER.md, items 5-6)]**
     * The reviewer, in this pane, mid-work: "which role works on sefaria-citation-normalizer" - answered: `norm-builder`
