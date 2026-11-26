@@ -18,6 +18,9 @@ M25. **[2026-11-27, the terminal adapter's guard part (notes/PLAN-TERMINAL-ADAPT
       for girsa-verifier's review, and girsa-architect when live (not listed this session).
     * One mutation GREEN at first (a source inside a heredoc: the case's library was never called, so the cut hid it
       either way) - the case rewritten to a library whose top level kills; 28 RED. Committed 654db02.
+    * Committed 6074848 (the plan's head). THE PLAN TO GIRSA-VERIFIER, written, NOT DELIVERED: "No agent named
+      'girsa-verifier' is reachable"; ListAgents lists no session; at 01:17 the first project's five panes were at
+      their shell (the night run). To send when it is live (the state's Now).
 
 M24. **[2026-11-25, the terminal adapter (notes/PLAN-TERMINAL-ADAPTER.md)]**
     * The reviewer: "small terminal adapter", then, asked which second terminal (WezTerm, iTerm2 or none): "wezterm".

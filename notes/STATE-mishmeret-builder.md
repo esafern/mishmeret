@@ -2,7 +2,7 @@
 
 Rewritten in place when a piece lands and at the end of a session; the log is `notes/LOG.md`, by item.
 
-## Built, on main (main 3ed1b9a, not pushed; each verified by girsa-verifier, merged by girsa-operator)
+## Built, on main (main 57b87b2, origin's main at it; each verified by girsa-verifier, merged by girsa-operator)
 
 - To 2026-11-24 (M01-M19), by the log. 70a6ffe-4715362: a ref judged by the repository (M20). 43a9d97: the Board's
   tab icon (M22). 94cd205: git's reference-transaction hook (M21) - main forward any role's, else the operator's;
@@ -14,15 +14,16 @@ Rewritten in place when a piece lands and at the end of a session; the log is `n
 
 ## Now
 
-- THE TERMINAL ADAPTER (PLAN-TERMINAL-ADAPTER, branch `builder-terminal-adapter` from main 3ed1b9a; its notes asked
-  of girsa-operator to merge into main): planned and measured - WezTerm 20240203 installed (the reviewer: "wezterm");
-  the prototype term.sh, 25 checks each on a private tmux and a private WezTerm server, 25 ok each (scratchpad wez/:
-  term.sh, measure.sh, mux.lua - gone with the scratchpad: the plan names each function and check). girsa-architect
-  answered (83c414ef4): Q3 IN THIS PIECE - next, prototype items 5-6 (the guard reads what a script sources; refuses
-  `wezterm cli kill-pane`, pkill/killall of wezterm but on a socket of the command's own), measured by the
-  guard-measure skill (probe, rule 45 by role, each rule red); the tags file written afresh by term_new; then the
-  plan to girsa-verifier. A WezTerm socket's path must be short (macOS SUN_LEN): a folder of the per-user temp dir.
-- No piece in build. Main's push is the reviewer's word, in girsa-operator's pane.
+- THE TERMINAL ADAPTER (PLAN-TERMINAL-ADAPTER, branch `builder-terminal-adapter` from main 57b87b2): planned and
+  measured (term.sh's prototype 25/25 on private tmux and WezTerm servers). ITS GUARD PART BUILT at 654db02 (items
+  5-6; M25): a script read with what it sources, a library's function when what runs names it; WezTerm's kill-pane
+  refused but on a socket of its own; pkill/killall/taskkill of wezterm outright; 28 mutations red; rule 45 newly
+  refused 1 and 5, named costs. The plan's head at 6074848.
+- NEXT: THE PLAN TO GIRSA-VERIFIER, its one review - written, NOT DELIVERED (no session live: the night run, 01:17).
+  Send when live: the plan, 654db02, the two departures (pkill outright; a library's function when called), and the
+  measure's files - session aa55e80c's scratchpad, ta/ (the plan's head names each; gone if cleared, the head is the
+  recipe). girsa-architect told the pkill departure when live. Then term.sh: its dispatch literal.
+- Main's push is the reviewer's word, in girsa-operator's pane.
 - The first project's bump to 2327b0d: girsa-operator's (it said so, 2026-11-25), with `ref_hook.py --install` run
   again after it (girsa-verifier's NOTE 1: a hook installed earlier passes CLAUDE_CODE_AGENT alone).
 - The normalizer's setup is its own, not this lane (the plan's head): `norm-builder` and an operator, rav-shvat-blog
@@ -32,8 +33,8 @@ Rewritten in place when a piece lands and at the end of a session; the log is `n
 
 ## Next, in order
 
-1. The terminal adapter's guard part, review and build (above); Windows the reviewer's own run before done. If
-   wanted, a session started by MISHMERET_ROLE with no agent file (measured top-level and nested first).
+1. The terminal adapter: the plan's review, then term.sh and the scripts (above); Windows the reviewer's own run
+   before done. If wanted, a session started by MISHMERET_ROLE with no agent file (measured top-level and nested first).
 2. The move to the names in the first project and Mishmeret itself (every shim, the settings' hook paths, the configs'
    `transcripts`), then the old names' removal once both pins pass - its own piece. The first project's share:
    `.claude/mishmeret.json` 208 times in 107 files, CLAUDE_CODE_AGENT 90 in 39 (girsa-architect, 7501436fb).
