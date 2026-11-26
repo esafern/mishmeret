@@ -1250,6 +1250,80 @@ def test_the_role_guard_keeps_every_role_off_the_live_tmux_server():
     assert rg.refusal("ex-builder", "git push origin b", "/work/book-builder", main_tree=main, read=lambda p: None)
 
 
+def test_the_guard_reads_what_a_script_sources_and_keeps_every_role_off_wezterms_live_panes():
+    """notes/PLAN-TERMINAL-ADAPTER.md, items 5 and 6 (girsa-architect's Q3). The session scripts' kill moves into
+    term.sh, which their library sources: the guard reads a script with each `.sh` file it sources and theirs, a folder
+    it cannot read taken for the script's own - for every rule. And WezTerm's live panes are the tmux server's case: a
+    role's pane holds WEZTERM_UNIX_SOCKET, so `wezterm cli kill-pane` is refused for every role, the operator too,
+    unless the command sets that socket to one of its own; pkill, killall or taskkill of wezterm outright. Placeholder
+    paths and scripts."""
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("role_guard", os.path.join(PKG, "role_guard.py"))
+    rg = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(rg)
+    term = ('term_kill() {\n  if [ "$T" = wezterm ]; then\n    wezterm cli kill-pane --pane-id "$p"\n  else\n'
+            '    tmux kill-session -t "$1"\n  fi\n}\nterm_capture() { tmux capture-pane -p -t "$1"; }\n')
+    files = {"/s/roles.sh": 'HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"\n. "$HERE/lib.sh"\nterm_kill "$S"\n',
+             "/s/morning.sh": '. "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib.sh"\nterm_capture "$p"\n',
+             "/s/fns.sh": "outer() { inner; }\ninner() {\n  tmux kill-server\n}\nk() { tmux kill-server; }\n",
+             "/s/nest.sh": ". ./fns.sh\nouter\n", "/s/kk.sh": ". ./fns.sh\nkk\n", "/s/top.sh": ". ./tl.sh\n",
+             "/s/tl.sh": "k() { tmux kill-server; }\nk\n", "/s/fn.sh": ". ./fk.sh\n",
+             "/s/fk.sh": "function k {\n  tmux kill-server\n}\n", "/s/open.sh": ". ./un.sh\n",
+             "/s/un.sh": "f() {\n  echo {\n}\ntmux kill-server\n", "/s/nested.sh": ". ./nf.sh\n",
+             "/s/nf.sh": "outer() {\n  inner() { :; }\n  tmux kill-server\n}\n",
+             "/s/lib.sh": '. "$HERE/term.sh"\n', "/s/term.sh": term, "/s/rel.sh": "source ./term.sh\nterm_kill x\n",
+             "/s/loop.sh": ". ./loop.sh\n", "/s/act.sh": ". venv/bin/activate\n. /dev/stdin\n",
+             "/s/doc.sh": "cat <<'EOF'\n. ./tl.sh\nEOF\n", "/s/c.sh": "bash -c 'wezterm cli kill-pane --pane-id 1'\n",
+             "/work/book-builder/p.sh": ". ./push.sh\n", "/work/book-builder/push.sh": "git push origin b\n"}
+    asked = []
+    read = lambda p: asked.append(p) or files.get(p)
+    at = lambda cmd: rg.tmux_refusal(cmd, "/s", read)
+    # item 5: two levels of sourcing, the folder in a variable; a relative path from where the shell is
+    why = at("bash roles.sh")
+    assert why and "WezTerm's LIVE panes" in why and "(in the script roles.sh)" in why
+    assert "LIVE tmux server" in at("WEZTERM_UNIX_SOCKET=/tmp/x/w bash roles.sh")
+    assert "WezTerm's LIVE panes" in at("env -u TMUX TMUX_TMPDIR=/tmp/x bash roles.sh")
+    assert at("env -u TMUX TMUX_TMPDIR=/tmp/x WEZTERM_UNIX_SOCKET=/tmp/x/w bash roles.sh") is None
+    assert at("bash rel.sh") and at("bash -n roles.sh") is None
+    assert at("bash loop.sh") is None and at("bash doc.sh") is None        # a loop ends; a heredoc's body is words
+    assert at("bash act.sh") is None and "/dev/stdin" not in asked and not any("activate" in p for p in asked)
+    assert at("bash c.sh") and at("WEZTERM_UNIX_SOCKET=/tmp/x/w bash c.sh") is None   # its `bash -c` inherits it
+    # a library's function is read when what runs names it: the script, another function so named, the library's own
+    # top-level code - not a name inside another (kk), not a function never called (the morning run's capture alone)
+    assert at("bash morning.sh") is None and at("bash kk.sh") is None and at("bash fn.sh") is None
+    assert at("bash nested.sh") is None                 # a function defined inside another is that one's body
+    assert at("bash nest.sh") and at("bash top.sh") and at("bash open.sh")     # open.sh: a body that never closes
+    # the other rules read a sourced file too
+    assert rg.refusal("ex-builder", "bash p.sh", "/work/book-builder", main_tree=lambda p: False, read=read)
+    # item 6: every form of wezterm's kill, and pkill / killall / taskkill naming it
+    no = lambda cmd: rg.tmux_refusal(cmd, "/work/elsewhere", read)
+    for refused in ("wezterm cli kill-pane --pane-id 3", "wezterm cli kill-pane", "wezterm.exe cli kill-pane --pane-id 3",
+                    "wezterm cli --no-auto-start kill-pane --pane-id 3",
+                    "wezterm --config-file /tmp/x/mux.lua cli --prefer-mux kill-pane --pane-id 3",
+                    "/Applications/WezTerm.app/Contents/MacOS/wezterm cli kill-pane --pane-id 3",
+                    "env -u WEZTERM_UNIX_SOCKET wezterm cli kill-pane --pane-id 3",
+                    "WEZTERM_UNIX_SOCKET= wezterm cli kill-pane --pane-id 3",
+                    'WEZTERM_UNIX_SOCKET="$WEZTERM_UNIX_SOCKET" wezterm cli kill-pane --pane-id 3',
+                    "WEZTERM_CONFIG_FILE=/tmp/x/mux.lua wezterm cli kill-pane --pane-id 3",
+                    'echo "export WEZTERM_UNIX_SOCKET=/tmp/x/s"; wezterm cli kill-pane --pane-id 3',
+                    "for p in 1 2; do wezterm cli kill-pane --pane-id $p; done", "bash -c 'wezterm cli kill-pane'"):
+        why = no(refused)
+        assert why and "WezTerm's LIVE panes" in why, refused
+    for refused in ("pkill wezterm", "pkill -f wezterm-mux-server", 'pkill -f "wezterm-mux-server --config-file /x/m.lua"',
+                    "killall wezterm-gui", "killall WezTerm", "WEZTERM_UNIX_SOCKET=/tmp/x/s pkill -f wezterm",
+                    "taskkill //IM wezterm-gui.exe //F"):
+        why = no(refused)
+        assert why and "pkill / killall / taskkill of wezterm" in why, refused
+    for fine in ("WEZTERM_UNIX_SOCKET=/tmp/x/s wezterm cli kill-pane --pane-id 3",
+                 "export WEZTERM_UNIX_SOCKET=/tmp/x/s; wezterm cli kill-pane --pane-id 3",
+                 "env WEZTERM_UNIX_SOCKET=/tmp/x/s wezterm cli kill-pane --pane-id 3", "wezterm cli list --format json",
+                 "wezterm cli send-text --pane-id 3 --no-paste 'echo hi'", "echo 'wezterm cli kill-pane'",
+                 "grep -n kill-pane mishmeret/term.sh", "pkill -f review_server.py"):
+        assert no(fine) is None, fine
+    # the operator is not exempt: main() asks both checks of every role
+    assert rg.refusal("ex-operator", "wezterm cli kill-pane --pane-id 0", "/tmp") is None and no("wezterm cli kill-pane")
+
+
 def _placeholder_clone_and_worktree(tmp_path, monkeypatch, gate_rc=0, hold_rc=0):
     """A placeholder main clone (branch `main`) and a worktree of it on `feature`, with the tools land.py calls replaced:
     the lane check passes, the Board answers `hold_rc` to a hold and records each call, the gate answers `gate_rc` and

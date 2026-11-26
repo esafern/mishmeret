@@ -11,19 +11,19 @@ parallel"):
   * CHANGING THE MAIN TREE through git - it is the operator's alone; every other role works in its own worktree and
     lands with `git merge --ff-only`, the one change it may make there (girsa-verifier's probe, 2026-10-01: commit,
     update-ref, merge --no-ff, cherry-pick, revert and reset --hard had all passed the first version).
-  * STOPPING THE LIVE TMUX SERVER - for every role, the operator too (below, TMUX_KILL).
+  * STOPPING THE LIVE TMUX SERVER OR WEZTERM'S PANES - for every role, the operator too (below, TMUX_KILL, WEZ_KILL).
   * LANDING AS ANOTHER ROLE through `tools/land.py`, which runs git where this hook cannot see it (below, LAND); and
     a `git commit` or a landing `git merge` in this repository run any other way (below, THROUGH_LAND).
   * A GIT VERB THAT IS NOT GIT'S OWN - an alias or an add-on - for every role (GIT_VERBS); and WRITING A GUARDED
     REPOSITORY'S CONFIG (`git config`, `git remote add`), or the global one, for every role, the operator too.
 
 WHAT IT READS: the command, and the text of a shell script it runs (`bash x.sh`, `sh x.sh`, `./x.sh`, its path from
-a variable the same command sets) - commits here are made by script. Only git in COMMAND POSITION counts (a line's
-start, or after ; & | ( ` or $(, after the shell's keywords then, do, else, elif, if, while, until, ! and {, and after
-a case arm's pattern; git also written `\\git`, "git" or 'git', behind its own options, and its verb quoted or
-escaped), and never what stands inside quotes or a
-heredoc's body: `grep "git push"` and a
-commit message saying "never git push --all" are words, not commands (the builder's and the verifier's probes). It
+a variable the same command sets) with the `.sh` files that script sources and the functions of theirs it calls -
+commits here are made by script. Only git in COMMAND POSITION counts (a line's start, or after ; & | ( ` or $(, after
+the shell's keywords then, do, else, elif, if, while, until, ! and {, and after a case arm's pattern; git also written
+`\\git`, "git" or 'git', behind its own options, and its verb quoted or escaped), and never what stands inside quotes
+or a heredoc's body: `grep "git push"` and a commit message saying "never git push --all" are words, not commands
+(the builder's and the verifier's probes). It
 is a guard on the ordinary forms, not a sandbox: `bash -c "..."`'s argument and git behind env, time, command, exec,
 nice, sudo or xargs, or by a path, are read; git hidden in a variable, another interpreter or a deeper script is not.
 Anything it cannot judge runs - but a verb it cannot read (`git $V` with V set elsewhere) is not git's own, and is refused.
@@ -1071,7 +1071,7 @@ def refusal(role, command, cwd, main_tree=is_main_tree, read=_read, depth=0, pro
             a, b = m.span(1)
             path = _expand(_unquote(command[a:b]), command[:a])
             here = _dir_before(command, masked, a, cwd)
-            body = _moved(read(os.path.join(here, path)), read)
+            body = _script(here, path, read)
             if body:
                 why = refusal(role, body, here, main_tree, read, depth + 1, project_tree, guarded)
                 if why:
@@ -1233,6 +1233,13 @@ def copy_refusal(command, cwd, is_worktree=lambda p: os.path.isfile(os.path.join
 # (kill-serv, kill-sess), kill-pane (one role's pane); a target is read as another session only when it names one outright
 # (not %N, @N, $N or ":1", which point into the server the command reaches). `pkill` / `killall` naming tmux is refused
 # outright. Not covered: tmux behind a variable or another interpreter, or `kill <pid>` of the server.
+# WEZTERM'S LIVE PANES THE SAME (notes/PLAN-TERMINAL-ADAPTER.md, item 6; girsa-architect's Q3): a role's pane under
+# WezTerm holds WEZTERM_UNIX_SOCKET, which `wezterm cli` follows, and with none it finds the running window - so `wezterm
+# cli kill-pane` reaches every role's pane, its own with no --pane-id. Refused for every role, the operator too, unless
+# the command sets WEZTERM_UNIX_SOCKET to a socket of its own (a prefix, `env`, an earlier `export`; not empty, not the
+# variable itself), into a script too. pkill, killall or taskkill naming wezterm is refused outright: it matches by
+# name, which no socket narrows - a test server is stopped by its pid. wezterm 20240203 has no other kill verb, and
+# takes no prefix of one. Not covered, as tmux's: wezterm behind a variable or a shell function, `kill <pid>`.
 TMUX_PREFIX = (r"(?:(?:[A-Za-z_]\w*=(?:" + WORD + r")?|env(?:\s+-u\s*\w+|\s+-" + WORD + r")*|time|command|exec"
                r"|nice(?:\s+-n\s*" + WORD + r"|\s+-\d+)?|sudo(?:\s+-[A-Za-z]+(?:\s+(?:[\w.-]+|\"[^\"]*\"|'[^']*'))?)*"
                r"|xargs(?:\s+-" + WORD + r"(?:\s+" + WORD + r")?)*)\s+)*")      # item 1's WORD, as PREFIX
@@ -1240,7 +1247,11 @@ TMUX_KILL = re.compile(BOUNDARY + "(" + TMUX_PREFIX + r")(?:\S*/)?tmux((?:\s+-(?
                        r"(kill[\w-]*)(?![\w-])([^;&|\n]*)", re.M)
 KILL_VERBS = ("kill-server", "kill-session", "kill-window", "kill-pane")
 KILL_ALIASES = {"killw": "kill-window", "killp": "kill-pane"}
-PKILL = re.compile(BOUNDARY + TMUX_PREFIX + r"(?:\S*/)?(?:pkill|killall)(?![\w-])([^;&|\n]*)", re.M)
+PKILL = re.compile(BOUNDARY + TMUX_PREFIX + r"(?:\S*/)?(?:pkill|killall|taskkill)(?![\w-])([^;&|\n]*)", re.M)
+WEZ_KILL = re.compile(BOUNDARY + "(" + TMUX_PREFIX + r")(?:\S*/)?wezterm(?:\.exe)?(?:\s+(?:-n|--skip-config|--config(?:-file)?"
+                      r"(?:=|\s+)" + WORD + r"))*\s+cli(?:\s+(?:--no-auto-start|--prefer-mux|--class(?:=|\s+)" + WORD
+                      + r"))*\s+kill-pane(?![\w-])", re.M)
+WEZ_EXPORT = re.compile(r"(?<![\w-])export\s+WEZTERM_UNIX_SOCKET=")
 
 
 def _kill_verb(word):
@@ -1266,26 +1277,127 @@ def _own_tmux_env(prefix, before):
     return bool(cleared and tmpdir)
 
 
+def _own_wez_env(prefix, command, masked, at):
+    """True when the command at `at`, with this `prefix`, runs wezterm with WEZTERM_UNIX_SOCKET set to a socket of its
+    own: the prefix's value, else the last `export` before it - not empty, and not the variable itself."""
+    exports = [WORD_AT.match(command, e.end()) for e in WEZ_EXPORT.finditer(masked[:at])]
+    sets = re.findall(r"(?<![\w$])WEZTERM_UNIX_SOCKET=(" + WORD + ")?", prefix) or [x.group(0) if x else "" for x in exports]
+    value = sets[-1] if sets else ""
+    return bool(_word(value)) and "WEZTERM_UNIX_SOCKET" not in value
+
+
 # the project's shell shim, by its form (`HELPER.py --sh NAME`), not by the helper's name - a project's own file
 SHELL_SHIM = re.compile(r'\.py"?\s+--sh\s+([\w.-]+\.sh)\b')
 HERE = os.path.dirname(os.path.abspath(__file__))
 
 
-def _moved(body, read):
-    """A SCRIPT MOVED TO MISHMERET IS READ WHERE IT RUNS (design-study/STEP-MISHMERET-MOVE-PLAN.md in Girsa, step 2): a
-    project's shell shim (`.claude/mishmeret_shim.py --sh NAME`) runs Mishmeret's NAME from the pinned tree - the tree
-    this guard runs from - so the guard reads that; read as the shim, `agents.sh --restart`'s kill-session would be
-    hidden. A script not found here leaves the shim itself."""
+SOURCE = re.compile(BOUNDARY + r"(?:source|\.)\s+", re.M)
+WORD_AT = re.compile(WORD)
+
+
+def _script(here, path, read):
+    """The text the shell runs for the script `path`, from `here`, or None. A SCRIPT MOVED TO MISHMERET IS READ WHERE IT
+    RUNS (design-study/STEP-MISHMERET-MOVE-PLAN.md in Girsa, step 2): a project's shell shim (`.claude/mishmeret_shim.py
+    --sh NAME`) runs Mishmeret's NAME from the pinned tree - the tree this guard runs from - so the guard reads that;
+    read as the shim, `agents.sh --restart`'s kill-session would be hidden. A script not found here leaves the shim
+    itself. Then what it sources (_sourced), each library cut to what runs (_called)."""
+    path = os.path.join(here, path)
+    body = read(path)
     m = SHELL_SHIM.search(body or "")
-    if not m:
-        return body
-    return read(os.path.join(HERE, m.group(1))) or body
+    moved = m and read(os.path.join(HERE, m.group(1)))
+    if moved:
+        path, body = os.path.join(HERE, m.group(1)), moved
+    libs = []
+    if body:
+        _sourced(body, path, here, read, {path}, libs)
+    return body and _called(body, libs)
 
 
-def tmux_refusal(command, cwd, read=_read, own_env=False, depth=0):
-    """None to let `command` run, or the reason to refuse it: it would stop the live tmux server or the roles' session
-    (the comment above). `own_env`: the command runs in an environment already set to a server of its own."""
+def _sourced(body, path, here, read, seen, libs):
+    """Each `.sh` file `body`, the script at `path`, sources (`. FILE`, `source FILE`), and theirs, each once, onto
+    `libs` - A SCRIPT IS READ WITH WHAT IT SOURCES (notes/PLAN-TERMINAL-ADAPTER.md, item 5): the session scripts' tmux
+    calls moved into term.sh, which agents-lib.sh sources, so agents.sh read alone hid its kill from the tmux rule. A
+    relative path is the shell's own, from `here`; another file the shell may source (`. venv/bin/activate`,
+    /dev/stdin) is not read."""
+    for m in SOURCE.finditer(mask(body)):
+        w = WORD_AT.match(body, m.end())
+        word = _word(w.group(0)) if w else ""
+        name = _expand(word, body[:m.start()])
+        if re.search(r"[$`]", name):
+            # shortcut: a folder the guard cannot read ("$HERE", "$(dirname "$0")") is taken for the script's own, as
+            # each session script's is; a library sourced by a variable from another folder is read wrong or not at all
+            name = os.path.join(os.path.dirname(path), word.rsplit("/", 1)[-1])
+        lib = os.path.normpath(os.path.join(here, name))
+        if lib.endswith(".sh") and not re.search(r"[$`]", lib) and lib not in seen:
+            seen.add(lib)
+            text = read(lib)
+            if text:
+                libs.append(text)
+                _sourced(text, lib, here, read, seen, libs)
+
+
+FUNC_DEF = re.compile(r"(?:^|[;&|\n])[ \t]*(?:function[ \t]+([\w.:-]+)[ \t]*(?:\(\s*\))?|([\w.:-]+)[ \t]*\(\s*\))\s*\{",
+                      re.M)
+
+
+def _defs(masked):
+    """Each function `masked` (a file's mask) defines outside another: (name, start, end), its definition to its
+    closing brace. From a body whose braces do not close, nothing more is taken for a function: the rest stays read."""
+    out, i = [], 0
+    for m in FUNC_DEF.finditer(masked):
+        if m.start() < i:
+            continue
+        depth, j = 1, m.end()
+        while j < len(masked) and depth:
+            depth += {"{": 1, "}": -1}.get(masked[j], 0)
+            j += 1
+        if depth:
+            break
+        out.append((m.group(1) or m.group(2), m.start(), j))
+        i = j
+    return out
+
+
+def _outside(text, spans):
+    """`text` without the (start, end) `spans`, which are in order."""
+    out, i = [], 0
+    for s, e in spans:
+        out.append(text[i:s])
+        i = e
+    return "".join(out) + text[i:]
+
+
+def _called(body, libs):
+    """`body`, then each of `libs` with a function cut out unless what runs names it - the script, a library's own
+    top-level code, a function so named - as the shell runs a sourced function only when called. So agents-morning.sh,
+    which sources term.sh for its capture and never calls its kill, is not read as killing (rule 45: 20 of the first
+    project's runs of it). A library is read after the script, as its functions run once it is sourced. Not read: a
+    function called by a name the guard cannot read (`"$verb"_kill`)."""
+    cut = [(text, mk, _defs(mk)) for text, mk in ((text, mask(text)) for text in libs)]
+    runs = [mask(body)] + [_outside(mk, [(s, e) for _, s, e in defs]) for _, mk, defs in cut]
+    called = set()
+    while True:
+        seen = "\n".join(runs)
+        new = {n for _, _, defs in cut for n, _, _ in defs
+               if n not in called and re.search(r"(?<![\w.:-])" + re.escape(n) + r"(?![\w.:-])", seen)}
+        if not new:
+            break
+        called |= new
+        runs += [mk[s:e] for _, mk, defs in cut for n, s, e in defs if n in new]
+    return "\n".join([body] + [_outside(text, [(s, e) for n, s, e in defs if n not in called]) for text, _, defs in cut])
+
+
+def tmux_refusal(command, cwd, read=_read, own_env=False, depth=0, own_wez=False):
+    """None to let `command` run, or the reason to refuse it: it would stop the live tmux server or the roles' session,
+    or close WezTerm's live panes (the comment above). `own_env`, `own_wez`: the command runs in an environment already
+    set to a tmux server, a WezTerm socket, of its own."""
     masked = mask(command)
+    for m in WEZ_KILL.finditer(masked):
+        if not (own_wez or _own_wez_env(command[m.start(1):m.end(1)], command, masked, m.start())):
+            return ("refused by the role guard: `wezterm cli kill-pane` here would reach WezTerm's LIVE panes - every "
+                    "role's, and with no --pane-id this one's own. A test server is reached only with "
+                    "`WEZTERM_UNIX_SOCKET=<its own socket>` set for the command; the live panes are the reviewer's to "
+                    "close")
     for m in TMUX_KILL.finditer(masked):
         prefix, opts = command[m.start(1):m.end(1)], command[m.start(2):m.end(2)]
         before, verb, rest = masked[:m.start()], _kill_verb(m.group(3)), command[m.start(4):m.end(4)]
@@ -1311,6 +1423,10 @@ def tmux_refusal(command, cwd, read=_read, own_env=False, depth=0):
         if re.search(r"(?<![\w-])tmux(?![\w-])", command[m.start(1):m.end(1)]):
             return ("refused by the role guard: pkill / killall of tmux would stop the LIVE tmux server with every "
                     "role's session in it - stop a test server by its own socket (`tmux -S <socket> kill-server`)")
+        if re.search(r"(?i)(?<![\w-])wezterm", command[m.start(1):m.end(1)]):
+            return ("refused by the role guard: pkill / killall / taskkill of wezterm would stop WezTerm with every "
+                    "role's LIVE pane in it - it matches by name, which no socket narrows: stop a test server by its "
+                    "pid (`kill <pid>`)")
     if depth == 0:                          # one level into a script the command runs, with that command's environment
         for m in TMUX_SCRIPT.finditer(masked):
             if re.search(r"-\w*n", m.group(2) or ""):  # `bash -n x.sh` reads it for its syntax, runs nothing
@@ -1318,14 +1434,15 @@ def tmux_refusal(command, cwd, read=_read, own_env=False, depth=0):
             a, b = m.span(3)
             path = _expand(_unquote(command[a:b]), command[:a])
             here = _dir_before(command, masked, a, cwd)
-            body = _moved(read(os.path.join(here, path)), read)
+            body = _script(here, path, read)
             if body:
-                why = tmux_refusal(body, here, read,
-                                   own_env or _own_tmux_env(command[m.start(1):m.end(1)], masked[:m.start()]), 1)
+                prefix = command[m.start(1):m.end(1)]
+                why = tmux_refusal(body, here, read, own_env or _own_tmux_env(prefix, masked[:m.start()]), 1,
+                                   own_wez or _own_wez_env(prefix, command, masked, m.start()))
                 if why:
                     return f"{why} (in the script {path})"
     for m in shell_c(command, masked):
-        why = tmux_refusal(shell_arg(m), _dir_before(command, masked, m.start(), cwd), read, own_env, depth)
+        why = tmux_refusal(shell_arg(m), _dir_before(command, masked, m.start(), cwd), read, own_env, depth, own_wez)
         if why:
             return why
     return None
@@ -1439,7 +1556,7 @@ def check_status_refusal(command, cwd, read=_read, depth=0):
             a, b = m.span(1)
             path = _expand(_unquote(command[a:b]), command[:a])
             here = _dir_before(command, masked, a, cwd)
-            body = _moved(read(os.path.join(here, path)), read)
+            body = _script(here, path, read)
             if body:
                 why = check_status_refusal(body, here, read, depth + 1)
                 if why:
@@ -1528,7 +1645,7 @@ def piped_check_refusal(command, cwd, read=_read, depth=0):
             a, b = m.span(1)
             path = _expand(_unquote(command[a:b]), command[:a])
             here = _dir_before(command, masked, a, cwd)
-            body = _moved(read(os.path.join(here, path)), read)
+            body = _script(here, path, read)
             if body:
                 why = piped_check_refusal(body, here, read, depth + 1)
                 if why:
