@@ -21,6 +21,36 @@ transcripts with its pi sessions, 510 distinct commands, every one in its main c
 operator (`norm-operator`, a placeholder: the reviewer's `!` or a second session); `~/work/rav-shvat-blog` foreign;
 `beta-rc*`, `stage` and `prod` the operator's tags.
 
+THE REVIEWER'S ANSWERS (2026-11-27, to mishmeret-builder's three questions in its pane, after girsa-operator's "the
+reviewer, in my pane: ... you will make that happen tonight"): the normalizer set up TONIGHT by the measured
+prototype, pinned at 57b87b2, this piece landing after ("Prototype tonight"); `refs/tags/v*` not protected ("No, leave
+v* open"); the design questions to girsa-architect ("Wait for girsa-architect"). DONE BY GIRSA-OPERATOR the same night,
+as the prototype printed: the pin at 57b87b2; the 7 files, committed by name in the normalizer's main as 165f8dc (the
+reviewer's own uncommitted files left out); norm-builder's worktree `~/work/sefaria-citation-normalizer-builder` on the
+branch `norm-builder`; the ref hook installed (it runs its Python by path, Homebrew's 3.15: a move of it fails every
+ref update closed till the install is run again). Its probes as measured. Not pushed: the normalizer's repository is
+public, and 165f8dc names `~/work/rav-shvat-blog` (its name already in two pushed messages) - the reviewer's word.
+
+GIRSA-ARCHITECT'S ANSWER (the first project's 332c2fdb1, design-study/MISHMERET-PROJECT-SETUP-ARCHITECT.md, written
+before any review of this plan): Q1-Q4 agreed, with additions; the terminal adapter's pkill departure agreed.
+- THE GAP: THE NORMALIZER'S RUNNER IS PI. Its shell calls by runner: Claude Code's one transcript 104 (2026-08-05 to
+  09-03), pi's one session 412 (11-23 to 11-25) - so the session the reviewer runs there is unguarded by a Claude Code
+  hook. In this piece: a role's runner on the command line, `"runner": "pi"` in its config entry (config.py's
+  OPTIONAL `roles.runner`), no agent file for it, and its start line among the printed steps - agents.sh's own,
+  `cd <tree> && pi --no-extensions --name ROLE --role ROLE -e <the pin>/mishmeret/pi_guard.ts`. MEASURED THE SAME NIGHT
+  (scratchpad st/pirun.py): pi 1.6.1 in a fresh copy's worktree, started so with the pin's pi_guard.ts, on the suite's
+  scripted provider (no model) - the push, a commit and a write in the main clone, the tag `stage` refused; status
+  and a write in its worktree let through; its bash's CLAUDE_CODE_AGENT and MISHMERET_ROLE the role; nothing left the
+  copy. The line given to the reviewer and girsa-operator that night: the normalizer needs no new file for it.
+- Q1, a module: and the config it is about to write passed through `config.load` first, so a config its own tree
+  refuses is never written; and said when `--commit` names a commit other than the tree it runs from.
+- Q2, printed: each step a command of its own (the commit's `add` and `commit` two lines).
+- Q3, project_shim.py: and the KEPT line compares the bytes - "same as" or "differs from" project_shim.py. Mishmeret's
+  own copy made a byte copy, with a test, at the move to the names: not this piece.
+- Q4, by the Board part: one constant beside LANDING (`BOARD = "board_dir" in _CFG`), read by the role guard's five
+  sentences and by ref_hook.py's through `rg`; and the words say what a role is told when no session plays the
+  operator (here "the reviewer's `!` or a second session"), as ref_hook.py:98's no-role sentence does.
+
 ## The measure (a prototype: setup_project.py and project_shim.py - this session's scratchpad, st/)
 
 On an APFS copy of the normalizer, its origin set to a local bare repository (no push could leave it), with a private
@@ -52,34 +82,41 @@ Mishmeret checkout holding main 57b87b2 as the pin (`MISHMERET_DIR`), as the rev
 
 ## The change
 
-1. `mishmeret/setup_project.py DIR --project NAME --operator ROLE --role ROLE=WORKTREE... [--foreign PATH...]
+1. `mishmeret/setup_project.py DIR --project NAME --operator ROLE --role ROLE=WORKTREE[:pi]... [--foreign PATH...]
    [--protect REF_GLOB...] [--commit SHA] [--write]`. Writes into the main clone:
    - `.mishmeret/config.json`, the six fields: `repository` (Mishmeret's, its checkout's origin), `mishmeret_commit`
-     (the commit it runs from, or --commit), `project`, `roles` (the operator; each role with its worktree),
-     `operator`, `guard` (`main` the main clone's branch; `foreign`; `refs`, each glob the operator's);
-   - `.claude/mishmeret_shim.py` (item 2), `.claude/hooks/role_guard.py`, and with --protect `.claude/hooks/ref_hook.py`;
+     (the commit it runs from, or --commit - said when it differs), `project`, `roles` (the operator; each role with
+     its worktree, `~` for the home folder, and `"runner": "pi"` for a pi role), `operator`, `guard` (`main` the main
+     clone's branch; `foreign`; `refs`, each glob the operator's) - passed through `config.load` before it is written;
+   - `.claude/mishmeret_shim.py` (item 2), `.claude/hooks/role_guard.py`, with --protect `.claude/hooks/ref_hook.py`;
    - the `PreToolUse` hook into `.claude/settings.json`, beside what it holds;
-   - `.claude/agents/<role>.md` for each: its name, the project, where it starts (`cd <tree> && claude --agent ROLE`).
-   A project's file is never replaced (said, "KEPT"); a second run writes nothing; without --write it says what it
-   would. Refused: a DIR not a main clone's top folder; a --role without its worktree. Then it prints git's steps in
-   their order - the pin (when absent), the commit (its files named), each role's worktree, the ref hook's install
-   (after the pin and the commit: the hook fails closed), where each role starts.
+   - `.claude/agents/<role>.md` for each Claude Code role: its name, the project, where it starts (`cd <tree> &&
+     claude --agent ROLE`); none for a pi role.
+   A project's file is never replaced ("KEPT", saying whether the shim is the same as project_shim.py or differs); a
+   second run writes nothing; without --write it says what it would. Refused: a DIR not a main clone's top folder; a
+   --role without its worktree. Then it prints git's steps in their order, each a command of its own - the pin (when
+   absent), the files' `add` and the `commit`, each role's worktree, the ref hook's install (after the pin and the
+   commit: the hook fails closed), where each role starts: a pi role's line `cd <tree> && pi --no-extensions --name
+   ROLE --role ROLE -e <the pin>/mishmeret/pi_guard.ts`.
 2. `mishmeret/project_shim.py`: the shim's helper a project keeps - Mishmeret's own `.claude/mishmeret_shim.py`, its
    config found at `.mishmeret/config.json`, else the old home.
-3. THE GUARD'S WORDS WITHOUT A BOARD: with no Board part, the six refusals say "ask <owner>" where they say "send
-   <owner> a REQUEST" (and the push's "a LANDED or a REQUEST").
+3. THE GUARD'S WORDS WITHOUT A BOARD: one constant beside LANDING, `BOARD = "board_dir" in _CFG`; with no Board part,
+   the six refusals (the role guard's five, ref_hook.py's through `rg`) say "ask <owner> - its session, or the
+   reviewer where none plays it" where they say "send <owner> a REQUEST" (and the push's "a LANDED or a REQUEST").
 4. The README's "The guard alone": the one command, its steps, what it does not do.
 
 THE COSTS AND LIMITS (for the README): each project holds its own copy of the shim's helper, and a run never replaces
-it - a change to project_shim.py reaches a project by hand (the KEPT line says to compare); Claude Code's roles alone
-(a pi role's `--role` and pi_guard.ts not written); the Board, the sessions, the landing not written (a project adds a
-part by hand, as today); the agent file minimal (no tools, model or brief: the project's own); git's steps printed,
-not run. Not measured: Linux and Windows.
+it - a change to project_shim.py reaches a project by hand (the KEPT line says whether it differs); a pi role is
+guarded only when started by its printed line (a bare `pi` runs no hook); the Board, the sessions, the landing not
+written (a project adds a part by hand, as today); the agent file minimal (no tools, model or brief: the project's
+own); git's steps printed, not run. Not measured: Linux and Windows.
 
-Not in this piece: Mishmeret's own `.claude/` and the first project's set by it; a check that a project's shim still
-matches project_shim.py; the normalizer's own setup - the reviewer's run of it, in their own terminal, once it lands.
+Not in this piece: Mishmeret's own `.claude/` and the first project's set by it (Mishmeret's own shim a byte copy of
+project_shim.py at the move to the names, girsa-architect's Q3); the normalizer's setup - done the night the plan was
+written, by the prototype (the head); its config's runner for norm-builder (`"runner": "pi"`) written at its pin
+bump to this piece, by its operator.
 
-## Design questions (to girsa-architect)
+## Design questions (to girsa-architect - answered at 332c2fdb1, each agreed: the head)
 
 1. WHERE IT LIVES: a module of `mishmeret/`, pinned and tested with the rest, run once from a checkout - not a
    shipped skill (a skill is read by a session already in a project; this makes the project). My recommendation: so.
@@ -110,5 +147,9 @@ matches project_shim.py; the normalizer's own setup - the reviewer's run of it, 
 - End to end on the placeholder: the written files committed, the pin a link to this tree (MISHMERET_DIR), the hook
   run as Claude Code runs it - a builder's push and its commit in the main clone refused, its commit in its worktree
   let through; no live Board, tmux or remote reached.
+- A pi role (`ROLE=WORKTREE:pi`): its config entry's runner, no agent file, its start line printed with the pin's path;
+  and, where pi is on PATH, pi started by that line in the written project on the suite's scripted provider - its push
+  refused, its worktree's write let through (skipped elsewhere, as tests/test_pi_role.py is).
+- A config the tree's own config.py refuses is not written; a --commit other than the tree's is said.
 - The six refusals: with the Board part, the REQUEST; without, "ask <owner>" - each shown red with its words taken
   out.
