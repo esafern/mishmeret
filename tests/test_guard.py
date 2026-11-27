@@ -1027,10 +1027,16 @@ def test_the_guard_alone_lets_git_commit_and_merge_be_and_keeps_every_other_rule
     assert why and "the operator's alone" in why, why
     # NO BOARD, NO BOARD WORDS (notes/PLAN-PROJECT-SETUP.md, item 3): a refusal asks the owner, never names a REQUEST -
     # the role guard's and the ref hook's alike (one switch, role_guard.ask)
-    for role, cmd, said in (("ex-builder", "git push origin main", "ask ex-operator - its session, or the reviewer"),
-                            ("ex-operator", f"git -C {other} commit -q -m x", "ask its own roles")):
-        why = hook(role, cmd)
-        assert said in why and "REQUEST" not in why, why
+    # nor a HANDOFF: the main tree's two refusals, its commit and a file tool's write (girsa-verifier's LOW 1 on 26589c0)
+    write = {"tool_name": "Write", "tool_input": {"file_path": str(book / "x.md"), "content": "x"}, "cwd": str(book),
+             "agent_type": "ex-builder"}
+    wrote = sp.run([sys.executable, os.path.join(PKG, "role_guard.py")], input=json.dumps(write), capture_output=True,
+                   text=True, env=env)
+    for why, said in ((hook("ex-builder", "git push origin main"), "ask ex-operator (its session, or the reviewer"),
+                      (hook("ex-operator", f"git -C {other} commit -q -m x"), "ask its own roles"),
+                      (hook("ex-builder", "git commit -q -m x"), "or ask ex-operator (its session"),
+                      (wrote.returncode == 2 and wrote.stderr, "or ask ex-operator (its session")):
+        assert why and said in why and "REQUEST" not in why and "HANDOFF" not in why, why
     sp.run(["git", "-C", str(book), "-c", "user.name=placeholder", "-c", "user.email=placeholder@example.org", "commit",
             "-q", "--allow-empty", "-m", "x"], check=True)
     probe = ("import sys, ref_hook\nhead = ref_hook._git(sys.argv[1], 'rev-parse', 'HEAD').stdout.strip()\n"
@@ -1045,6 +1051,7 @@ def test_the_guard_alone_lets_git_commit_and_merge_be_and_keeps_every_other_rule
     spec.loader.exec_module(rg)
     assert "send ex-operator a LANDED or a REQUEST" in rg.refusal("ex-builder", "git push origin b", "/work/book-builder",
                                                                   main_tree=lambda p: False, read=lambda p: None)
+    assert "or send ex-operator a HANDOFF" in rg.edit_refusal("ex-builder", "/work/book/x.md", main_tree=lambda p: True)
 
 
 def test_the_role_guard_refuses_a_check_whose_failure_cannot_stop_the_commit_after_it():

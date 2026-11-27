@@ -65,7 +65,7 @@ GUARD = _CFG["guard"]
 
 def ask(owner, request="a REQUEST"):
     """How a refusal sends a role to `owner`: the Board's `request`, or with no Board, the owner itself."""
-    return f"send {owner} {request}" if BOARD else f"ask {owner} - its session, or the reviewer where none plays it"
+    return f"send {owner} {request}" if BOARD else f"ask {owner} (its session, or the reviewer where none plays it)"
 # ONE SHELL WORD in the masked text, its quoted parts kept as quotes around spaces (notes/PLAN-KNOWN-GAPS.md, item 1):
 # with `\S+` a quoted word ended at its first space, so `git -C "." push`, `X="a b" git push` and the like matched
 # nothing and every rule let them through. It ends at an unquoted separator, as the shell's does (else `R=x; S=y; git`
@@ -1169,7 +1169,7 @@ def refusal(role, command, cwd, main_tree=is_main_tree, read=_read, depth=0, pro
             if any(map(main_tree, _git_trees(command, masked, m, cwd))):
                 return (f"refused by the role guard: `git {verb}` would change the main tree or a root the "
                         "project lists, which are the operator's alone - work in your worktree or a copy and land with `git "
-                        "merge --ff-only`, or send the operator a HANDOFF" + no_role)
+                        f"merge --ff-only`, or {ask(OPERATOR, 'a HANDOFF')}" + no_role)
     sets = SETS_AGENT.search(masked)
     if sets:
         return (f"refused by the role guard: a command may not set {sets.group(1)} - the session's start sets it to "
@@ -1799,7 +1799,7 @@ def edit_refusal(role, path, main_tree=is_main_tree):
                    if role == NO_ROLE else "")
         return ("refused by the role guard: this file is in the main tree or a root the project lists, which only the "
                 f"operator ({OPERATOR}) changes - edit your worktree's copy and land with `git merge --ff-only`, or "
-                "send the operator a HANDOFF" + no_role)
+                f"{ask(OPERATOR, 'a HANDOFF')}" + no_role)
     return None
 
 

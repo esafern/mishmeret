@@ -87,7 +87,7 @@ def files(root, project, operator, roles, foreign, protect, commit):
     for role, place, tree in [(operator, "the main clone", root)] + [(r, f"{r}'s own worktree", w)
                                                                     for r, w, pi in roles if not pi]:
         out[f".claude/agents/{role}.md"] = AGENT.format(role=role, project=project, place=place,
-                                                        start=f"cd {tilde(tree)} && claude --agent {role}")
+                                                        start=f"cd {tilde(tree)} && claude --agent {role} --name {role}")
     path = os.path.join(root, ".claude", "settings.json")
     settings = json.load(open(path, encoding="utf-8")) if os.path.exists(path) else {}
     pre = settings.setdefault("hooks", {}).setdefault("PreToolUse", [])
@@ -181,11 +181,11 @@ def main(argv):
     if a.protect:
         steps.append(("the ref hook, after the pin and the commit",
                       f"cd {tilde(root)} && python3 .claude/hooks/ref_hook.py --install"))
-    steps.append((f"{a.operator}'s start", f"cd {tilde(root)} && claude --agent {a.operator}"))
+    steps.append((f"{a.operator}'s start", f"cd {tilde(root)} && claude --agent {a.operator} --name {a.operator}"))
     for r, w, pi in roles:
         steps.append((f"{r}'s start", f"cd {tilde(w)} && " + (
             f"pi --no-extensions --name {r} --role {r} -e {tilde(pin)}/mishmeret/pi_guard.ts" if pi
-            else f"claude --agent {r}")))
+            else f"claude --agent {r} --name {r}")))
     print(("\nThen, in your own terminal or the operator's, in order:" if a.write else
            "\nNothing written (--write writes it). Then, in order:"))
     for i, (what, command) in enumerate(steps, 1):

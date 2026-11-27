@@ -95,7 +95,8 @@ def test_setup_writes_what_the_guard_needs_and_never_a_projects_own_file(tmp_pat
     assert [h["hooks"][0]["command"] for h in settings["hooks"]["PreToolUse"]] == \
         ['python3 "$CLAUDE_PROJECT_DIR/.claude/hooks/role_guard.py"']
     assert open(os.path.join(PKG, "project_shim.py")).read() == (root / ".claude" / "mishmeret_shim.py").read_text()
-    assert "~/work/placeholder-builder && claude --agent ex-builder" in (root / ".claude/agents/ex-builder.md").read_text()
+    assert "~/work/placeholder-builder && claude --agent ex-builder --name ex-builder" in \
+        (root / ".claude/agents/ex-builder.md").read_text()
     # a second run writes nothing; a project's own file is kept and said
     before = {rel: (root / rel).read_text() for rel in written(root)}
     out = setup(tmp_path, *args, "--write")
@@ -130,13 +131,19 @@ def test_setup_prints_gits_steps_in_order_each_a_command_and_refuses_what_it_can
     assert lines[3:5] == [f"git -C {root} worktree add {tmp_path / 'book-builder'} -b ex-builder",
                           f"git -C {root} worktree add {pi_tree} -b ex-pi"], lines
     assert lines[5] == f"cd {root} && python3 .claude/hooks/ref_hook.py --install", lines
-    assert lines[6:] == [f"cd {root} && claude --agent ex-operator", f"cd {tmp_path / 'book-builder'} && claude --agent "
-                         f"ex-builder", f"cd {pi_tree} && pi --no-extensions --name ex-pi --role ex-pi -e "
-                         f"{pin}/mishmeret/pi_guard.ts"], lines
-    # the pin there, its step gone; nothing written, no add and no commit
+    assert lines[6:] == [f"cd {root} && claude --agent ex-operator --name ex-operator", f"cd {tmp_path / 'book-builder'} "
+                         "&& claude --agent ex-builder --name ex-builder", f"cd {pi_tree} && pi --no-extensions --name "
+                         f"ex-pi --role ex-pi -e {pin}/mishmeret/pi_guard.ts"], lines   # --name, as agents.sh starts one
+    # the pin there, its step gone; nothing written, no add and no commit; a role's branch there before its worktree is
+    # checked out, not made again (girsa-verifier's NOTE 4 on 26589c0: `-b` fails, a branch of that name exists)
+    subprocess.run(["git", "-C", str(root), "branch", "ex-pi"], check=True)
     out = setup(tmp_path, *args, "--write", pins={head: tree})
     steps = out.stdout.split("Then,", 1)[1]
     assert "worktree add --detach" not in steps and " add .mishmeret" not in steps and " commit -m" not in steps, steps
+    made = [line.strip() for line in steps.splitlines() if " worktree add " in line]
+    assert made == [f"git -C {root} worktree add {tmp_path / 'book-builder'} -b ex-builder",
+                    f"git -C {root} worktree add {pi_tree} ex-pi"], made
+    assert subprocess.run(made[1].split(), capture_output=True).returncode == 0 and (pi_tree / ".git").exists()
     # refused, nothing written
     other = clone(tmp_path / "x")
     out = setup(tmp_path, other, "--project", "P", "--operator", "ex-operator", "--protect", "tags/stage", "--write")
