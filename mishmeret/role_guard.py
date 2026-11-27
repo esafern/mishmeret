@@ -80,8 +80,8 @@ FUNC = r"(?:\b(?:function|coproc)\s+[\w.:-]+\s*(?:\(\s*\)\s*)?|\(\s*\)\s*)(?=[{(
 BOUNDARY = r"(?:" + BASE_BOUNDARY + "|" + CASE_ARM + "|" + FUNC + ")" + KEYWORD + "*"
 # the names the guard reads in command position: `mask` gives each back written `\name`, `"name"` or `'name'` (a
 # path inside the quotes too), as the shell runs it
-NAMES = ("git", "tmux", "pkill", "killall", "cp", "cd", "bash", "sh", "zsh", "dash", "ksh", "env", "time", "command",
-         "exec", "nice", "sudo", "xargs", "land.py")
+NAMES = ("git", "tmux", "wezterm", "pkill", "killall", "taskkill", "cp", "cd", "bash", "sh", "zsh", "dash", "ksh", "env",
+         "time", "command", "exec", "nice", "sudo", "xargs", "land.py")
 _NAME = "(?:" + "|".join(NAMES) + ")"
 NAME_WORD = re.compile(r"""(?<![\w"'\\])(?:\\""" + _NAME + r"""|(["'])(?:[\w.~/-]*/)?""" + _NAME + r"""\1)(?![\w"'-])""")
 SHELL = r"""(?:\\|["'])?(?:\S*/)?(?:bash|sh|zsh|dash|ksh)["']?"""     # for the patterns that read the original text
@@ -1372,7 +1372,8 @@ def _called(body, libs):
     top-level code, a function so named - as the shell runs a sourced function only when called. So agents-morning.sh,
     which sources term.sh for its capture and never calls its kill, is not read as killing (rule 45: 20 of the first
     project's runs of it). A library is read after the script, as its functions run once it is sourced. Not read: a
-    function called by a name the guard cannot read (`"$verb"_kill`)."""
+    function called by a name the guard cannot read (`"$verb"_kill`), or only from a trap's string or an eval's words,
+    which the mask blanks (girsa-verifier's NOTE 1 on 7e797dd: none in the scripts or on the record)."""
     cut = [(text, mk, _defs(mk)) for text, mk in ((text, mask(text)) for text in libs)]
     runs = [mask(body)] + [_outside(mk, [(s, e) for _, s, e in defs]) for _, mk, defs in cut]
     called = set()

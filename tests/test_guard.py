@@ -1271,6 +1271,9 @@ def test_the_guard_reads_what_a_script_sources_and_keeps_every_role_off_wezterms
              "/s/fk.sh": "function k {\n  tmux kill-server\n}\n", "/s/open.sh": ". ./un.sh\n",
              "/s/un.sh": "f() {\n  echo {\n}\ntmux kill-server\n", "/s/nested.sh": ". ./nf.sh\n",
              "/s/nf.sh": "outer() {\n  inner() { :; }\n  tmux kill-server\n}\n",
+             "/s/cs.sh": ". ./cslib.sh\n", "/s/cslib.sh": "pytest -q | tail -1\ngit merge --ff-only b\n",
+             "/s/shim.sh": 'exec python3 "$(dirname "$0")/mishmeret_shim.py" --sh mvroles.sh "$@"\n',
+             os.path.join(rg.HERE, "mvroles.sh"): "tmux kill-server\n",
              "/s/lib.sh": '. "$HERE/term.sh"\n', "/s/term.sh": term, "/s/rel.sh": "source ./term.sh\nterm_kill x\n",
              "/s/loop.sh": ". ./loop.sh\n", "/s/act.sh": ". venv/bin/activate\n. /dev/stdin\n",
              "/s/doc.sh": "cat <<'EOF'\n. ./tl.sh\nEOF\n", "/s/c.sh": "bash -c 'wezterm cli kill-pane --pane-id 1'\n",
@@ -1293,8 +1296,13 @@ def test_the_guard_reads_what_a_script_sources_and_keeps_every_role_off_wezterms
     assert at("bash morning.sh") is None and at("bash kk.sh") is None and at("bash fn.sh") is None
     assert at("bash nested.sh") is None                 # a function defined inside another is that one's body
     assert at("bash nest.sh") and at("bash top.sh") and at("bash open.sh")     # open.sh: a body that never closes
-    # the other rules read a sourced file too
+    # the other rules read a sourced file too (girsa-verifier's LOW 1 on 7e797dd: the check-status and piped rules)
     assert rg.refusal("ex-builder", "bash p.sh", "/work/book-builder", main_tree=lambda p: False, read=read)
+    assert "(in the script cs.sh)" in rg.check_status_refusal("bash cs.sh", "/s", read=read)
+    assert "(in the script cs.sh)" in rg.piped_check_refusal("bash cs.sh", "/s", read=read)
+    # a project's shell shim is read as the Mishmeret script it runs, from this guard's own tree (LOW 1: unpinned)
+    why = at("bash shim.sh")
+    assert why and "LIVE tmux server" in why and "(in the script shim.sh)" in why
     # item 6: every form of wezterm's kill, and pkill / killall / taskkill naming it
     no = lambda cmd: rg.tmux_refusal(cmd, "/work/elsewhere", read)
     for refused in ("wezterm cli kill-pane --pane-id 3", "wezterm cli kill-pane", "wezterm.exe cli kill-pane --pane-id 3",
@@ -1306,12 +1314,14 @@ def test_the_guard_reads_what_a_script_sources_and_keeps_every_role_off_wezterms
                     'WEZTERM_UNIX_SOCKET="$WEZTERM_UNIX_SOCKET" wezterm cli kill-pane --pane-id 3',
                     "WEZTERM_CONFIG_FILE=/tmp/x/mux.lua wezterm cli kill-pane --pane-id 3",
                     'echo "export WEZTERM_UNIX_SOCKET=/tmp/x/s"; wezterm cli kill-pane --pane-id 3',
+                    "wezterm cli kill-pane --pane-id 3; export WEZTERM_UNIX_SOCKET=/tmp/x/s",     # an export after it
+                    '"wezterm" cli kill-pane --pane-id 3', "\\wezterm cli kill-pane --pane-id 3",  # NAMES (NOTE 3)
                     "for p in 1 2; do wezterm cli kill-pane --pane-id $p; done", "bash -c 'wezterm cli kill-pane'"):
         why = no(refused)
         assert why and "WezTerm's LIVE panes" in why, refused
     for refused in ("pkill wezterm", "pkill -f wezterm-mux-server", 'pkill -f "wezterm-mux-server --config-file /x/m.lua"',
                     "killall wezterm-gui", "killall WezTerm", "WEZTERM_UNIX_SOCKET=/tmp/x/s pkill -f wezterm",
-                    "taskkill //IM wezterm-gui.exe //F"):
+                    "taskkill //IM wezterm-gui.exe //F", '"taskkill" //IM wezterm-gui.exe //F'):
         why = no(refused)
         assert why and "pkill / killall / taskkill of wezterm" in why, refused
     for fine in ("WEZTERM_UNIX_SOCKET=/tmp/x/s wezterm cli kill-pane --pane-id 3",
