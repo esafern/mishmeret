@@ -2,7 +2,7 @@
 
 Rewritten in place when a piece lands and at the end of a session; the log is `notes/LOG.md`, by item.
 
-## Built, on main (main 57b87b2, origin's main at it; each verified by girsa-verifier, merged by girsa-operator)
+## Built, on main (main f31c0c7, 11 ahead of origin's; each verified by girsa-verifier, merged by girsa-operator)
 
 - To 2026-11-24 (M01-M19), by the log. 70a6ffe-4715362: a ref judged by the repository (M20). 43a9d97: the Board's
   tab icon (M22). 94cd205: git's reference-transaction hook (M21) - main forward any role's, else the operator's;
@@ -11,20 +11,20 @@ Rewritten in place when a piece lands and at the end of a session; the log is `n
   sentence; no landing part, no land.py; the config at `.mishmeret/config.json` (else `.claude/mishmeret.json`);
   config.session_role, MISHMERET_ROLE else CLAUDE_CODE_AGENT (the Bash guard's role still `agent_type`);
   `transcripts` for `claude_projects`. Old names read until both pins and configs pass them.
+- f31c0c7: the terminal adapter (PLAN-TERMINAL-ADAPTER; M25, M27) - term.sh, every terminal step in tmux's and
+  WezTerm's form; the config's OPTIONAL `terminal` and config.TERMINALS (each one's pane variable, the Stop hook's);
+  the guard reads a script with the `.sh` files it sources, a library's function when called, and keeps WezTerm's
+  live panes as tmux's server; notes/terminal-adapter/measure.sh, 22 of 22 on each. Windows the reviewer's own run.
+  At the first project's pin bump: its operator-sessions skill's test line names both servers (LOW 1, girsa-operator's).
 
 ## Now
 
-- THE TERMINAL ADAPTER (PLAN-TERMINAL-ADAPTER, branch `builder-terminal-adapter` from main 57b87b2): BUILT at
-  2c44f21 (M25, M27) - its guard part 654db02 and 52c04a8 (the plan review's LOW 1); term.sh, the config's `terminal`,
-  the scripts through it; 22 of 22 on private tmux and WezTerm servers (notes/terminal-adapter/measure.sh); rule 45
-  1 and 6, named costs. girsa-verifier's check of 18920ce NOT YET (#3523): MEDIUM 1 and LOW 2 taken at ff064ae (suite
-  206), the round sent to it. NEXT: its answer on ff064ae; then LANDED-ready to girsa-operator, its merge. Windows the
-  reviewer's own run.
-- A PROJECT'S SETUP (PLAN-PROJECT-SETUP, branch `builder-project-setup` from main 57b87b2, the plan at 5937c48; M26):
-  girsa-architect agreed (332c2fdb1); girsa-verifier READY on MEDIUM 1 (`guard.foreign` written with `~`, and a test
-  that no written file holds the home folder). Its build next, after the adapter's check. THE NORMALIZER SET UP that
-  night by the prototype (girsa-operator: its 165f8dc, not pushed); norm-builder runs under pi by its line with the
-  pin's pi_guard.ts. This branch's log and state stay on the adapter's.
+- A PROJECT'S SETUP (PLAN-PROJECT-SETUP, branch `builder-project-setup`, rebased onto main f31c0c7; M26): girsa-architect
+  agreed (332c2fdb1); girsa-verifier READY on MEDIUM 1 (every home path written as `~`, `guard.foreign` too, and a test
+  that no written file holds the home folder); NOTE 1 (settings.json rewritten in json.dumps's form) for the README,
+  NOTE 2 (a relative --role from the shell's folder) for the usage. IN BUILD. The prototype: session aa55e80c's
+  scratchpad, st/. THE NORMALIZER SET UP by it already (girsa-operator: its 165f8dc, not pushed); norm-builder runs
+  under pi by its line with the pin's pi_guard.ts.
 - Main's push is the reviewer's word, in girsa-operator's pane.
 - The first project's bump to 2327b0d: girsa-operator's (it said so, 2026-11-25), with `ref_hook.py --install` run
   again after it (girsa-verifier's NOTE 1: a hook installed earlier passes CLAUDE_CODE_AGENT alone).
@@ -33,8 +33,8 @@ Rewritten in place when a piece lands and at the end of a session; the log is `n
 
 ## Next, in order
 
-1. The terminal adapter's check and merge (above); then the setup's build. If wanted, a session started by
-   MISHMERET_ROLE with no agent file (measured top-level and nested first).
+1. The setup's build (above). If wanted, a session started by MISHMERET_ROLE with no agent file (measured top-level
+   and nested first).
 2. The move to the names in the first project and Mishmeret itself (every shim, the settings' hook paths, the configs'
    `transcripts`), then the old names' removal once both pins pass - its own piece. The first project's share:
    `.claude/mishmeret.json` 208 times in 107 files, CLAUDE_CODE_AGENT 90 in 39 (girsa-architect, 7501436fb).
