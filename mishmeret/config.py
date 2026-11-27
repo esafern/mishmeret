@@ -114,8 +114,10 @@ ROLE_KEYS = {"name": str, "short": str, "colour": str, "page_light": str, "page_
 # A pin older than this commit refuses the key (its role keys are exact): it is named with the pin bump that brings it
 RUNNERS = ("claude", "pi")
 # WHERE THE SESSIONS RUN (notes/PLAN-TERMINAL-ADAPTER.md): tmux, or WezTerm - which runs on Windows too; term.sh holds
-# each one's form of every terminal step, and the session part keeps tmux's names for both (girsa-architect's Q1)
-TERMINALS = ("tmux", "wezterm")
+# each one's form of every terminal step, and the session part keeps tmux's names for both (girsa-architect's Q1).
+# Each with the variable that names a session's own pane in its environment, for the Stop hook (finish_hook.py;
+# girsa-verifier's MEDIUM 1 on the build: it read TMUX_PANE alone). A pin older than this commit refuses `terminal`.
+TERMINALS = {"tmux": "TMUX_PANE", "wezterm": "WEZTERM_PANE"}
 
 
 class ConfigError(Exception):

@@ -5,7 +5,8 @@ then "add finish-and-exit": after that command's sentence it is cleared and exit
 Stop (the project's .claude/settings.json).
 
 When the turn's last message ends with a closing sentence (role_usage.closing, the rule's one home) and this is the
-session of a role with a tmux pane, running in one, it starts `agents.sh --next ROLE PANE [exit]` detached and
+session of a role with a pane, running in one of the config's terminal (its pane variable, config.TERMINALS: tmux's
+TMUX_PANE, WezTerm's WEZTERM_PANE), it starts `agents.sh --next ROLE PANE [exit]` detached and
 returns. Every rule about what is then typed is that script's: only the pane agents.sh gave the role, and never while
 a night run is going. A finish with a step undone ends with what is left, not with a sentence, and is left alone.
 
@@ -29,8 +30,9 @@ def main():
         return
     message = data.get("last_assistant_message") if isinstance(data, dict) else None
     said = role_usage.closing(message) if isinstance(message, str) else None
-    role, pane = config.session_role(), os.environ.get("TMUX_PANE")
+    role = config.session_role()
     try:
+        pane = os.environ.get(config.TERMINALS[config.load().get("terminal", "tmux")])    # the pane, by its terminal
         if not said or not pane or role not in config.role_names(tmux=True):
             return
     except config.ConfigError:

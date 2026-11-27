@@ -793,6 +793,34 @@ def test_the_stop_hook_hands_a_finished_roles_pane_to_agents_sh_next(monkeypatch
         assert len(calls) == 2 and calls[1][0] == calls[0][0], case
 
 
+def test_the_stop_hook_reads_the_pane_of_the_configs_terminal(monkeypatch, tmp_path):
+    """girsa-verifier's MEDIUM 1 on the terminal adapter's build: the hook read TMUX_PANE alone, and a WezTerm pane holds
+    WEZTERM_PANE (measured on a private server) - so under `terminal: wezterm` a finished session was never cleared and
+    started again. The pane is the config's terminal's (config.TERMINALS); the other's variable names none."""
+    import importlib.util
+    import io
+    from conftest import write_project
+    spec = importlib.util.spec_from_file_location("finish_hook", os.path.join(PKG, "finish_hook.py"))
+    hook = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(hook)
+    calls = []
+    monkeypatch.setattr(hook.subprocess, "Popen", lambda args, **kw: calls.append(args))
+    monkeypatch.setenv("CLAUDE_CODE_AGENT", "ex-builder")
+    data = json.dumps({"hook_event_name": "Stop", "session_id": "s-1", "last_assistant_message": "Done.\n" + SHORT})
+    for terminal, env, started in (("tmux", {"TMUX_PANE": "%3"}, "%3"), ("tmux", {"WEZTERM_PANE": "3"}, None),
+                                   ("wezterm", {"WEZTERM_PANE": "3"}, "3"), ("wezterm", {"TMUX_PANE": "%3"}, None)):
+        monkeypatch.setenv("MISHMERET_CONFIG", write_project(tmp_path / terminal, terminal=terminal))
+        for name in ("TMUX_PANE", "WEZTERM_PANE"):
+            monkeypatch.delenv(name, raising=False)
+        for name, value in env.items():
+            monkeypatch.setenv(name, value)
+        calls.clear()
+        monkeypatch.setattr(sys, "stdin", io.StringIO(data))
+        hook.main()
+        want = [] if started is None else [["bash", os.path.join(PKG, "agents.sh"), "--next", "ex-builder", started]]
+        assert calls == want, (terminal, env, calls)
+
+
 @pytest.mark.parametrize("case", ["again", "exit", "another's pane", "night run going", "the run asked it",
                                   "a lock left behind", "never at its shell", "a run begun meanwhile",
                                   "words in the prompt", "no prompt found", "finished twice",

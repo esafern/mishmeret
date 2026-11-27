@@ -8,8 +8,9 @@ commit the project pins. The modes and options are each script's own: read its h
 `agents-morning.sh`) - this skill lists none of them.
 
 **Starting the roles:** `bash agents.sh` in the project's main clone, through the project's own copy (its shim names
-the config and the pinned commit). Each role starts in a pane of the config's `tmux_session`, from the main clone,
-its agent file's effort given. A role whose last session still runs elsewhere is not started twice. A role whose
+the config and the pinned commit). Each role starts in a pane of the config's `tmux_session` - a tmux session, or with
+the config's `terminal: wezterm` a workspace of the WezTerm window agents.sh is run in (outside one it stops) - from
+the main clone, its agent file's effort given. A role whose last session still runs elsewhere is not started twice. A role whose
 config entry names `runner: pi` starts under pi with Mishmeret's guard extension and no other (`pi_guard.ts`), fresh,
 never resumed; with the extension missing it is not started, and its pane says why.
 
@@ -21,8 +22,11 @@ The night run types the second, the morning run the first.
 **The keep-alive:** `keepalive_due.py` names each role whose prompt cache is about to go cold; the operator sends each
 named role a keep-alive message, and the role answers with `board.py status --role <role> --still`.
 
-**A test tmux server:** only as `env -u TMUX TMUX_TMPDIR=<its own folder> tmux ...` or `tmux -S <its own socket> ...`.
-The role guard refuses a kill that would reach the live server or the roles' session, for every role.
+**A test server:** tmux only as `env -u TMUX TMUX_TMPDIR=<its own folder> tmux ...` or `tmux -S <its own socket>
+...`; WezTerm only with `WEZTERM_UNIX_SOCKET=<its own socket>` set, a private server stopped by its pid. agents.sh holds
+both terminals' kills, so a test of it names both: `env -u TMUX TMUX_TMPDIR=<folder> WEZTERM_UNIX_SOCKET=<socket>
+bash agents.sh`. The role guard refuses a kill that would reach the live server, the roles' session or WezTerm's live
+panes, for every role.
 
 **The rules:**
 - A pane's words standing at its prompt are never typed over (`agents.sh --next` checks first).
