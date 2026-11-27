@@ -27,8 +27,7 @@ Rewritten in place when a piece lands and at the end of a session; the log is `n
   set up by the prototype already (its 165f8dc); norm-builder runs under pi by its line with the pin's pi_guard.ts.
 - Waiting on the reviewer, in girsa-operator's pane: main's push (11 ahead); the normalizer's 165f8dc push (its
   repository public); the Windows run.
-- The first project's bump to 2327b0d: girsa-operator's (it said so, 2026-11-25), with `ref_hook.py --install` run
-  again after it (girsa-verifier's NOTE 1: a hook installed earlier passes CLAUDE_CODE_AGENT alone).
+- The first project's pin bump: girsa-operator's, `ref_hook.py --install` run again after it (girsa-verifier's NOTE 1).
 - To resume: `git -C ~/work/mishmeret log --oneline -3`; `git -C ~/work/mishmeret-builder status -sb`; the Board, and a
   watcher on any Board item a piece waits on.
 
