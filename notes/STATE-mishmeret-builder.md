@@ -26,7 +26,7 @@ Rewritten in place when a piece lands and at the end of a session; the log is `n
   any, LANDED-ready, girsa-operator's merge. The measures' files: session aa55e80c's scratchpad, st/. The normalizer
   set up by the prototype already (its 165f8dc); norm-builder runs under pi by its line with the pin's pi_guard.ts.
 - Waiting on the reviewer, in girsa-operator's pane: the normalizer's 165f8dc push (its repository public); the
-  Windows run. Main pushed, origin at f31c0c7 (girsa-operator, the reviewer's "push mishmeret").
+  Windows run. Main pushed (origin f31c0c7).
 - The first project's pin bump: girsa-operator's, `ref_hook.py --install` run again after it (girsa-verifier's NOTE 1).
 - To resume: `git -C ~/work/mishmeret log --oneline -3`; `git -C ~/work/mishmeret-builder status -sb`; the Board, and a
   watcher on any Board item a piece waits on.
