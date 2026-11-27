@@ -21,9 +21,10 @@ Rewritten in place when a piece lands and at the end of a session; the log is `n
 
 - A PROJECT'S SETUP (PLAN-PROJECT-SETUP, branch `builder-project-setup` on main f31c0c7; M26, M28): BUILT at 24bee91 -
   setup_project.py, project_shim.py, the guard's words with no Board (role_guard.BOARD, ask()); the plan review's
-  MEDIUM 1 taken; 19 red; measured on a copy of the normalizer; rule 45 0/0/0; suite 209. NEXT: girsa-verifier's
-  check at 26589c0 - asked 2026-11-27, its answer by SendMessage (none come: ask it, live); then a round if it finds
-  any, LANDED-ready, girsa-operator's merge. The measures' files: session aa55e80c's scratchpad, st/. The normalizer
+  MEDIUM 1 taken; 19 red; measured on a copy of the normalizer; rule 45 0/0/0; suite 209. girsa-verifier's check of
+  26589c0 (#3544) NOT YET on LOW 1; its round 64dc3e2 (all but NIT 1) sent. NEXT: its answer by
+  SendMessage (none come: ask it, live); then LANDED-ready, girsa-operator's merge. Measures: scratchpads
+  aa55e80c st/, b1136c5d round/. The normalizer
   set up by the prototype already (its 165f8dc); norm-builder runs under pi by its line with the pin's pi_guard.ts.
 - Waiting on the reviewer, in girsa-operator's pane: the normalizer's 165f8dc push (its repository public); the
   Windows run. Main pushed (origin f31c0c7).

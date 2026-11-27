@@ -81,6 +81,29 @@ THE BUILD (24bee91, on main f31c0c7 - the branch rebased; the reviewer: "a mishm
   worktree remove` or a forced add could reach the real one. Not run; the copy's own record removed by its path.
 - RULE 45 by role, main f31c0c7 against the build (the words alone changed): 0, 0, 0 on both records, every role.
 
+GIRSA-VERIFIER'S CHECK of 26589c0 (session d5add4, message #3544; its REVIEW.md on the first project's main 84f37c697,
+design-study/step5-verification/mishmeret-project-setup-build-2026-11-27/): NOT YET on LOW 1 - MEDIUM 1 of the plan
+review taken (no written file or printed step holds the home folder), the suite 209, the 19 red, rule 45 0/0/0.
+- LOW 1: two refusals still sent a role to the Board with none there - the main tree's git refusal and its file
+  refusal said "send the operator a HANDOFF". NOTE 1: the live pi run ran the measure project's pin (main 57b87b2), so
+  its push refusal had the old words; the changed words were checked by the tests alone. NOTE 2: the build's
+  mutate-setup.out (05:17) predates 24bee91, its Q3 row naming text the build does not hold; girsa-verifier's re-run
+  the record. NOTE 3: the printed starts lacked agents.sh's `--name ROLE`, by which "ask <owner> (its session ...)"
+  finds a session. NOTE 4: `-b` always (its m1) left the tests green; the printed step then fails on a role's branch
+  that exists. NIT 1: setup_project.py's MISHMERET_DIR default beside project_shim.py's. NIT 2: the push refusal's
+  `instead` after ask()'s inner dash.
+
+THE ROUND (64dc3e2): LOW 1 - both say `ask(OPERATOR, 'a HANDOFF')` (with the Board "send <operator> a HANDOFF",
+without it "ask <operator> (...)"), a case each in the guard-alone test, the file refusal's with the Board too. NIT 2 -
+ask()'s no-Board words in parentheses, `ask <owner> (its session, or the reviewer where none plays it)`, so no clause
+follows a dash's. NOTE 3 - the agent files' and the printed starts `claude --agent ROLE --name ROLE` (a project set up
+before keeps its agent files: KEPT). NOTE 4 - a case with the role's branch made first: the printed step without `-b`,
+run, exit 0. NIT 1 NOT TAKEN: project_shim.py is the text written whole into each project as its own helper, and a
+default moved into it makes every project set up before read KEPT, "it differs", for a NIT. Mutations: the round's 8
+red; the build's 19 red again on it (three rows' text moved: the agent file's start, ask()'s words, and NOTE 2's Q3 -
+mended). The suite 209. Rule 45 NOT RUN on the round: no decision's code changed, only words - the two HANDOFF refusals', and ask()'s with
+no Board.
+
 ## The measure (a prototype: setup_project.py and project_shim.py - this session's scratchpad, st/)
 
 On an APFS copy of the normalizer, its origin set to a local bare repository (no push could leave it), with a private
