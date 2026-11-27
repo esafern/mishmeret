@@ -3,6 +3,19 @@
 Findings, decisions and open work, each the moment it is known; a time from `date`. One item per run of work, newest
 first (`M01.`, `M02.` ...); what git records (what each commit did) is not repeated here.
 
+M27. **[2026-11-27, the terminal adapter's review and build (notes/PLAN-TERMINAL-ADAPTER.md)]**
+    * girsa-verifier's review (Board #3516): READY on LOW 1; both departures agreed. LOW 1 and NOTE 3 taken at
+      52c04a8 (its 7 mutations, my 28, two for NAMES: 37 red); NOTE 1 named in the code; NOTE 2 at the build; NOTE 4
+      the plan's count corrected. Its review of the setup plan (Board #3517): READY on MEDIUM 1 - `guard.foreign`
+      written with the home folder from an unquoted `~/...`, and no test that no written file holds it; the
+      normalizer's 165f8dc holds none. For that piece's build.
+    * THE BUILD, 2c44f21. Two faults found before the commit, by its own test and its measure: term.sh read the
+      terminal when sourced, before the config (agents.sh under wezterm ran tmux); WezTerm's padded lines joined by the
+      capture (the first WezTerm measure stopped after 9 - my own check's `exit 1` inside eval ended the script
+      without a FAULT line; read again in a subshell). Then 22 of 22 on each private server. A removal of the private
+      server's folder by a substitution stopped by the harness's check; removed by its literal path after.
+    * Rule 45 at the build: 1 and 6, named costs; nothing let through.
+
 M26. **[2026-11-27, a project's setup (notes/PLAN-PROJECT-SETUP.md, branch builder-project-setup)]**
     * The reviewer, on "the verifier will be tomorrow" first, then: "what can we do to get a role in place to use
       mishmeret for the normalizer project. is that work planned" - answered: not planned (PLAN-GUARD-ONLY put the

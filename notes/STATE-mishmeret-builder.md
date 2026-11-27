@@ -14,17 +14,16 @@ Rewritten in place when a piece lands and at the end of a session; the log is `n
 
 ## Now
 
-- THE TERMINAL ADAPTER (PLAN-TERMINAL-ADAPTER, branch `builder-terminal-adapter` from main 57b87b2): planned and
-  measured. ITS GUARD PART BUILT at 654db02 (M25): a script read with what it sources, a library's function when
-  called; WezTerm's kill-pane but on its own socket, and pkill of wezterm, refused; rule 45: 1 and 5, named costs.
-- Its plan WITH GIRSA-VERIFIER for its one review (sent and delivered 2026-11-27; the measure's files in session
-  aa55e80c's scratchpad, ta/). On its answer: its findings into the plan, then term.sh's build (the reviewer: "when
-  ver comes back, implement") - its dispatch literal. girsa-architect agreed the pkill departure (332c2fdb1).
-- A PROJECT'S SETUP (PLAN-PROJECT-SETUP, branch `builder-project-setup` from main 57b87b2, the plan alone at 5937c48;
-  M26): setup_project.py measured on a copy of the normalizer (scratchpad st/). girsa-architect answered (332c2fdb1):
-  agreed, a pi role's runner and start line into the piece. Plan with girsa-verifier. THE NORMALIZER SET UP that
+- THE TERMINAL ADAPTER (PLAN-TERMINAL-ADAPTER, branch `builder-terminal-adapter` from main 57b87b2): BUILT at
+  2c44f21 (M25, M27) - its guard part 654db02 and 52c04a8 (girsa-verifier's plan review, READY on LOW 1, taken); term.sh,
+  the config's `terminal`, the scripts through it; 22 of 22 on private tmux and WezTerm servers; suite 205; rule 45
+  1 and 6, named costs. NEXT: girsa-verifier's check at the final commit, then girsa-operator's merge. Windows the
+  reviewer's own run. The measures' files: session aa55e80c's scratchpad, ta/ (gone if cleared: the plan's head).
+- A PROJECT'S SETUP (PLAN-PROJECT-SETUP, branch `builder-project-setup` from main 57b87b2, the plan at 5937c48; M26):
+  girsa-architect agreed (332c2fdb1); girsa-verifier READY on MEDIUM 1 (`guard.foreign` written with `~`, and a test
+  that no written file holds the home folder). Its build next, after the adapter's check. THE NORMALIZER SET UP that
   night by the prototype (girsa-operator: its 165f8dc, not pushed); norm-builder runs under pi by its line with the
-  pin's pi_guard.ts. This branch's log and state stay here, on the adapter's.
+  pin's pi_guard.ts. This branch's log and state stay on the adapter's.
 - Main's push is the reviewer's word, in girsa-operator's pane.
 - The first project's bump to 2327b0d: girsa-operator's (it said so, 2026-11-25), with `ref_hook.py --install` run
   again after it (girsa-verifier's NOTE 1: a hook installed earlier passes CLAUDE_CODE_AGENT alone).
@@ -33,9 +32,8 @@ Rewritten in place when a piece lands and at the end of a session; the log is `n
 
 ## Next, in order
 
-1. The terminal adapter: the plan's review, then term.sh and the scripts (above); Windows the reviewer's own run
-   before done. Then the setup's build; the normalizer's own run of it is the reviewer's, once it lands. If wanted, a
-   session started by MISHMERET_ROLE with no agent file (measured top-level and nested first).
+1. The terminal adapter's check and merge (above); then the setup's build. If wanted, a session started by
+   MISHMERET_ROLE with no agent file (measured top-level and nested first).
 2. The move to the names in the first project and Mishmeret itself (every shim, the settings' hook paths, the configs'
    `transcripts`), then the old names' removal once both pins pass - its own piece. The first project's share:
    `.claude/mishmeret.json` 208 times in 107 files, CLAUDE_CODE_AGENT 90 in 39 (girsa-architect, 7501436fb).

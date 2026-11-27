@@ -117,6 +117,32 @@ departures from girsa-architect's form agreed (girsa-architect too, 332c2fdb1). 
   function, which the guard does not read. Refusing an unreadable `wezterm cli` verb, as git's is: not in this piece.
 - For term.sh: agents-lib.sh's `pane_of_pid` is the plan's `term_pane_of_pid` - moved there, no second copy.
 
+THE BUILD (2c44f21, on 52c04a8's guard; the reviewer: "when ver comes back, implement"): items 1-4 as planned.
+- term.sh: the plan's 17 functions (with `term_tags_file` and `term_wez_panes`, WezTerm's two helpers); the scripts
+  call nothing of a terminal's (test_term.py reads them by the guard's mask); `pane_of_pid` moved there. Under tmux
+  each call the scripts made before, its arguments and redirections the same.
+- FOUND BY ITS OWN TESTS AND MEASURE, fixed before the commit: (1) term.sh read MM_TERMINAL when sourced, and
+  agents-lib.sh sources it before it reads the config - agents.sh under `terminal: wezterm` still ran tmux (the stub
+  test's first run); it reads it at each call. (2) WezTerm pads a screen's line with spaces to its pane's width, so
+  the capture joined a prompt's line to its output (the first WezTerm measure: 9 checks, then the run's end) - and
+  Claude Code's screen pads its lines too, so the morning run's `^...$` ready line would not have been found. A line
+  is joined now only when its text fills the pane; its cost, a line wrapped exactly at a space read as two, in the
+  README.
+- MEASURED on the built term.sh (this session's scratchpad, ta/measure/: measure.sh, measure-tmux.out,
+  measure-wez.out, mux.lua): agents.sh's sequence on a private tmux server (`env -u TMUX TMUX_TMPDIR=<folder>`) and a
+  private WezTerm 20240203 headless server on a short socket (stopped by its pid): 22 checks each, 22 ok each.
+- TESTS: test_term.py (4) - each function's call under each terminal's stub; the tags file begun afresh, the latest
+  tag read, gone at the kill, a padded line not joined; agents.sh's start in a WezTerm window (no tmux call) and its
+  stop outside one; no script naming a terminal. test_config.py - `terminal` and MM_TERMINAL. test_guard.py - the real
+  agents.sh through term.sh, each terminal's kill with the other's private environment set (NOTE 2), the morning run
+  not refused. The suite 205. term.sh's checks each red with its rule out: 11 of 11.
+- THE BUILD'S RUN OF RULE 45, main 57b87b2 against the build's snapshot, by role: the first project's 174,150 newly
+  refused 1, newly let through 0, faults 0 in each of three roles; Mishmeret's 2,277: 6, 0, 0 - the 5 pkills, and this
+  lane's own run of the worktree's agents.sh against a private tmux server alone, now reaching term.sh's WezTerm kill
+  (the first cost, as the first project's 1).
+- NOT MEASURED: WezTerm's window (attaching; a start from inside one); Claude Code's screen typed into by WezTerm;
+  Linux; Windows - the reviewer's own run on the Windows machine, before the case is called done.
+
 ## The measure (a prototype: `term.sh`, one function a verb, each with a tmux and a WezTerm form)
 
 `measure.sh` runs agents.sh's sequence through it, 25 checks: no session at start; four panes, each its own id, listed
