@@ -22,10 +22,11 @@ Rewritten in place when a piece lands and at the end of a session; the log is `n
 - A PROJECT'S SETUP (PLAN-PROJECT-SETUP, branch `builder-project-setup` on main f31c0c7; M26, M28): BUILT at 24bee91 -
   setup_project.py, project_shim.py, the guard's words with no Board (role_guard.BOARD, ask()); the plan review's
   MEDIUM 1 taken; 19 red; measured on a copy of the normalizer; rule 45 0/0/0; suite 209. NEXT: girsa-verifier's
-  check at the final commit, then girsa-operator's merge. The measures' files: session aa55e80c's scratchpad, st/.
-  THE NORMALIZER SET UP by the prototype already (girsa-operator: its 165f8dc, not pushed); norm-builder runs under pi
-  by its line with the pin's pi_guard.ts.
-- Main's push is the reviewer's word, in girsa-operator's pane.
+  check at 26589c0 - asked 2026-11-27, its answer by SendMessage (none come: ask it, live); then a round if it finds
+  any, LANDED-ready, girsa-operator's merge. The measures' files: session aa55e80c's scratchpad, st/. The normalizer
+  set up by the prototype already (its 165f8dc); norm-builder runs under pi by its line with the pin's pi_guard.ts.
+- Waiting on the reviewer, in girsa-operator's pane: main's push (11 ahead); the normalizer's 165f8dc push (its
+  repository public); the Windows run.
 - The first project's bump to 2327b0d: girsa-operator's (it said so, 2026-11-25), with `ref_hook.py --install` run
   again after it (girsa-verifier's NOTE 1: a hook installed earlier passes CLAUDE_CODE_AGENT alone).
 - To resume: `git -C ~/work/mishmeret log --oneline -3`; `git -C ~/work/mishmeret-builder status -sb`; the Board, and a
