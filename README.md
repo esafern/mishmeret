@@ -101,6 +101,24 @@ beside an operator, 34 refused - 10 pushes, 18 writes in the main clone, 5 into 
 and a stash - so the builder works in its own worktree and the operator lands and pushes; as its operator, 7. A session
 started with no role is refused what the builder is: 34.
 
+ONE COMMAND WRITES IT (notes/PLAN-PROJECT-SETUP.md), run once from a Mishmeret checkout by the reviewer or the
+operator, in their own terminal:
+
+    python3 ~/work/mishmeret/mishmeret/setup_project.py <the main clone> --project NAME --operator ROLE \
+        --role ROLE=WORKTREE[:pi] ... [--foreign PATH ...] [--protect REF_GLOB ...] [--commit SHA] [--write]
+
+It writes the six-field config (checked by its own tree's config.py first), the shim's helper (`project_shim.py`'s
+text), the hooks' shims, the `PreToolUse` hook beside what `.claude/settings.json` holds, and an agent file for each
+Claude Code role; without `--write` it says what it would. Every path under the home folder is written `~/...`. It
+never replaces a project's file - a second run writes nothing, and one that differs is kept and said - and runs no
+git: it prints git's steps, each a command, in order - the pin (when absent), the files' add, their commit, each
+worktree, the ref hook's install (after the pin and the commit: the hook fails closed), each role's start. A pi role
+(`:pi`) has no agent file; its start line runs pi with the pin's `pi_guard.ts`. Its costs: each project keeps its own
+copy of the shim's helper, which a later run does not replace; a pi role is guarded only when started by its line - a
+bare `pi` runs no hook; settings.json is written back in json's own form (its spacing, and any non-ASCII as `\uXXXX`);
+a relative path is taken from the folder the command runs in; the agent file names no tools, model or brief. With no
+Board part, a refusal sends a role to ask its owner, never to send a Board REQUEST.
+
 ## A ref is judged by the repository
 
 A branch or a tag belongs to the shared repository, which the main clone and every worktree read, so the guard judges a

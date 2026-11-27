@@ -95,7 +95,7 @@ def refusal(role, lines, where):
                 "refs": f"a ref `guard.refs` gives to {owner} alone",
                 "replace": f"an object replacement, as `git replace` makes - {owner}'s alone"}[kind]
         # outside every session there is no REQUEST to send (girsa-architect's Q1): the owner's pane, or the reviewer's
-        way = (f"run it in {owner}'s pane, as `! git ...`" if role == rg.NO_ROLE else f"send {owner} a REQUEST")
+        way = (f"run it in {owner}'s pane, as `! git ...`" if role == rg.NO_ROLE else rg.ask(owner))    # the guard's
         return (f"refused by the ref hook: {role} may not move {ref} ({(cur or 'none')[:12]} to {new[:16]}) - {what}; "
                 + way)
     return None

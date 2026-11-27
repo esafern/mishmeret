@@ -56,7 +56,16 @@ _CFG = config.load()
 OPERATOR = _CFG["operator"]
 LANDING = "land" in _CFG        # absent (config.PARTS): no landing tool - git commits and merges as it is
 PLANNED = _CFG["land"]["planned"] if LANDING else None
+# THE BOARD'S WORDS ONLY WITH A BOARD (notes/PLAN-PROJECT-SETUP.md, item 3; girsa-architect's Q4): a refusal sends a
+# role to its owner as a Board REQUEST; a project with no Board part has none, and its live session gave the words
+# back as its advice. There, it asks the owner - whose session may be none (the reviewer's `!`).
+BOARD = "board_dir" in _CFG
 GUARD = _CFG["guard"]
+
+
+def ask(owner, request="a REQUEST"):
+    """How a refusal sends a role to `owner`: the Board's `request`, or with no Board, the owner itself."""
+    return f"send {owner} {request}" if BOARD else f"ask {owner} - its session, or the reviewer where none plays it"
 # ONE SHELL WORD in the masked text, its quoted parts kept as quotes around spaces (notes/PLAN-KNOWN-GAPS.md, item 1):
 # with `\S+` a quoted word ended at its first space, so `git -C "." push`, `X="a b" git push` and the like matched
 # nothing and every rule let them through. It ends at an unquoted separator, as the shell's does (else `R=x; S=y; git`
@@ -578,7 +587,7 @@ def foreign_tree(path):
 
 def foreign_refusal(repo):
     return (f"refused by the role guard: this is a tree of {repo}, a repository no role of this project changes "
-            "(its config's `guard.foreign`) - not its main clone, not any worktree of it; send its own roles a REQUEST")
+            "(its config's `guard.foreign`) - not its main clone, not any worktree of it; " + ask("its own roles"))
 
 
 def is_main_tree(path, guarded=None):
@@ -1030,7 +1039,7 @@ def _ref_refusal(role, verb, command, masked, m, cwd, guarded):
                 owner = WORKTREES.get(path) or next((r for w, r in WORKTREES.items() if w.endswith(tail)), None)
                 if owner and role not in (owner, OPERATOR):
                     return (f"refused by the role guard: {name} is {owner}'s worktree - its own, and the operator's to "
-                            f"remove or move on the reviewer's word; send {owner} a REQUEST")
+                            f"remove or move on the reviewer's word; {ask(owner)}")
                 continue
             if listing is None:
                 if role != OPERATOR:
@@ -1058,7 +1067,7 @@ def _ref_refusal(role, verb, command, masked, m, cwd, guarded):
                 return (f"refused by the role guard: `git {verb}` here {'may move' if '*' in name else 'moves'} {ref}, "
                         f"{whose} - {owner}'s alone, from any worktree of this repository"
                         + (" (and the operator's, on the reviewer's word)" if why == "worktree" else "")
-                        + f"; name another ref, or send {owner} a REQUEST")
+                        + f"; name another ref, or {ask(owner)}")
     return None
 
 
@@ -1126,7 +1135,7 @@ def refusal(role, command, cwd, main_tree=is_main_tree, read=_read, depth=0, pro
         if verb == "push":
             if role != OPERATOR:
                 return (f"refused by the role guard: pushing is the operator's ({OPERATOR}), on the reviewer's "
-                        "word - send it a LANDED or a REQUEST instead" + no_role)
+                        f"word - {ask(OPERATOR, 'a LANDED or a REQUEST')} instead" + no_role)
             retired = GUARD.get("retired_remotes", [])
             set_here = _push_config(command[m.start():m.start(1)], command[m.start(1):m.end(1)])
             if set_here:
@@ -1154,7 +1163,7 @@ def refusal(role, command, cwd, main_tree=is_main_tree, read=_read, depth=0, pro
             if owner and not (leaves and verb != "merge"):
                 return (f"refused by the role guard: `git {verb}` would change {owner}'s worktree - its branch, index "
                         f"and files are its own (and the operator's, on the reviewer's word); work in your own "
-                        f"worktree, or send {owner} a REQUEST" + no_role)
+                        f"worktree, or {ask(owner)}" + no_role)
             if leaves:
                 continue
             if any(map(main_tree, _git_trees(command, masked, m, cwd))):

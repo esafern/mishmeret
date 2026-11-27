@@ -997,7 +997,8 @@ def test_the_guard_alone_lets_git_commit_and_merge_be_and_keeps_every_other_rule
         sp.run(["git", "init", "-q", str(repo)], check=True)
     (book / ".mishmeret").mkdir()
     (book / ".mishmeret" / "config.json").write_text(json.dumps(minimal_config(
-        guard={"foreign": [str(other)], "checks": ["pytest"]})), encoding="utf-8")
+        guard={"foreign": [str(other)], "checks": ["pytest"], "refs": {"refs/tags/stage": "ex-operator"}})),
+        encoding="utf-8")
     env = {k: v for k, v in os.environ.items() if not k.startswith(("MISHMERET_", "CLAUDE_"))}
     env["CLAUDE_PROJECT_DIR"] = str(book)
 
@@ -1024,6 +1025,26 @@ def test_the_guard_alone_lets_git_commit_and_merge_be_and_keeps_every_other_rule
         assert why and said in why, (role, cmd, why)
     why = hook(None, "git commit -q -m x", MISHMERET_ROLE="ex-operator", CLAUDE_CODE_AGENT="ex-operator")
     assert why and "the operator's alone" in why, why
+    # NO BOARD, NO BOARD WORDS (notes/PLAN-PROJECT-SETUP.md, item 3): a refusal asks the owner, never names a REQUEST -
+    # the role guard's and the ref hook's alike (one switch, role_guard.ask)
+    for role, cmd, said in (("ex-builder", "git push origin main", "ask ex-operator - its session, or the reviewer"),
+                            ("ex-operator", f"git -C {other} commit -q -m x", "ask its own roles")):
+        why = hook(role, cmd)
+        assert said in why and "REQUEST" not in why, why
+    sp.run(["git", "-C", str(book), "-c", "user.name=placeholder", "-c", "user.email=placeholder@example.org", "commit",
+            "-q", "--allow-empty", "-m", "x"], check=True)
+    probe = ("import sys, ref_hook\nhead = ref_hook._git(sys.argv[1], 'rev-parse', 'HEAD').stdout.strip()\n"
+             "print(ref_hook.refusal('ex-builder', [('0' * 40, head, 'refs/tags/stage')], sys.argv[1]))")
+    out = sp.run([sys.executable, "-c", probe, str(book)], cwd=PKG, capture_output=True, text=True, env=env)
+    assert "ex-builder may not move refs/tags/stage" in out.stdout and "ask ex-operator" in out.stdout \
+        and "REQUEST" not in out.stdout, (out.stdout, out.stderr)
+    # with the Board, the Board's words (the placeholder project's config has it)
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("role_guard", os.path.join(PKG, "role_guard.py"))
+    rg = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(rg)
+    assert "send ex-operator a LANDED or a REQUEST" in rg.refusal("ex-builder", "git push origin b", "/work/book-builder",
+                                                                  main_tree=lambda p: False, read=lambda p: None)
 
 
 def test_the_role_guard_refuses_a_check_whose_failure_cannot_stop_the_commit_after_it():
