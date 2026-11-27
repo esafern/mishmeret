@@ -15,10 +15,11 @@ Rewritten in place when a piece lands and at the end of a session; the log is `n
 ## Now
 
 - THE TERMINAL ADAPTER (PLAN-TERMINAL-ADAPTER, branch `builder-terminal-adapter` from main 57b87b2): BUILT at
-  2c44f21 (M25, M27) - its guard part 654db02 and 52c04a8 (girsa-verifier's plan review, READY on LOW 1, taken); term.sh,
-  the config's `terminal`, the scripts through it; 22 of 22 on private tmux and WezTerm servers; suite 205; rule 45
-  1 and 6, named costs. NEXT: girsa-verifier's check at the final commit, then girsa-operator's merge. Windows the
-  reviewer's own run. The measures' files: session aa55e80c's scratchpad, ta/ (gone if cleared: the plan's head).
+  2c44f21 (M25, M27) - its guard part 654db02 and 52c04a8 (the plan review's LOW 1); term.sh, the config's `terminal`,
+  the scripts through it; 22 of 22 on private tmux and WezTerm servers (notes/terminal-adapter/measure.sh); rule 45
+  1 and 6, named costs. girsa-verifier's check of 18920ce NOT YET (#3523): MEDIUM 1 and LOW 2 taken at ff064ae (suite
+  206), the round sent to it. NEXT: its answer on ff064ae; then LANDED-ready to girsa-operator, its merge. Windows the
+  reviewer's own run.
 - A PROJECT'S SETUP (PLAN-PROJECT-SETUP, branch `builder-project-setup` from main 57b87b2, the plan at 5937c48; M26):
   girsa-architect agreed (332c2fdb1); girsa-verifier READY on MEDIUM 1 (`guard.foreign` written with `~`, and a test
   that no written file holds the home folder). Its build next, after the adapter's check. THE NORMALIZER SET UP that
@@ -52,7 +53,8 @@ Rewritten in place when a piece lands and at the end of a session; the log is `n
 - A branch checked out nowhere is no one's. In the ref hook: an operator's subagent has the operator's rights; a tag
   made on origin elsewhere fails a non-owner's plain fetch; Linux, Windows and reftable unmeasured.
 - The guard-measure skill's mutate.py copies `.claude/skills/` alone; the hook's tests need `.claude/`'s shim helper
-  and land.py (the build ran a scratch copy): the operator's lane.
+  and land.py (the build ran a scratch copy): the operator's lane. And its rule 45's old side reads a path into a live
+  tree as the tree now is: run it before the tree moves, or from the old commit (girsa-verifier's NOTE 1 on 18920ce).
 - The Board's `--waiting-for` takes this config's roles alone: a wait on a first-project role cannot be shown.
 - At the next touch of mishmeret/skills/mishmeret-landing/SKILL.md: its line 8 names `.claude/land.py`, Mishmeret's own.
 - At the next touch of role_usage.py (:3, :28) and role_sessions.py (:9): their docstrings say claude_projects

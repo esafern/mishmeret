@@ -143,6 +143,23 @@ THE BUILD (2c44f21, on 52c04a8's guard; the reviewer: "when ver comes back, impl
 - NOT MEASURED: WezTerm's window (attaching; a start from inside one); Claude Code's screen typed into by WezTerm;
   Linux; Windows - the reviewer's own run on the Windows machine, before the case is called done.
 
+GIRSA-VERIFIER'S CHECK OF 18920ce (session d5add4, the first project's Board #3523; its REVIEW.md on the first project's
+main 8682bc113, design-study/step5-verification/mishmeret-terminal-adapter-build-2026-11-27/): NOT YET - MEDIUM 1 and
+LOW 2 in one round; LOW 1 girsa-operator's; NOTEs 1-3. Under tmux no change found. Its run: the suite 205; this
+measure on its private servers, 22 of 22 each; rule 45 by role, the first project 1/0/0 (its files byte-equal),
+Mishmeret 8/0/0 (the 6, and two rows read from the worktree as it now is - NOTE 1).
+- MEDIUM 1, under WezTerm a finished session never cleared and started again: finish_hook.py read TMUX_PANE alone, and
+  a WezTerm pane holds WEZTERM_PANE - the plan's list of terminal steps had no line for the Stop hook. TAKEN at
+  ff064ae: config.TERMINALS names each terminal's pane variable, the hook reads the config's; a test under each.
+- LOW 2, the tmux stub joined a call's words with spaces, so `send-keys -t "$1" $2 Enter` passed it (7 of 22 on a real
+  server): TAKEN at ff064ae - both stubs record each word apart; its t1 red, WezTerm's and a tag's split beside it.
+- LOW 1, the first project's operator-sessions skill gives a test of agents.sh with tmux's private server alone:
+  girsa-operator's, at its pin bump; the shipped mishmeret-sessions skill's same line fixed here (ff064ae).
+- NOTE 1, the old side of rule 45 read a path into a live tree as the tree now is: for the guard-measure skill's owner
+  (the state's open items). NOTE 2: config.py says a pin older than this commit refuses `terminal` (ff064ae).
+  NOTE 3: the measure committed, notes/terminal-adapter/measure.sh, run as committed: 22 of 22 on each server.
+- The round: 5 mutations red, term.sh's 11 red again on the new stubs; the suite 206. No guard code changed in it.
+
 ## The measure (a prototype: `term.sh`, one function a verb, each with a tmux and a WezTerm form)
 
 `measure.sh` runs agents.sh's sequence through it, 25 checks: no session at start; four panes, each its own id, listed

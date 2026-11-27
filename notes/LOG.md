@@ -15,6 +15,13 @@ M27. **[2026-11-27, the terminal adapter's review and build (notes/PLAN-TERMINAL
       without a FAULT line; read again in a subshell). Then 22 of 22 on each private server. A removal of the private
       server's folder by a substitution stopped by the harness's check; removed by its literal path after.
     * Rule 45 at the build: 1 and 6, named costs; nothing let through.
+    * girsa-verifier's check of 18920ce (Board #3523): NOT YET, MEDIUM 1 (the Stop hook's TMUX_PANE alone: under WezTerm
+      no session started again - a terminal step the plan's list lacked; WHERE YOU LOOKED, NOT WHERE IT IS: my sweep
+      was of the three scripts, not of the Python that reads a pane) and LOW 2 (the stub joined a call's words). Both
+      taken at ff064ae, with the shipped sessions skill's private-server line (LOW 1's twin) and the measure committed.
+    * The machine slept during the round's commit (land.py's suite ran 19 minutes); the turn was cut after ff064ae
+      was committed and before it was sent. girsa-operator said so (02:12 UTC). Checked: the suite at ff064ae 206;
+      the round sent to girsa-verifier, its LOW 1 to girsa-operator.
 
 M26. **[2026-11-27, a project's setup (notes/PLAN-PROJECT-SETUP.md, branch builder-project-setup)]**
     * The reviewer, on "the verifier will be tomorrow" first, then: "what can we do to get a role in place to use
