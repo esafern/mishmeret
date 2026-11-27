@@ -3,6 +3,20 @@
 Findings, decisions and open work, each the moment it is known; a time from `date`. One item per run of work, newest
 first (`M01.`, `M02.` ...); what git records (what each commit did) is not repeated here.
 
+M28. **[2026-11-27, a project's setup: its build (notes/PLAN-PROJECT-SETUP.md)]**
+    * The terminal adapter VERIFIED on its round (Board #3524); LANDED-ready to girsa-operator; MERGED, main f31c0c7 by
+      fast-forward (its scan of the diff: no home path or name). Not pushed. The setup branch rebased onto it.
+    * THE BUILD, 24bee91. The tests' first form ran setup_project.py from this tree, which reads its commit and origin
+      from git - mutate.py's copy has no .git, so the baseline failed: each test now runs it from a git checkout of its
+      own. One mutation GREEN (the add line read by its start); the test reads it whole: 19 red.
+    * THE MEASURE on a copy of the normalizer: the copy held 165f8dc and a worktree record naming the real worktree -
+      `git branch -D` refused for it; the copy's record removed by its literal path (the real worktree's link points
+      into the real clone, read first). Then the build's steps, 25 cases, the live pi session as planned. A "branch on
+      the bare origin: True" read was the copy's own branch from before, 59b2642 - not a push.
+    * The whole suite under rule 45's twelve processes (load 11 on 10 cores) failed one browser test, its Chromium not
+      launched in 180 s; alone it passed in 1 s, and the suite again: 209.
+    * The reviewer: "GM" - told the state, and the two pushes and the Windows run that wait on them.
+
 M27. **[2026-11-27, the terminal adapter's review and build (notes/PLAN-TERMINAL-ADAPTER.md)]**
     * girsa-verifier's review (Board #3516): READY on LOW 1; both departures agreed. LOW 1 and NOTE 3 taken at
       52c04a8 (its 7 mutations, my 28, two for NAMES: 37 red); NOTE 1 named in the code; NOTE 2 at the build; NOTE 4

@@ -51,6 +51,36 @@ before any review of this plan): Q1-Q4 agreed, with additions; the terminal adap
   sentences and by ref_hook.py's through `rg`; and the words say what a role is told when no session plays the
   operator (here "the reviewer's `!` or a second session"), as ref_hook.py:98's no-role sentence does.
 
+GIRSA-VERIFIER'S REVIEW (session 1a7205, the first project's Board #3517; its REVIEW.md in its worktree,
+design-study/step5-verification/mishmeret-project-setup-plan-2026-11-27/): READY on MEDIUM 1 - the prototype wrote the
+home folder (its owner's name) into the files it has committed: the worktrees and the agent files' start lines whole,
+`guard.foreign` from an unquoted `~/...`, and no test that no written file holds it (the normalizer's 165f8dc holds
+none). LOW 1 (two copies of the shim's helper in Mishmeret) for the move to the names. NOTE 1: settings.json written
+back in json.dumps's form - the README's costs. NOTE 2: a relative --role from the shell's folder - the usage.
+
+THE BUILD (24bee91, on main f31c0c7 - the branch rebased; the reviewer: "a mishmeret piece. plan it"): items 1-4.
+- MEDIUM 1 TAKEN: every path under the home folder written `~/...` (`tilde`), `guard.foreign` too, given expanded or
+  not; a test that no written file holds the home folder. NOTEs 1 and 2 in the README and the usage.
+- girsa-architect's additions: the config through `config.load` before it is written (a refused one: "not written");
+  a --commit other than the tree's said; each step a command (the add, the commit); the KEPT shim "differs from
+  mishmeret/project_shim.py"; `BOARD` and `ask()` in role_guard.py, read by its five refusals and ref_hook.py's.
+- THE PI ROLE: `ROLE=WORKTREE:pi` - its runner in the config, no agent file, its start line with the pin's pi_guard.ts.
+- TESTS (tests/test_setup_project.py, 3): the setup run from a Mishmeret checkout of its own (a git tree with an
+  origin: mutate.py's copy has no .git) on a placeholder main clone - what it writes, `~` throughout, the config loaded,
+  settings.json merged, a second run nothing, a project's file kept and said; git's steps in order, each a command,
+  the pin's only when absent, a pi role's line; a refused config not written, a DIR no main clone, a --role without its
+  path; end to end through the written hook. test_guard.py: no Board, "ask" and no REQUEST - the guard's and the ref
+  hook's - and with the Board, the REQUEST. 19 decisions red with each taken out (one GREEN at first: the add line
+  read by its start alone - now whole). The suite 209.
+- MEASURED: the build run on a fresh APFS copy of the normalizer reset to its commit before 165f8dc, `norm-builder` a
+  pi role - its steps followed, each exit 0; no home path in any written file; 25 hook cases as expected; a live pi
+  session started by the printed line on the suite's scripted provider - the push, a main-clone commit and write, the
+  tag `stage` refused, its worktree's write let through. Run first on the copy as it was (165f8dc in it): the shims and
+  settings "as it is", the config and an agent file KEPT, the existing branch's worktree without `-b`.
+- FOUND: an APFS copy of a main clone holds its worktrees' records, pointing at the real worktrees - in it, `git
+  worktree remove` or a forced add could reach the real one. Not run; the copy's own record removed by its path.
+- RULE 45 by role, main f31c0c7 against the build (the words alone changed): 0, 0, 0 on both records, every role.
+
 ## The measure (a prototype: setup_project.py and project_shim.py - this session's scratchpad, st/)
 
 On an APFS copy of the normalizer, its origin set to a local bare repository (no push could leave it), with a private

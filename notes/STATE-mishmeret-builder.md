@@ -19,12 +19,12 @@ Rewritten in place when a piece lands and at the end of a session; the log is `n
 
 ## Now
 
-- A PROJECT'S SETUP (PLAN-PROJECT-SETUP, branch `builder-project-setup`, rebased onto main f31c0c7; M26): girsa-architect
-  agreed (332c2fdb1); girsa-verifier READY on MEDIUM 1 (every home path written as `~`, `guard.foreign` too, and a test
-  that no written file holds the home folder); NOTE 1 (settings.json rewritten in json.dumps's form) for the README,
-  NOTE 2 (a relative --role from the shell's folder) for the usage. IN BUILD. The prototype: session aa55e80c's
-  scratchpad, st/. THE NORMALIZER SET UP by it already (girsa-operator: its 165f8dc, not pushed); norm-builder runs
-  under pi by its line with the pin's pi_guard.ts.
+- A PROJECT'S SETUP (PLAN-PROJECT-SETUP, branch `builder-project-setup` on main f31c0c7; M26, M28): BUILT at 24bee91 -
+  setup_project.py, project_shim.py, the guard's words with no Board (role_guard.BOARD, ask()); the plan review's
+  MEDIUM 1 taken; 19 red; measured on a copy of the normalizer; rule 45 0/0/0; suite 209. NEXT: girsa-verifier's
+  check at the final commit, then girsa-operator's merge. The measures' files: session aa55e80c's scratchpad, st/.
+  THE NORMALIZER SET UP by the prototype already (girsa-operator: its 165f8dc, not pushed); norm-builder runs under pi
+  by its line with the pin's pi_guard.ts.
 - Main's push is the reviewer's word, in girsa-operator's pane.
 - The first project's bump to 2327b0d: girsa-operator's (it said so, 2026-11-25), with `ref_hook.py --install` run
   again after it (girsa-verifier's NOTE 1: a hook installed earlier passes CLAUDE_CODE_AGENT alone).
