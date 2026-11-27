@@ -98,6 +98,25 @@ branch's first code; the cases, extracts, decisions and prototype scripts in thi
   guard reads both kills - test_guard.py's read of the real agents.sh pins it, its private-server line gaining the
   WezTerm socket.
 
+GIRSA-VERIFIER'S REVIEW (session 1a7205, the first project's Board #3516; its REVIEW.md in its worktree,
+design-study/step5-verification/mishmeret-terminal-adapter-plan-2026-11-27/): READY on LOW 1, NOTEs 1-4; both
+departures from girsa-architect's form agreed (girsa-architect too, 332c2fdb1). Its run: the suite at 654db02 200; rule
+45 by role on its copies, its eight comparison files byte-equal to mine; departure (b)'s 20 reproduced.
+- LOW 1, four decisions no test saw (each mutation left the whole suite green): the check-status and piped-check rules
+  through a sourced library; an export after the kill; the shim's moved script (unpinned on main too - with it out, 6
+  of the first project's runs of agents.sh newly let through). TAKEN at 52c04a8, a case each; its 7 mutations with my
+  28 and two for NAMES, 37 red.
+- NOTE 1, a function called only from a trap's string or an eval's words is cut (the mask blanks them): none in the
+  scripts or on the record - named in `_called`'s "Not read" (52c04a8).
+- NOTE 2, the script is read before its libraries, so an export or unset after the call counts as set for the kill: at
+  term.sh's build, the real agents.sh's test asserts each terminal's refusal with the other's private environment set.
+- NOTE 3, `"wezterm"` and `\wezterm` let through (wezterm not in NAMES): TAKEN at 52c04a8 - `wezterm` and `taskkill`
+  in NAMES, a case each. A command's own `. term.sh; term_kill` is not followed (on main too; 0 on the record): kept.
+- NOTE 4, the record's "0 and 0" kill-panes count the written-out form: Mishmeret's record holds one more, this lane's
+  probe's `c() { wezterm cli --no-auto-start "$@"; }; ... c kill-pane`, on its own socket - a verb behind a shell
+  function, which the guard does not read. Refusing an unreadable `wezterm cli` verb, as git's is: not in this piece.
+- For term.sh: agents-lib.sh's `pane_of_pid` is the plan's `term_pane_of_pid` - moved there, no second copy.
+
 ## The measure (a prototype: `term.sh`, one function a verb, each with a tmux and a WezTerm form)
 
 `measure.sh` runs agents.sh's sequence through it, 25 checks: no session at start; four panes, each its own id, listed
