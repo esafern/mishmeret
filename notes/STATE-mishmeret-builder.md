@@ -2,7 +2,7 @@
 
 Rewritten in place when a piece lands and at the end of a session; the log is `notes/LOG.md`, by item.
 
-## Built, on main (main f31c0c7, 11 ahead of origin's; each verified by girsa-verifier, merged by girsa-operator)
+## Built, on main (main f31c0c7, origin's at it; each verified by girsa-verifier, merged by girsa-operator)
 
 - To 2026-11-24 (M01-M19), by the log. 70a6ffe-4715362: a ref judged by the repository (M20). 43a9d97: the Board's
   tab icon (M22). 94cd205: git's reference-transaction hook (M21) - main forward any role's, else the operator's;
@@ -25,8 +25,8 @@ Rewritten in place when a piece lands and at the end of a session; the log is `n
   check at 26589c0 - asked 2026-11-27, its answer by SendMessage (none come: ask it, live); then a round if it finds
   any, LANDED-ready, girsa-operator's merge. The measures' files: session aa55e80c's scratchpad, st/. The normalizer
   set up by the prototype already (its 165f8dc); norm-builder runs under pi by its line with the pin's pi_guard.ts.
-- Waiting on the reviewer, in girsa-operator's pane: main's push (11 ahead); the normalizer's 165f8dc push (its
-  repository public); the Windows run.
+- Waiting on the reviewer, in girsa-operator's pane: the normalizer's 165f8dc push (its repository public); the
+  Windows run. Main pushed, origin at f31c0c7 (girsa-operator, the reviewer's "push mishmeret").
 - The first project's pin bump: girsa-operator's, `ref_hook.py --install` run again after it (girsa-verifier's NOTE 1).
 - To resume: `git -C ~/work/mishmeret log --oneline -3`; `git -C ~/work/mishmeret-builder status -sb`; the Board, and a
   watcher on any Board item a piece waits on.
