@@ -1,7 +1,7 @@
-"""Every test runs against a placeholder project (its config written here) and with stub `tmux`, `claude`, `osascript`
-and `launchctl` first on PATH - so no test reaches the real tmux server, starts Claude Code, shows an alert or loads a
-launchd job (in Girsa, 2026-11-01: a test whose clone variable the moved code no longer read reached the roles' live
-tmux session). A test that needs a stub to say something puts its own in front."""
+"""Every test runs against a placeholder project (its config written here) and with stub `tmux`, `wezterm`, `claude`,
+`osascript` and `launchctl` first on PATH - so no test reaches the real tmux server or WezTerm, starts Claude Code,
+shows an alert or loads a launchd job (in Girsa, 2026-11-01: a test whose clone variable the moved code no longer read
+reached the roles' live tmux session). A test that needs a stub to say something puts its own in front."""
 import json
 import os
 import sys
@@ -92,7 +92,7 @@ os.environ.pop("CLAUDE_PID", None)
 
 STUBS = os.path.join(REPO, "stub-bin")
 os.makedirs(STUBS)
-for name in ("tmux", "claude", "osascript", "launchctl"):
+for name in ("tmux", "wezterm", "claude", "osascript", "launchctl"):
     with open(os.path.join(STUBS, name), "w", encoding="utf-8") as fh:
         fh.write("#!/bin/sh\nexit 0\n" if name != "claude" else "#!/bin/sh\necho '[]'\n")
     os.chmod(os.path.join(STUBS, name), 0o755)

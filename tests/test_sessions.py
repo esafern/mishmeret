@@ -489,10 +489,14 @@ def test_the_agents_scripts_share_one_clone_one_role_list_and_one_pane_lookup():
     assert source in start and source in night
     assert 'MM_CFG=$(python3 "$HERE/config.py" --shell)' in lib and 'DIR="$MM_ROOT"' in lib
     assert '[ -n "${MISHMERET_CONFIG:-}" ] ||' in lib and "MISHMERET_CONFIG:-$DIR" not in lib, "no config guessed, none set"
-    for copy in ("ROLES=", "\nDIR=\"", "claude agents --json", '.jsonl 2>/dev/null', 'list-panes -s -t "$SESSION" -F \'#{pane_pid} #{pane_id}\'',
-                 "PROJECTS=", "config.py --shell"):
+    for copy in ("ROLES=", "\nDIR=\"", "claude agents --json", '.jsonl 2>/dev/null', "PROJECTS=", "config.py --shell"):
         assert copy in lib, copy
         assert copy not in start and copy not in night, f"a second copy of {copy!r}"
+    # the pane of a process is term.sh's, as every terminal step (girsa-verifier, on notes/PLAN-TERMINAL-ADAPTER.md:
+    # agents-lib.sh's pane_of_pid moved there, no second copy)
+    term = read("term.sh")
+    assert "term_pane_of_pid() {" in term and '-F \'#{pane_pid} #{pane_id}\'' in term
+    assert not [t for t in (lib, start, night) if "pane_of_pid() {" in t or "#{pane_pid}" in t]
     for gone in ("create window", "Go starts", 'buttons {\\"Not today\\"', 'agents.sh" --restart'):
         assert gone not in night, f"the night run and the morning run start nothing: {gone!r}"
     # ONE HOME FOR THE CLOSING SENTENCE'S RULE (girsa-architect, 2026-11-10): role_usage.py's, asked by the night run

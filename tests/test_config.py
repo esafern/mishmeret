@@ -26,7 +26,8 @@ def sample():
             {"name": "ex-helper", "short": "helper", "colour": "", "page_light": "", "page_dark": "",
              "corner": False, "tmux": False}],
         "page_order": ["builder", "operator"], "operator": "ex-operator", "board_dir": "~/board",
-        "board_port": 9450, "tmux_session": "ex", "tmux_conf": "~/.tmux-ex.conf", "claude_projects": "~/.claude/projects",
+        "board_port": 9450, "terminal": "tmux", "tmux_session": "ex", "tmux_conf": "~/.tmux-ex.conf",
+        "claude_projects": "~/.claude/projects",
         "agent_files": ".claude/agents/{role}.md", "python": "venv/bin/python", "launchd_prefix": "org.example", "state_dir": "scratch/state",
         "night": {"check_every": 1, "you_idle": 2, "role_idle": 3, "landed_quiet": 4, "poll": 5, "context_limit": 6,
                   "gap": 7, "finish_command": "/done-for-now", "finish_exit_command": "/done-and-out"},
@@ -209,6 +210,24 @@ def test_a_role_may_name_its_runner_and_the_shell_form_lists_the_pi_roles(write)
         cfg["roles"][1]["runner"] = bad
         write(cfg)
         with pytest.raises(config.ConfigError, match=r"roles\[1\]\.runner"):
+            config.load()
+
+
+def test_the_terminal_is_tmux_or_wezterm_and_the_shell_form_names_it(write):
+    """notes/PLAN-TERMINAL-ADAPTER.md, item 2 (girsa-architect's Q1): an OPTIONAL top-level `terminal` - absent (tmux),
+    "tmux" or "wezterm"; any other refused by name. term.sh reads it as MM_TERMINAL, empty when absent."""
+    shell = lambda: subprocess.run(["bash", "-c", 'eval "$1"; printf "[%s]" "$MM_TERMINAL"', "-", subprocess.run(
+        [sys.executable, os.path.join(PKG, "config.py"), "--shell"], capture_output=True, text=True,
+        env=os.environ).stdout], capture_output=True, text=True).stdout
+    for value, said in ((None, "[]"), ("tmux", "[tmux]"), ("wezterm", "[wezterm]")):
+        cfg = dict(sample(), terminal=value)
+        if value is None:
+            del cfg["terminal"]
+        write(cfg)
+        assert config.load().get("terminal") == value and shell() == said, value
+    for bad in ("screen", "", 1):
+        write(dict(sample(), terminal=bad))
+        with pytest.raises(config.ConfigError, match="terminal"):
             config.load()
 
 

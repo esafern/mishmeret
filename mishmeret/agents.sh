@@ -1,5 +1,6 @@
 #!/bin/bash
-# agents.sh - start the project's role sessions in one tmux window, one pane each, each pane labelled in its role's colour.
+# agents.sh - start the project's role sessions in one window, one pane each, each pane labelled in its role's colour -
+# tmux's, or WezTerm's (the config's `terminal`; every terminal step is term.sh's, sourced by agents-lib.sh).
 #
 #   bash agents.sh             start them; if the roles' tmux session (the config's tmux_session) is already running, start again each role whose
 #                              pane is back at its shell, then attach to it
@@ -18,7 +19,8 @@
 # Each role starts as START_HERE says: from the main clone, `claude --agent <role> --name <role>`.
 # The session recap is turned on for every role by .claude/settings.json (CLAUDE_CODE_ENABLE_AWAY_SUMMARY), not here:
 # Claude Code turns it off for a session started with --agent unless that is set.
-# The label on each pane's top border is tmux's own, so it keeps its colour whatever Claude Code does to the pane's title.
+# The label on each pane's top border is tmux's own, so it keeps its colour whatever Claude Code does to the pane's title
+# (WezTerm has none: the tab's title names the session).
 # The colours are the roles' (the config's, as their agent files name them), as the hex values Claude Code draws them with.
 
 set -u
@@ -58,7 +60,7 @@ pi_line() {   # role -> the command that starts it under pi
 # the config's tmux_conf (here ~/.tmux-agents.conf) holds the Ctrl-A prefix, Alt+z zoom and mouse; nothing loaded it, so the tmux server agents.sh
 # started on 2026-10-09 ran on tmux's defaults. Loaded into the server whenever this script starts or attaches.
 TMUX_CONF="$MM_TMUX_CONF"
-load_tmux_conf() { [ -f "$TMUX_CONF" ] && tmux source-file "$TMUX_CONF"; return 0; }
+load_tmux_conf() { term_conf "$TMUX_CONF"; }
 
 # THE SKILLS MISHMERET SHIPS (notes/PLAN-SHIPPED-SKILLS.md): each skill of the tree this script runs from is linked into
 # the project's .claude/skills/ at every start, so a pin bump moves them all at the next start. Only a link is replaced
@@ -102,31 +104,31 @@ session_of() { printf '%s\n' "$SESSIONS" | awk -F'\t' -v r="$1" '$1 == r { print
 # hand - an unmarked config there was kept by the shim in every role's worktree (the first project's 2026-11-05)
 CLEAN="env -u MISHMERET_CONFIG -u MISHMERET_CONFIG_BY_SHIM"
 start_role() {   # pane-id role colour; fails when the role is left alone (its last session is running elsewhere)
-  tmux set-option -p -t "$1" @role "$2"
-  tmux set-option -p -t "$1" @colour "$3"
+  term_tag "$1" role "$2"
+  term_tag "$1" colour "$3"
   local sid; sid=$(session_of "$2")
   if [ "$sid" = "live" ]; then
-    tmux send-keys -t "$1" "echo '$2: its last session is still running elsewhere - not started again here'" Enter
+    term_send "$1" "echo '$2: its last session is still running elsewhere - not started again here'"
     return 1
   fi
   if is_pi "$2"; then   # started fresh, never resumed: its sessions are pi's, not in Claude Code's transcripts
     if [ ! -f "$HERE/pi_guard.ts" ]; then
-      tmux send-keys -t "$1" "echo '$2: not started - its runner is pi, and the guard extension $HERE/pi_guard.ts is missing'" Enter
+      term_send "$1" "echo '$2: not started - its runner is pi, and the guard extension $HERE/pi_guard.ts is missing'"
       return 1
     fi
-    tmux send-keys -t "$1" "$(pi_line "$2")" Enter
+    term_send "$1" "$(pi_line "$2")"
     return
   fi
   if [ "$MODE" = "--resume" ]; then
     case "$sid" in
       ""|none) ;;                                       # no earlier session: started fresh, below
-      *) tmux send-keys -t "$1" "cd '$DIR' && $CLEAN claude --resume $sid --agent $2 --name $2 $(effort_of "$2") 'agents.sh --resume: this session stopped without finishing (its tmux pane closed) and is resumed here with its context. A command that was running when it stopped did not finish - check the state of what you were doing before you go on.'" Enter
+      *) term_send "$1" "cd '$DIR' && $CLEAN claude --resume $sid --agent $2 --name $2 $(effort_of "$2") 'agents.sh --resume: this session stopped without finishing (its pane closed) and is resumed here with its context. A command that was running when it stopped did not finish - check the state of what you were doing before you go on.'"
          return ;;
     esac
   fi
   # NO OPENING PROMPT HERE: the agent file's `initialPrompt` sends the brief's line itself, so typing it too sent it twice
   # (the reviewer, 2026-10-25: "each command line includes the start prompt as a parameter which is duplicative")
-  tmux send-keys -t "$1" "cd '$DIR' && $CLEAN claude --agent $2 --name $2 $(effort_of "$2")" Enter
+  term_send "$1" "cd '$DIR' && $CLEAN claude --agent $2 --name $2 $(effort_of "$2")"
 }
 
 # NEXT - A FINISHED SESSION IS CLEARED, EXITED AND STARTED AGAIN IN ITS PANE (the reviewer, 2026-11-10, the first
@@ -151,8 +153,8 @@ if [ "$MODE" = "--next" ]; then
   mkdir -p "$MM_STATE_DIR"
   say() { echo "$(date '+%F %H:%M:%S') $role: $*" >> "$MM_STATE_DIR/next.log"; }
   tell() { say "told you: $*"; alert "$role: $*" "$MM_PROJECT: a finished session"; }   # agents-lib.sh
-  at_shell() { case "$(tmux display-message -p -t "$pane" '#{pane_current_command}' 2>/dev/null)" in zsh|-zsh|bash|-bash|sh|-sh) return 0 ;; esac; return 1; }
-  [ -n "$role" ] && [ -n "$pane" ] && [ "$(tmux show-options -pv -t "$pane" @role 2>/dev/null)" = "$role" ] \
+  at_shell() { case "$(term_cmd "$pane")" in zsh|-zsh|bash|-bash|sh|-sh) return 0 ;; esac; return 1; }
+  [ -n "$role" ] && [ -n "$pane" ] && [ "$(term_tag_of "$pane" role)" = "$role" ] \
     || { say "pane $pane was not given to it by agents.sh - nothing typed"; exit 0; }
   lock=$(going_run)
   if [ -n "$lock" ]; then
@@ -161,7 +163,7 @@ if [ "$MODE" = "--next" ]; then
     exit 0
   fi
   in_prompt() {   # -> what stands in the pane's prompt, typed and not sent: nothing when it is empty, "?" when no prompt is found
-    tmux capture-pane -e -p -t "$pane" 2>/dev/null | python3 -c '
+    term_capture "$pane" -e | python3 -c '
 import re, sys
 mark = chr(0x276f) + chr(0xa0)
 lines = [line for line in sys.stdin.buffer.read().decode("utf-8", "replace").splitlines() if mark in line]
@@ -172,7 +174,7 @@ print("" if rest.startswith(chr(27) + "[2m") else re.sub(chr(27) + "[^m]*m", "",
     local has; has=$(in_prompt)
     if [ "$has" = "?" ]; then tell "its prompt could not be read - $1 not typed; finish closing it by hand, then: bash agents.sh"; exit 0; fi
     if [ -n "$has" ]; then tell "words are standing in its prompt - $1 not typed over them; type /clear and /exit there, then: bash agents.sh"; exit 0; fi
-    tmux send-keys -t "$pane" "$1" Enter
+    term_send "$pane" "$1"
   }
   sleep 2; typed_then "/clear"; sleep "$MM_NIGHT_GAP"; typed_then "/exit"
   n=0; until at_shell; do
@@ -186,14 +188,14 @@ print("" if rest.startswith(chr(27) + "[2m") else re.sub(chr(27) + "[^m]*m", "",
   if [ -n "$(find "$started" -mmin -10 2>/dev/null)" ]; then tell "finished again within ten minutes of being started here - cleared and exited, not started a second time; bash agents.sh starts it"; exit 0; fi
   touch "$started"
   SESSIONS=""   # its last session is the one just exited, not one running elsewhere
-  start_role "$pane" "$role" "$(tmux show-options -pv -t "$pane" @colour)"
+  start_role "$pane" "$role" "$(term_tag_of "$pane" colour)"
   say "cleared, exited and started again in $pane"
   exit 0
 fi
 
-if tmux has-session -t "$SESSION" 2>/dev/null; then
+if term_has "$SESSION"; then
   if [ "${1:-}" = "--restart" ]; then
-    tmux kill-session -t "$SESSION"
+    term_kill "$SESSION"
   else
     # A ROLE WHOSE PANE IS BACK AT ITS SHELL IS STARTED AGAIN IN IT (the reviewer, 2026-10-10: "it opened all the panes but
     # i had to manually start each agent" - the night run had closed the roles and left the session and its panes)
@@ -201,13 +203,13 @@ if tmux has-session -t "$SESSION" 2>/dev/null; then
     while read -r pane role cmd; do
       [ -n "$role" ] || continue
       case "$cmd" in
-        zsh|-zsh|bash|-bash|sh|-sh) start_role "$pane" "$role" "$(tmux show-options -pv -t "$pane" @colour)" && started="$started $role" ;;
+        zsh|-zsh|bash|-bash|sh|-sh) start_role "$pane" "$role" "$(term_tag_of "$pane" colour)" && started="$started $role" ;;
       esac
-    done < <(tmux list-panes -s -t "$SESSION" -F '#{pane_id} #{@role} #{pane_current_command}')
-    if [ -n "$started" ]; then echo "The tmux session '$SESSION' is already running - started again:$started. Attaching."
-    else echo "The tmux session '$SESSION' is already running, every role in it - attaching. To stop it and start again: bash agents.sh --restart"; fi
+    done < <(term_list "$SESSION")
+    if [ -n "$started" ]; then echo "The roles' session '$SESSION' is already running - started again:$started. Attaching."
+    else echo "The roles' session '$SESSION' is already running, every role in it - attaching. To stop it and start again: bash agents.sh --restart"; fi
     load_tmux_conf
-    exec tmux attach-session -t "$SESSION"
+    term_attach "$SESSION"
   fi
 fi
 
@@ -221,11 +223,11 @@ fi
 PANES=""; prev=""; across=1
 for role in $MM_LAYOUT; do
   if [ -z "$prev" ]; then
-    prev=$(tmux new-session -d -s "$SESSION" -x "$(tput cols)" -y "$(tput lines)" -c "$DIR" -P -F '#{pane_id}')
+    prev=$(term_new "$SESSION" "$DIR") || exit 1
     load_tmux_conf
   else
-    if [ "$across" = 1 ]; then dir=-h; across=0; else dir=-v; across=1; fi
-    prev=$(tmux split-window $dir -t "$prev" -c "$DIR" -P -F '#{pane_id}')
+    if [ "$across" = 1 ]; then dir=across; across=0; else dir=down; across=1; fi
+    prev=$(term_split "$prev" "$dir" "$DIR")
   fi
   PANES="$PANES $role=$prev"
 done
@@ -235,8 +237,7 @@ for role in $ROLES; do
 done
 operator=$(pane_for "$MM_OPERATOR_ROLE")
 
-tmux set-option -w -t "$SESSION" pane-border-status top
-tmux set-option -w -t "$SESSION" pane-border-format ' #[fg=#{@colour},bold]#{@role}#[default] '
-tmux select-layout -t "$SESSION" tiled
-tmux select-pane -t "$operator"
-exec tmux attach-session -t "$SESSION"
+term_label "$SESSION"
+term_layout "$SESSION"
+term_focus "$operator"
+term_attach "$SESSION"

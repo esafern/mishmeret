@@ -37,6 +37,7 @@ FIELDS = {
     "operator": str,            # agents (the pane selected last), and the guard and the landing tool when they move
     "board_dir": str,           # board: the Board's record and its files
     "board_port": int,          # board, board_server: the Board's page
+    "terminal": str,            # term.sh (OPTIONAL): the session scripts' terminal, one of TERMINALS - tmux when absent
     "tmux_session": str,        # agents, agents-lib, agents-morning
     "tmux_conf": str,           # agents
     "transcripts": dict,        # role_usage, agents-lib: each runner's transcripts folder, by its RUNNERS name
@@ -84,7 +85,7 @@ DRAWN = ("short", "colour", "page_light", "page_dark", "corner", "tmux")
 OPTIONAL = {"python", "drafts", "guard.homes", "guard.precommit", "guard.foreign", "land.ledger", "land.server",
             "night.finish_command", "night.finish_exit_command", "expiring", "roles.runner", "guard.refs",
             "roles.worktrees", "guard.main", "claude_projects", "guard.fallback_roots", "guard.trees",
-            "guard.retired_remotes", "guard.checks", *(f for fields in PARTS.values() for f in fields),
+            "guard.retired_remotes", "guard.checks", "terminal", *(f for fields in PARTS.values() for f in fields),
             *("roles." + k for k in DRAWN)}
 # WHAT EXPIRES (notes/PLAN-EXPIRING.md): each item's keys, and each source's kind with the kinds of its value -
 # expiring.READERS reads one each (a test holds the two to one list); a name given twice is refused (girsa-architect:
@@ -112,6 +113,9 @@ ROLE_KEYS = {"name": str, "short": str, "colour": str, "page_light": str, "page_
 # WHAT STARTS A ROLE (notes/PLAN-PI-ROLE.md): Claude Code, absent or "claude"; or pi, guarded by mishmeret/pi_guard.ts.
 # A pin older than this commit refuses the key (its role keys are exact): it is named with the pin bump that brings it
 RUNNERS = ("claude", "pi")
+# WHERE THE SESSIONS RUN (notes/PLAN-TERMINAL-ADAPTER.md): tmux, or WezTerm - which runs on Windows too; term.sh holds
+# each one's form of every terminal step, and the session part keeps tmux's names for both (girsa-architect's Q1)
+TERMINALS = ("tmux", "wezterm")
 
 
 class ConfigError(Exception):
@@ -242,6 +246,8 @@ def load(p=None):
                 continue
             night[k] = _typed("night." + k, t, cfg["night"][k] if env is None else env, p, from_env=env is not None)
         cfg["night"] = night
+    if cfg.get("terminal", "tmux") not in TERMINALS:
+        raise ConfigError(f"{p}: terminal must be one of {', '.join(TERMINALS)}, not {cfg['terminal']!r}")
     drawn = "board_dir" in cfg or "tmux_session" in cfg
     for i, r in enumerate(cfg["roles"]):
         if not isinstance(r, dict):
@@ -352,7 +358,7 @@ def role_names(**only):
 SHELL = (("project", "MM_PROJECT", str), ("tmux_session", "MM_SESSION", str), ("tmux_conf", "MM_TMUX_CONF", expand),
          ("transcripts", "MM_PROJECTS", lambda t: expand(t["claude"])), ("python", "MM_PYTHON", expand),
          ("agent_files", "MM_AGENT_FILES", str), ("launchd_prefix", "MM_LAUNCHD_PREFIX", str), ("state_dir", "MM_STATE_DIR", expand),
-         ("operator", "MM_OPERATOR_ROLE", str))
+         ("operator", "MM_OPERATOR_ROLE", str), ("terminal", "MM_TERMINAL", str))
 
 
 def shell():

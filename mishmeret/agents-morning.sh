@@ -204,7 +204,7 @@ if [ "${1:-}" = "--night" ]; then
     [ -n "$DRY" ] || alert "$*" "$MM_PROJECT: the night run"     # agents-lib.sh
   }
   type_in() {   # pane text
-    if [ -n "$DRY" ]; then say "(dry run) would type $2 into $1"; else tmux send-keys -t "$1" "$2" Enter; fi
+    if [ -n "$DRY" ]; then say "(dry run) would type $2 into $1"; else term_send "$1" "$2"; fi
   }
   you_idle() { ioreg -c IOHIDSystem | awk '/HIDIdleTime/ {print int($NF / 1000000000); exit}'; }
   quiet_for() {   # sessionId -> seconds since its transcript last changed (its last turn); 0 when not found
@@ -287,7 +287,7 @@ if [ "${1:-}" = "--night" ]; then
         rm -f "$NIGHT/$r.closed" "$NIGHT/$r.outside" "$NIGHT/$r.land-sent" "$NIGHT/$r.land-only" "$NIGHT/$r.landed-kept" "$NIGHT/$r.left" "$NIGHT/$r.asked" "$NIGHT/$r.kept" "$NIGHT/$r.nopane" "$NIGHT/$r.cleared"; say "$r: running again after it was closed - its finish starts over"
         pending=$((pending + 1)); continue
       fi
-      pane=$(pane_of_pid "$pid")
+      pane=$(term_pane_of_pid "$SESSION" "$pid")
       bw=""   # a Board wait only is not work (only_board_waits, above)
       if [ "$st" = "busy" ] && only_board_waits "$pid"; then st=idle; bw=" (only a Board wait running)"; fi
       if [ -e "$NIGHT/$r.cleared" ]; then   # cleared and sent /exit: waiting for it to close, five minutes at most
@@ -338,8 +338,7 @@ if [ "${1:-}" = "--night" ]; then
           # THE PANE'S RECENT HISTORY, ITS WRAPPED LINES JOINED (2026-10-09, the night of 10-08: the builder and the verifier
           # said "ready to clear" and were left open - the phrase had scrolled above the visible pane, or a narrow pane
           # broke it across two lines; the steward wrote "can be cleared")
-          if [ -n "$pane" ] && tmux capture-pane -p -J -S -200 -t "$pane" 2>/dev/null \
-              | grep -qE "$READY_LINE"; then
+          if [ -n "$pane" ] && term_capture "$pane" 200 | grep -qE "$READY_LINE"; then
             if [ -e "$NIGHT/$r.land-only" ]; then keep_landed "$r"; continue; fi
             say "$r: finished and says it is ready to clear - /clear, /exit"
             type_in "$pane" "/clear"; sleep "$GAP"; type_in "$pane" "/exit"; sleep "$GAP"
@@ -463,7 +462,7 @@ send_land() {   # roles...
   local r pane
   for r in "$@"; do
     pane=$(pane_of "$r")
-    if [ -n "$pane" ]; then tmux send-keys -t "$pane" "$FINISH" Enter; echo "         sent to $r ($pane)"
+    if [ -n "$pane" ]; then term_send "$pane" "$FINISH"; echo "         sent to $r ($pane)"
     else echo "         $r: its pane was not found - type $FINISH in it yourself"; fi
   done
 }
@@ -499,7 +498,7 @@ for r in $ROLES; do
   was=$(printf '%s\n' "$BEFORE" | awk -v r="$r" '$1 == r {print $2}'); info=$(role_info "$r"); now=$(echo "$info" | cut -d' ' -f2)
   if [ "${info%% *}" = "absent" ]; then echo "         $r: not running - bash agents.sh starts it in its pane"
   elif [ "$now" != "$was" ]; then echo "         $r: finished, and started again in a new session"
-  elif pane=$(pane_of "$r"); [ -n "$pane" ] && tmux capture-pane -p -J -S -200 -t "$pane" 2>/dev/null | grep -qE "$READY_LINE"; then
+  elif pane=$(pane_of "$r"); [ -n "$pane" ] && term_capture "$pane" 200 | grep -qE "$READY_LINE"; then
     echo "         $r: said it is ready to clear and is still in the session it had - the project's settings do not name"
     echo "           the Stop hook (finish_hook.py), or it could not run agents.sh --next. Type /clear and /exit in its pane, then: bash agents.sh"
   else echo "         $r: still in the session it had - it did not finish; look at its pane"; fi

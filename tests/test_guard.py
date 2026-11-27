@@ -1222,8 +1222,15 @@ def test_the_role_guard_keeps_every_role_off_the_live_tmux_server():
     # the repository's own agents.sh, read from disk: run against the live server it is refused (its --restart kills
     # the roles' session); in a test server's environment, or only syntax-checked, it runs
     assert "in the script agents.sh" in rg.tmux_refusal("bash agents.sh --resume", PKG)
-    assert rg.tmux_refusal("env -u TMUX TMUX_TMPDIR=/tmp/x bash agents.sh --resume", PKG) is None
+    # its kill is term.sh's, which agents-lib.sh sources (notes/PLAN-TERMINAL-ADAPTER.md): each terminal's refused with
+    # the other's private environment set (girsa-verifier's NOTE 2 on the plan), and a run with both let through
+    assert "WezTerm's LIVE panes" in rg.tmux_refusal("env -u TMUX TMUX_TMPDIR=/tmp/x bash agents.sh --resume", PKG)
+    assert "LIVE tmux server" in rg.tmux_refusal("WEZTERM_UNIX_SOCKET=/tmp/x/w bash agents.sh --resume", PKG)
+    assert rg.tmux_refusal("env -u TMUX TMUX_TMPDIR=/tmp/x WEZTERM_UNIX_SOCKET=/tmp/x/w bash agents.sh --resume",
+                           PKG) is None
     assert rg.tmux_refusal("bash -n agents.sh", PKG) is None
+    # the morning run sources term.sh for its capture and never calls its kill: not refused (rule 45: 20 such runs)
+    assert rg.tmux_refusal("bash agents-morning.sh --skip-tonight", PKG) is None
     # the forms tmux itself takes (girsa-verifier's LOW on bba1587e): aliases, unique prefixes, a pane, pkill/killall,
     # a target that points into the reached server; and a shell reading a heredoc or a here-string runs its body
     for refused in ("tmux killw -t ex:1", "tmux kill-serv", "tmux kill-sess -t ex", "tmux kill-pane",

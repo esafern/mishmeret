@@ -7,6 +7,7 @@
 # script one of them starts (agents.sh, from the night run's Go) works in the same clone through MISHMERET_CONFIG.
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+. "$HERE/term.sh"   # every terminal step, tmux's or WezTerm's (notes/PLAN-TERMINAL-ADAPTER.md)
 # NO PROJECT NAMED, NO RUN (two runs of 2026-11-05, each this checkout's script run directly): one, in Mishmeret's own
 # folder, was refused without saying where to run it from; the other, in the project's folder, ran this checkout - not
 # the commit the project pins - and exported the config it read to every role with no shim's mark, so the project's
@@ -50,15 +51,9 @@ sys.exit(0 if role_usage.turn_ended(sys.argv[2]) else 1)' "$HERE" "$sid" 2>/dev/
   echo "$st"
 }
 
-pane_of_pid() {   # a role's claude pid -> its tmux pane in the roles' session (the process is a child of the pane's shell)
-  local ppid; ppid=$(ps -o ppid= -p "$1" 2>/dev/null | tr -d ' ')
-  [ -n "$ppid" ] || return 0
-  tmux list-panes -s -t "$SESSION" -F '#{pane_pid} #{pane_id}' 2>/dev/null | awk -v p="$ppid" '$1 == p {print $2}'
-}
-
-pane_of() {   # role -> its tmux pane id, or nothing
+pane_of() {   # role -> its pane in the roles' session, or nothing (its claude process is a child of the pane's shell)
   local pid; pid=$(role_info "$1" | cut -d' ' -f3)
-  [ "$pid" = "-" ] || pane_of_pid "$pid"
+  [ "$pid" = "-" ] || term_pane_of_pid "$SESSION" "$pid"
 }
 
 run_going() {   # a night run's lock folder -> success unless the run that wrote its process id there is gone (a lock

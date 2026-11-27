@@ -14,8 +14,9 @@ and how one person stays in charge of every decision that is theirs.
   the person in charge, and wait for the answer. It also serves what expires (`expiring.py`: tokens, logins,
   certificates - the project's list) as a calendar feed, `/expiring.ics`, with reminders 7 days and 1 day ahead. The
   server reads the project's config once, at its start: after a config change, restart it.
-- **Sessions and the night run** (`agents.sh`, `agents-morning.sh`, `finish_hook.py`): start the roles in tmux, keep
-  them warm, and clear the ones that have finished - by day each is started again in its pane, by night none is.
+- **Sessions and the night run** (`agents.sh`, `agents-morning.sh`, `finish_hook.py`): start the roles in tmux or
+  WezTerm, keep them warm, and clear the ones that have finished - by day each is started again in its pane, by night
+  none is.
 - **Reports**: tokens per role, start-up reading sizes, each role's effort setting, and a check of every draft the
   moment it is written.
 - **The lessons** (`LESSONS.md`): the rules every session of a project run with Mishmeret works by, cited by name. A
@@ -26,8 +27,8 @@ editions: 140,000+ lines of code and tests, and 19 release candidates since July
 (since October, these roles) and reviewed by me. Mishmeret names no project of its own; a project supplies its roles
 and rules in one config file (below).
 
-Standard library only. The sessions (`agents.sh`, `agents-morning.sh`) are macOS-only: tmux, launchd, osascript and
-iTerm2. The Board, the hooks, the status line and the reports are portable.
+Standard library only. The sessions (`agents.sh`, `agents-morning.sh`) are macOS-only: tmux or WezTerm (below),
+launchd, osascript and iTerm2. The Board, the hooks, the status line and the reports are portable.
 
 ## How a project uses it
 
@@ -55,7 +56,8 @@ transcripts, the agent files, the launchd prefix, the state folder, the night ru
 sentence, naming itself. A role's drawing keys are required with the Board or the sessions.
 `FIELDS` lists them with the module that reads each: the project's name, its roles (name, short name, tmux colour, the Board page's two
 colours, whether it has a corner and a tmux pane), the page's order, the operator, the Board's folder and port, the
-tmux session and settings file, each runner's transcripts folder (`transcripts`, `{"claude": "~/.claude/projects",
+terminal (`terminal`: tmux, absent, or wezterm - below), the tmux session and settings file, each runner's transcripts
+folder (`transcripts`, `{"claude": "~/.claude/projects",
 "pi": "~/.pi/agent/sessions"}`; its old name `claude_projects`, Claude Code's folder alone, read as its `claude` until
 both configs move), the agent files, the project's Python, the launchd
 prefix, the state folder and the night run's knobs (with the project's two commands that end a session, below);
@@ -169,6 +171,33 @@ in the pane's prompt, and does not start a role twice in ten minutes; what it di
 While a night run is going it stands down and the run closes the session itself: at night nothing is started again,
 and `bash agents.sh` starts each closed role in its pane when you are back.
 
+## The terminal: tmux or WezTerm
+
+Every step the session scripts take in a terminal - make a pane, type into it, read it back, find a role's pane, close
+the session - is a function of `term.sh`, in tmux's form and in WezTerm's (notes/PLAN-TERMINAL-ADAPTER.md); the
+scripts name no terminal themselves. The config's OPTIONAL `terminal` chooses: `"tmux"` (absent) or `"wezterm"`. The
+sessions part keeps tmux's names for both - `tmux_session`, `tmux_conf`, a role's `tmux` - and `tmux_conf` is read by
+nothing under WezTerm; their renaming waits for the next change of a required key.
+
+Under WezTerm a session is a workspace of the window `bash agents.sh` runs in - run outside a WezTerm window, it stops
+and says so; no script starts one. A pane's role and colour are lines of `<state_dir>/panes-<session>.tsv`, begun
+afresh with the session (pane ids repeat across servers) and removed when it is killed. Its costs: no label on each
+pane's border (the tab's title names the session); no tiled layout (the splits as made); a line wrapped exactly at a
+space stays two lines in a capture (WezTerm pads a line with spaces, so only a full one is read as wrapped); a pane
+closed by hand leaves its tags in the file, read against the panes listed.
+
+The guard keeps WezTerm's live panes as it keeps tmux's server: `wezterm cli kill-pane` is refused for every role,
+the operator too, unless the command sets `WEZTERM_UNIX_SOCKET` to a socket of its own; pkill, killall or taskkill
+naming wezterm is refused outright (a private server is stopped by its pid). It reads a script with the `.sh` files
+it sources, a library's function where what runs names it - so a test run of `agents.sh`, whose `term.sh` holds both
+kills, names a private server for each: `env -u TMUX TMUX_TMPDIR=<folder> WEZTERM_UNIX_SOCKET=<socket> bash agents.sh`.
+
+Measured on macOS (WezTerm 20240203, a private headless server; tmux on its own): the same 22 checks on each. Not
+measured: WezTerm's window (attaching, a start from inside one), Claude Code's own screen typed into by WezTerm, Linux,
+and Windows - the case WezTerm is here for, where the scripts would run under Git Bash and a pane is a ConPTY (a pane's
+command and a process's pane read its tty): the reviewer's own run on the Windows machine, before the case is called
+done.
+
 ## Skills shipped to every project
 
 `mishmeret/skills/` holds four Claude Code skills, Mishmeret's general procedures, pinned with the code they describe:
@@ -200,8 +229,8 @@ on macOS only (pi 1.6.0); Linux and Windows are not.
 
     python3 -m pytest tests/
 
-They run against a placeholder project, with stub `tmux`, `claude`, `osascript` and `launchctl` first on PATH, so no
-test reaches a real tmux server or starts a session (`tests/conftest.py`). The pi tests run pi itself with a scripted
+They run against a placeholder project, with stub `tmux`, `wezterm`, `claude`, `osascript` and `launchctl` first on
+PATH, so no test reaches a real tmux server or WezTerm, or starts a session (`tests/conftest.py`). The pi tests run pi itself with a scripted
 provider (`tests/pi/`, no model), and are skipped where `pi` is not on PATH.
 
 MIT licence (`LICENSE`).
